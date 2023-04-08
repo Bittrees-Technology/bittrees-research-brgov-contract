@@ -14,7 +14,6 @@ contract BittreesResearchEquity is
     CountersUpgradeable.Counter private _tokenIds;
     uint256 public mintPrice;
 
-    event MemberJoined(address indexed member, uint256 indexed tokenId);
     event MintPriceUpdated(uint256 indexed oldValue, uint256 indexed newValue);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -62,8 +61,6 @@ contract BittreesResearchEquity is
         _tokenIds.increment();
         uint256 newItemId = _tokenIds.current();
         _mint(to, newItemId, 1, "");
-
-        emit MemberJoined(to, newItemId);
 
         return newItemId;
     }
