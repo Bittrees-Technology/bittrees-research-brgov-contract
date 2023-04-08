@@ -2,7 +2,6 @@ import { expect } from 'chai';
 import { upgrades } from 'hardhat';
 import hre from 'hardhat';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { time } from '@nomicfoundation/hardhat-network-helpers';
 import { Contract } from 'ethers';
 
 const DAY = 60 * 60 * 24;
@@ -80,17 +79,31 @@ describe('BittreesResearchEquity', function () {
         });
 
         describe('upon successful mint (when value is equal to mintPrice)', function () {
-            it('should emit a MemberJoined', async function () {
+            it('should emit a TransferSingle', async function () {
                 await contract.setMintPrice(
                     hre.ethers.utils.parseEther('10.0')
                 );
+                console.log('xxx', owner.address, otherUser.address);
+
+                const topic1 = owner.address;
+                const topic2_from =
+                    '0x0000000000000000000000000000000000000000';
+                const topic3_to = otherUser.address;
+                const topic4_id = 1;
+                const topic5_value = 1;
                 await expect(
                     contract.mintEquity(otherUser.address, {
                         value: hre.ethers.utils.parseEther('10.0'),
                     })
                 )
-                    .to.emit(contract, 'MemberJoined')
-                    .withArgs(otherUser.address, 1);
+                    .to.emit(contract, 'TransferSingle')
+                    .withArgs(
+                        topic1,
+                        topic2_from,
+                        topic3_to,
+                        topic4_id,
+                        topic5_value
+                    );
             });
 
             it('should be owned by otherUser', async function () {
@@ -112,19 +125,30 @@ describe('BittreesResearchEquity', function () {
                 ).to.equal(1);
             });
 
-            it('non-owner should also be successful and emit a MemberJoined', async function () {
+            it('non-owner should also be successful and emit a TransferSingle', async function () {
                 await contract.setMintPrice(
                     hre.ethers.utils.parseEther('10.0')
                 );
+
+                const topic1 = otherUser.address;
+                const topic2_from =
+                    '0x0000000000000000000000000000000000000000';
+                const topic3_to = otherUser.address;
+                const topic4_id = 1;
+                const topic5_value = 1;
                 await expect(
-                    contract
-                        .connect(otherUser)
-                        .mintEquity(otherUser.address, {
-                            value: hre.ethers.utils.parseEther('10.0'),
-                        })
+                    contract.connect(otherUser).mintEquity(otherUser.address, {
+                        value: hre.ethers.utils.parseEther('10.0'),
+                    })
                 )
-                    .to.emit(contract, 'MemberJoined')
-                    .withArgs(otherUser.address, 1);
+                    .to.emit(contract, 'TransferSingle')
+                    .withArgs(
+                        topic1,
+                        topic2_from,
+                        topic3_to,
+                        topic4_id,
+                        topic5_value
+                    );
             });
         });
     });
