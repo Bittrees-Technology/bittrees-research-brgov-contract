@@ -9,13 +9,13 @@ const DAY = 60 * 60 * 24;
 const WEEK = DAY * 7;
 const YEAR = 52 * WEEK;
 
-describe('BAGMembership', function () {
+describe('BittreesResearchEquity', function () {
     let contract: Contract;
     let owner: SignerWithAddress;
     let otherUser: SignerWithAddress;
 
     beforeEach(async function () {
-        const Contract = await hre.ethers.getContractFactory('BAGMembership');
+        const Contract = await hre.ethers.getContractFactory('BittreesResearchEquity');
 
         const [_owner, _otherUser] = await hre.ethers.getSigners();
         owner = _owner;
