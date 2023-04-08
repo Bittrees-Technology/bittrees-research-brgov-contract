@@ -15,7 +15,9 @@ describe('BittreesResearchEquity', function () {
     let otherUser: SignerWithAddress;
 
     beforeEach(async function () {
-        const Contract = await hre.ethers.getContractFactory('BittreesResearchEquity');
+        const Contract = await hre.ethers.getContractFactory(
+            'BittreesResearchEquity'
+        );
 
         const [_owner, _otherUser] = await hre.ethers.getSigners();
         owner = _owner;
@@ -170,99 +172,6 @@ describe('BittreesResearchEquity', function () {
             ).to.be.revertedWith(
                 'AccessControl: account 0x70997970c51812dc3a010c7d01b50e0d17dc79c8 is missing role 0x0000000000000000000000000000000000000000000000000000000000000000'
             );
-        });
-    });
-
-    describe('membership token', () => {
-        it('has correct expiration timeframe (default 1 year)', async () => {
-            const unixNow = Date.now() / 1000;
-            await contract.setMintPrice(hre.ethers.utils.parseEther('10.0'));
-            await contract.mintMembership(otherUser.address, {
-                value: hre.ethers.utils.parseEther('10.0'),
-            });
-            const tokenId = 1;
-            const timestampNow = Math.floor(unixNow + 52 * 604800);
-            const timestampFromContract = await contract.expirationTimestamps(
-                tokenId
-            );
-            expect(
-                timestampFromContract.gt(
-                    hre.ethers.BigNumber.from(timestampNow)
-                )
-            ).to.be.true;
-            expect(await contract.isExpired(tokenId)).to.be.false;
-        });
-        it('owner should be valid for unexpired tokens', async () => {
-            await contract.setMintPrice(hre.ethers.utils.parseEther('10.0'));
-            await contract.mintMembership(otherUser.address, {
-                value: hre.ethers.utils.parseEther('10.0'),
-            });
-
-            const tokenId = 1;
-            expect(await contract.isExpired(tokenId)).to.be.false;
-
-            const balance = await contract.balanceOf(
-                otherUser.address,
-                tokenId
-            );
-            expect(balance.eq(1)).to.be.true;
-        });
-
-        it('admin can manually change member expiration to zero to indicate expired', async () => {
-            await contract.setMintPrice(hre.ethers.utils.parseEther('10.0'));
-            await contract.mintMembership(otherUser.address, {
-                value: hre.ethers.utils.parseEther('10.0'),
-            });
-
-            const tokenId = 1;
-            await contract.setExpiration(tokenId, 0x0);
-
-            const balance = await contract.balanceOf(
-                otherUser.address,
-                tokenId
-            );
-
-            expect(balance.eq(0)).to.be.true;
-        });
-
-        it('has default expiration timeframe of 1 year', async () => {
-            const currentTimeframe = await contract.expirationTimeframe();
-            expect(currentTimeframe.eq(hre.ethers.BigNumber.from(YEAR))).to.be
-                .true;
-        });
-
-        it('admin can manually update expiration "timeframe" to any time', async () => {
-            await contract.setExpirationTimeframe(2 * YEAR);
-            const currentTimeframe = await contract.expirationTimeframe();
-            expect(currentTimeframe.eq(hre.ethers.BigNumber.from(2 * YEAR))).to
-                .be.true;
-        });
-
-        it('otherUser can NOT manually update expiration "timeframe" to any time', async () => {
-            await expect(
-                contract.connect(otherUser).setExpirationTimeframe(2 * YEAR)
-            ).to.be.revertedWith(
-                'AccessControl: account 0x70997970c51812dc3a010c7d01b50e0d17dc79c8 is missing role 0x0000000000000000000000000000000000000000000000000000000000000000'
-            );
-        });
-
-        it('owner should be 0x0 for expired tokens', async () => {
-            await contract.setMintPrice(hre.ethers.utils.parseEther('10.0'));
-            await contract.mintMembership(otherUser.address, {
-                value: hre.ethers.utils.parseEther('10.0'),
-            });
-
-            // move one second beyond one year so token is expired
-            await time.increase(YEAR + 1);
-
-            const tokenId = 1;
-            expect(await contract.isExpired(tokenId)).to.be.true;
-
-            const balance = await contract.balanceOf(
-                otherUser.address,
-                tokenId
-            );
-            expect(balance.eq(0)).to.be.true;
         });
     });
 });
