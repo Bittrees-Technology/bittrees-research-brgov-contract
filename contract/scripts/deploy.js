@@ -10,7 +10,7 @@ async function main() {
     );
     console.log('Deployer wallet public key:', deployer.address);
 
-    const Contract = await ethers.getContractFactory('BAGMembership');
+    const Contract = await ethers.getContractFactory('BittreesResearchEquity');
     const proxyContract = await upgrades.deployProxy(Contract);
     await proxyContract.deployed();
 

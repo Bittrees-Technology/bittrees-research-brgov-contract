@@ -1,8 +1,8 @@
-# bag-membership
+# Bittrees Research - Equity Contract
 
-![Solidity tests](https://github.com/briangershon/bag-membership/actions/workflows/continuous-integration.yaml/badge.svg)
+![Solidity tests](https://github.com/Bittrees-Technology/bittrees-research-equity-contract/actions/workflows/continuous-integration.yaml/badge.svg)
 
-Builder's Advocacy Group Membership Contract (based on ERC-1155)
+Bittrees Research Equity Contract (based on ERC-1155)
 
 Includes:
 
@@ -136,7 +136,7 @@ Now that you've connected to your contract above via `hardhat console`, let's pl
 // - if you're interacting with a contract on testnet or mainnet and you should see your public wallet account (the match for your private key in your `.env` file)
 await ethers.provider.listAccounts();
 
-const Contract = await ethers.getContractFactory('BAGMembership');
+const Contract = await ethers.getContractFactory('BittreesResearchEquity');
 const contract = await Contract.attach('<proxy contract address goes here>');
 await contract.setMintPrice('1000000000000000');   // this wei represents 0.001 whole coin (e.g. ETH or MATIC)
 // you'll need to wait a bit until value is stored on the blockchain before retrieving in next step
