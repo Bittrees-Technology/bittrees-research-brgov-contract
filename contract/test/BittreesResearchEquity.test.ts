@@ -69,11 +69,11 @@ describe('BittreesResearchEquity', function () {
         });
     });
 
-    describe('mintMembership', function () {
+    describe('mintEquity', function () {
         it('should not mint if value is below the minimum mintPrice', async function () {
             await contract.setMintPrice(hre.ethers.utils.parseEther('10.0'));
             await expect(
-                contract.mintMembership(otherUser.address, {
+                contract.mintEquity(otherUser.address, {
                     value: hre.ethers.utils.parseEther('9.0'),
                 })
             ).to.be.revertedWith('Not enough funds sent');
@@ -85,7 +85,7 @@ describe('BittreesResearchEquity', function () {
                     hre.ethers.utils.parseEther('10.0')
                 );
                 await expect(
-                    contract.mintMembership(otherUser.address, {
+                    contract.mintEquity(otherUser.address, {
                         value: hre.ethers.utils.parseEther('10.0'),
                     })
                 )
@@ -103,7 +103,7 @@ describe('BittreesResearchEquity', function () {
                     await contract.balanceOf(otherUser.address, 1)
                 ).to.equal(0);
 
-                await contract.mintMembership(otherUser.address, {
+                await contract.mintEquity(otherUser.address, {
                     value: hre.ethers.utils.parseEther('10.0'),
                 });
 
@@ -119,7 +119,7 @@ describe('BittreesResearchEquity', function () {
                 await expect(
                     contract
                         .connect(otherUser)
-                        .mintMembership(otherUser.address, {
+                        .mintEquity(otherUser.address, {
                             value: hre.ethers.utils.parseEther('10.0'),
                         })
                 )
@@ -132,7 +132,7 @@ describe('BittreesResearchEquity', function () {
     describe('withdrawal', () => {
         it('should withdraw funds if DEFAULT_ADMIN_ROLE', async () => {
             await contract.setMintPrice(hre.ethers.utils.parseEther('22.0'));
-            await contract.mintMembership(otherUser.address, {
+            await contract.mintEquity(otherUser.address, {
                 value: hre.ethers.utils.parseEther('22.0'),
             });
 
@@ -163,7 +163,7 @@ describe('BittreesResearchEquity', function () {
 
         it('should not withdraw funds if not DEFAULT_ADMIN_ROLE', async () => {
             await contract.setMintPrice(hre.ethers.utils.parseEther('22.0'));
-            await contract.mintMembership(otherUser.address, {
+            await contract.mintEquity(otherUser.address, {
                 value: hre.ethers.utils.parseEther('22.0'),
             });
 

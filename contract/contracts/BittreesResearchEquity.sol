@@ -56,7 +56,7 @@ contract BittreesResearchEquity is
         mintPrice = _newPrice;
     }
 
-    function mintMembership(address to) external payable returns (uint256) {
+    function mintEquity(address to) external payable returns (uint256) {
         require(mintPrice <= msg.value, "Not enough funds sent");
 
         _tokenIds.increment();
