@@ -12,9 +12,9 @@ contract BittreesResearchEquity is
 {
     using CountersUpgradeable for CountersUpgradeable.Counter;
     CountersUpgradeable.Counter private _tokenIds;
-    uint256 public mintPrice;
+    uint256 public mintPriceBTREE;
 
-    event MintPriceUpdated(uint256 indexed oldValue, uint256 indexed newValue);
+    event MintPriceBTREEUpdated(uint256 indexed oldValue, uint256 indexed newValue);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -22,7 +22,7 @@ contract BittreesResearchEquity is
     }
 
     function initialize() public initializer {
-        mintPrice = 0.01 ether;
+        mintPriceBTREE = 1000 ether;
 
         __ERC1155_init(
             "ipfs://QmXMsaYXedBE5BDXwXfNNWgoo36ZkY3XoNqecGFU97RZQh/1"
@@ -47,16 +47,16 @@ contract BittreesResearchEquity is
         _setURI(newuri);
     }
 
-    function setMintPrice(
+    function setMintPriceBTREE(
         uint256 _newPrice
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         // Mint price in wei
-        emit MintPriceUpdated(mintPrice, _newPrice);
-        mintPrice = _newPrice;
+        emit MintPriceBTREEUpdated(mintPriceBTREE, _newPrice);
+        mintPriceBTREE = _newPrice;
     }
 
-    function mintEquity(address to) external payable returns (uint256) {
-        require(mintPrice <= msg.value, "Not enough funds sent");
+    function mintWithBTREE(address to) external payable returns (uint256) {
+        require(mintPriceBTREE <= msg.value, "Not enough BTREE funds sent");
 
         _tokenIds.increment();
         uint256 newItemId = _tokenIds.current();

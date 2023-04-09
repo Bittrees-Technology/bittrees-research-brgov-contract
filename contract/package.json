@@ -20,6 +20,7 @@
     "license": "MIT",
     "devDependencies": {
         "@nomicfoundation/hardhat-toolbox": "^2.0.0",
+        "@openzeppelin/contracts": "^4.8.2",
         "@openzeppelin/contracts-upgradeable": "^4.6.0",
         "@openzeppelin/hardhat-defender": "^1.8.1",
         "@openzeppelin/hardhat-upgrades": "^1.17.0",

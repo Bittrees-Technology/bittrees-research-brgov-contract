@@ -4,16 +4,20 @@ import hre from 'hardhat';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { Contract } from 'ethers';
 
-const DAY = 60 * 60 * 24;
-const WEEK = DAY * 7;
-const YEAR = 52 * WEEK;
-
 describe('BittreesResearchEquity', function () {
     let contract: Contract;
     let owner: SignerWithAddress;
     let otherUser: SignerWithAddress;
 
     beforeEach(async function () {
+        const BTREEContract = await hre.ethers.getContractFactory(
+            'BTREETokenMock'
+        );
+
+        const btreeContract = await BTREEContract.deploy();
+        await btreeContract.deployed();
+        // console.log('Deployed BTREETokenMock at: ', btreeContract.address);
+
         const Contract = await hre.ethers.getContractFactory(
             'BittreesResearchEquity'
         );
@@ -36,8 +40,8 @@ describe('BittreesResearchEquity', function () {
 
             it('should successfully set and retrieve MintPrice', async () => {
                 const newMintPrice = 10;
-                await contract.setMintPrice(newMintPrice);
-                await expect(await contract.mintPrice()).to.equal(newMintPrice);
+                await contract.setMintPriceBTREE(newMintPrice);
+                await expect(await contract.mintPriceBTREE()).to.equal(newMintPrice);
             });
         });
 
@@ -49,9 +53,9 @@ describe('BittreesResearchEquity', function () {
                     'AccessControl: account 0x70997970c51812dc3a010c7d01b50e0d17dc79c8 is missing role 0x0000000000000000000000000000000000000000000000000000000000000000'
                 );
             });
-            it('should not be able to setMintPrice', async () => {
+            it('should not be able to setMintPriceBTREE', async () => {
                 await expect(
-                    contract.connect(otherUser).setMintPrice(1000000)
+                    contract.connect(otherUser).setMintPriceBTREE(1000000)
                 ).to.be.revertedWith(
                     'AccessControl: account 0x70997970c51812dc3a010c7d01b50e0d17dc79c8 is missing role 0x0000000000000000000000000000000000000000000000000000000000000000'
                 );
@@ -59,31 +63,30 @@ describe('BittreesResearchEquity', function () {
         });
 
         describe('emits', function () {
-            it('MintPriceUpdated event', async function () {
-                await contract.setMintPrice(5000);
-                await expect(contract.setMintPrice(8000))
-                    .to.emit(contract, 'MintPriceUpdated')
+            it('MintPriceBTREEUpdated event', async function () {
+                await contract.setMintPriceBTREE(5000);
+                await expect(contract.setMintPriceBTREE(8000))
+                    .to.emit(contract, 'MintPriceBTREEUpdated')
                     .withArgs(5000, 8000);
             });
         });
     });
 
-    describe('mintEquity', function () {
-        it('should not mint if value is below the minimum mintPrice', async function () {
-            await contract.setMintPrice(hre.ethers.utils.parseEther('10.0'));
+    describe('mintWithBTREE', function () {
+        it('should not mint if value is below the minimum mintPriceBTREE', async function () {
+            await contract.setMintPriceBTREE(hre.ethers.utils.parseEther('1000.0'));
             await expect(
-                contract.mintEquity(otherUser.address, {
-                    value: hre.ethers.utils.parseEther('9.0'),
+                contract.mintWithBTREE(otherUser.address, {
+                    value: hre.ethers.utils.parseEther('999.0'),
                 })
-            ).to.be.revertedWith('Not enough funds sent');
+            ).to.be.revertedWith('Not enough BTREE funds sent');
         });
 
-        describe('upon successful mint (when value is equal to mintPrice)', function () {
+        describe('upon successful mint (when value is equal to mintPriceBTREE)', function () {
             it('should emit a TransferSingle', async function () {
-                await contract.setMintPrice(
+                await contract.setMintPriceBTREE(
                     hre.ethers.utils.parseEther('10.0')
                 );
-                console.log('xxx', owner.address, otherUser.address);
 
                 const topic1 = owner.address;
                 const topic2_from =
@@ -92,7 +95,7 @@ describe('BittreesResearchEquity', function () {
                 const topic4_id = 1;
                 const topic5_value = 1;
                 await expect(
-                    contract.mintEquity(otherUser.address, {
+                    contract.mintWithBTREE(otherUser.address, {
                         value: hre.ethers.utils.parseEther('10.0'),
                     })
                 )
@@ -107,7 +110,7 @@ describe('BittreesResearchEquity', function () {
             });
 
             it('should be owned by otherUser', async function () {
-                await contract.setMintPrice(
+                await contract.setMintPriceBTREE(
                     hre.ethers.utils.parseEther('10.0')
                 );
 
@@ -116,7 +119,7 @@ describe('BittreesResearchEquity', function () {
                     await contract.balanceOf(otherUser.address, 1)
                 ).to.equal(0);
 
-                await contract.mintEquity(otherUser.address, {
+                await contract.mintWithBTREE(otherUser.address, {
                     value: hre.ethers.utils.parseEther('10.0'),
                 });
 
@@ -126,7 +129,7 @@ describe('BittreesResearchEquity', function () {
             });
 
             it('non-owner should also be successful and emit a TransferSingle', async function () {
-                await contract.setMintPrice(
+                await contract.setMintPriceBTREE(
                     hre.ethers.utils.parseEther('10.0')
                 );
 
@@ -137,7 +140,7 @@ describe('BittreesResearchEquity', function () {
                 const topic4_id = 1;
                 const topic5_value = 1;
                 await expect(
-                    contract.connect(otherUser).mintEquity(otherUser.address, {
+                    contract.connect(otherUser).mintWithBTREE(otherUser.address, {
                         value: hre.ethers.utils.parseEther('10.0'),
                     })
                 )
@@ -155,8 +158,8 @@ describe('BittreesResearchEquity', function () {
 
     describe('withdrawal', () => {
         it('should withdraw funds if DEFAULT_ADMIN_ROLE', async () => {
-            await contract.setMintPrice(hre.ethers.utils.parseEther('22.0'));
-            await contract.mintEquity(otherUser.address, {
+            await contract.setMintPriceBTREE(hre.ethers.utils.parseEther('22.0'));
+            await contract.mintWithBTREE(otherUser.address, {
                 value: hre.ethers.utils.parseEther('22.0'),
             });
 
@@ -186,8 +189,8 @@ describe('BittreesResearchEquity', function () {
         });
 
         it('should not withdraw funds if not DEFAULT_ADMIN_ROLE', async () => {
-            await contract.setMintPrice(hre.ethers.utils.parseEther('22.0'));
-            await contract.mintEquity(otherUser.address, {
+            await contract.setMintPriceBTREE(hre.ethers.utils.parseEther('22.0'));
+            await contract.mintWithBTREE(otherUser.address, {
                 value: hre.ethers.utils.parseEther('22.0'),
             });
 
