@@ -5,6 +5,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { Contract } from 'ethers';
 
 describe('BittreesResearchEquity', function () {
+    let btreeContract: Contract;
     let contract: Contract;
     let owner: SignerWithAddress;
     let otherUser: SignerWithAddress;
@@ -14,9 +15,8 @@ describe('BittreesResearchEquity', function () {
             'BTREETokenMock'
         );
 
-        const btreeContract = await BTREEContract.deploy();
+        btreeContract = await BTREEContract.deploy();
         await btreeContract.deployed();
-        // console.log('Deployed BTREETokenMock at: ', btreeContract.address);
 
         const Contract = await hre.ethers.getContractFactory(
             'BittreesResearchEquity'
@@ -38,10 +38,45 @@ describe('BittreesResearchEquity', function () {
                 await expect(await contract.uri(1)).to.equal(newURI);
             });
 
-            it('should successfully set and retrieve MintPrice', async () => {
+            it('should successfully set and retrieve BTREE MintPrice', async () => {
                 const newMintPrice = 10;
                 await contract.setMintPriceBTREE(newMintPrice);
-                await expect(await contract.mintPriceBTREE()).to.equal(newMintPrice);
+                await expect(await contract.mintPriceBTREE()).to.equal(
+                    newMintPrice
+                );
+            });
+
+            it('should emit BTREEPriceUpdated event', async function () {
+                await contract.setMintPriceBTREE(5000);
+                await expect(contract.setMintPriceBTREE(8000))
+                    .to.emit(contract, 'BTREEPriceUpdated')
+                    .withArgs(5000, 8000);
+            });
+
+            it('should successfully set and retrieve BTREE Contract Address', async () => {
+                await contract.setBTREEContract(btreeContract.address);
+                await expect(await contract.btreeContract()).to.equal(
+                    btreeContract.address
+                );
+            });
+
+            it('should emit BTREEContractUpdated event', async function () {
+                await expect(contract.setBTREEContract(btreeContract.address))
+                    .to.emit(contract, 'BTREEContractUpdated')
+                    .withArgs('0x0000000000000000000000000000000000000000', btreeContract.address);
+            });
+
+            it('should successfully set and retrieve BTREE Treasury Wallet', async () => {
+                await contract.setBTREETreasury(otherUser.address);
+                await expect(await contract.btreeTreasury()).to.equal(
+                    otherUser.address
+                );
+            });
+
+            it('should emit BTREETreasuryUpdated event', async function () {
+                await expect(contract.setBTREETreasury(otherUser.address))
+                    .to.emit(contract, 'BTREETreasuryUpdated')
+                    .withArgs('0x0000000000000000000000000000000000000000', otherUser.address);
             });
         });
 
@@ -61,20 +96,13 @@ describe('BittreesResearchEquity', function () {
                 );
             });
         });
-
-        describe('emits', function () {
-            it('MintPriceBTREEUpdated event', async function () {
-                await contract.setMintPriceBTREE(5000);
-                await expect(contract.setMintPriceBTREE(8000))
-                    .to.emit(contract, 'MintPriceBTREEUpdated')
-                    .withArgs(5000, 8000);
-            });
-        });
     });
 
     describe('mintWithBTREE', function () {
         it('should not mint if value is below the minimum mintPriceBTREE', async function () {
-            await contract.setMintPriceBTREE(hre.ethers.utils.parseEther('1000.0'));
+            await contract.setMintPriceBTREE(
+                hre.ethers.utils.parseEther('1000.0')
+            );
             await expect(
                 contract.mintWithBTREE(otherUser.address, {
                     value: hre.ethers.utils.parseEther('999.0'),
@@ -140,9 +168,11 @@ describe('BittreesResearchEquity', function () {
                 const topic4_id = 1;
                 const topic5_value = 1;
                 await expect(
-                    contract.connect(otherUser).mintWithBTREE(otherUser.address, {
-                        value: hre.ethers.utils.parseEther('10.0'),
-                    })
+                    contract
+                        .connect(otherUser)
+                        .mintWithBTREE(otherUser.address, {
+                            value: hre.ethers.utils.parseEther('10.0'),
+                        })
                 )
                     .to.emit(contract, 'TransferSingle')
                     .withArgs(
@@ -158,7 +188,9 @@ describe('BittreesResearchEquity', function () {
 
     describe('withdrawal', () => {
         it('should withdraw funds if DEFAULT_ADMIN_ROLE', async () => {
-            await contract.setMintPriceBTREE(hre.ethers.utils.parseEther('22.0'));
+            await contract.setMintPriceBTREE(
+                hre.ethers.utils.parseEther('22.0')
+            );
             await contract.mintWithBTREE(otherUser.address, {
                 value: hre.ethers.utils.parseEther('22.0'),
             });
@@ -189,7 +221,9 @@ describe('BittreesResearchEquity', function () {
         });
 
         it('should not withdraw funds if not DEFAULT_ADMIN_ROLE', async () => {
-            await contract.setMintPriceBTREE(hre.ethers.utils.parseEther('22.0'));
+            await contract.setMintPriceBTREE(
+                hre.ethers.utils.parseEther('22.0')
+            );
             await contract.mintWithBTREE(otherUser.address, {
                 value: hre.ethers.utils.parseEther('22.0'),
             });
