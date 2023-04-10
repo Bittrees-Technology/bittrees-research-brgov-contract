@@ -4,7 +4,7 @@ import hre from 'hardhat';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { Contract } from 'ethers';
 
-async function setupAndMint(
+async function setupForMint(
     btreeContract: Contract,
     contract: Contract,
     treasuryWallet: SignerWithAddress,
@@ -20,30 +20,10 @@ async function setupAndMint(
         hre.ethers.utils.parseEther('1000.0')
     );
 
-    // const otherWalletBalanceBefore = await btreeContract.balanceOf(
-    //     otherWallet.address
-    // );
-    // console.log(
-    //     'otherWalletBalanceBefore: ',
-    //     otherWalletBalanceBefore.toString()
-    // );
-    // const treasuryBalanceBefore = await btreeContract.balanceOf(
-    //     treasuryWallet.address
-    // );
-    // console.log('treasuryBalanceBefore: ', treasuryBalanceBefore.toString());
-
-    // mint 1 BTREE NFT, but first approve BTREE tokens to transfer
-
-    // console.log(
-    //     'about to approve',
-    //     hre.ethers.utils.parseEther('1000.0'),
-    //     'tokens for address',
-    //     contract.address
-    // );
+    // approve 1000 BTREE tokens to transfer
     await btreeContract
         .connect(otherWallet)
         .approve(contract.address, hre.ethers.utils.parseEther('1000.0'));
-    await contract.mintWithBTREE(otherWallet.address);
 }
 
 describe('BittreesResearchEquity', function () {
@@ -154,29 +134,29 @@ describe('BittreesResearchEquity', function () {
 
     describe('mintWithBTREE', function () {
         it('should not mint if value is below the minimum mintPriceBTREE', async function () {
+            await setupForMint(
+                btreeContract,
+                contract,
+                treasuryWallet,
+                otherWallet
+            );
+
             await contract.setMintPriceBTREE(
-                hre.ethers.utils.parseEther('1000.0')
+                hre.ethers.utils.parseEther('2000.0')
             );
             await expect(
-                contract.mintWithBTREE(otherWallet.address, {
-                    value: hre.ethers.utils.parseEther('999.0'),
-                })
+                contract.mintWithBTREE(otherWallet.address)
             ).to.be.revertedWith('Not enough BTREE funds sent');
         });
 
         describe('upon successful mint (when value is equal to mintPriceBTREE)', function () {
             it('should emit a TransferSingle', async function () {
-                await setupAndMint(
+                await setupForMint(
                     btreeContract,
                     contract,
                     treasuryWallet,
                     otherWallet
                 );
-                // await contract.setMintPriceBTREE(
-                //     hre.ethers.utils.parseEther('1000.0')
-                // );
-                // await contract.setBTREEContract(btreeContract.address);
-                // await contract.setBTREETreasury(treasuryWallet.address);
 
                 const topic1 = owner.address;
                 const topic2_from =
@@ -184,11 +164,7 @@ describe('BittreesResearchEquity', function () {
                 const topic3_to = otherWallet.address;
                 const topic4_id = 1;
                 const topic5_value = 1;
-                await expect(
-                    contract.mintWithBTREE(otherWallet.address, {
-                        value: hre.ethers.utils.parseEther('1000.0'),
-                    })
-                )
+                await expect(contract.mintWithBTREE(otherWallet.address))
                     .to.emit(contract, 'TransferSingle')
                     .withArgs(
                         topic1,
@@ -199,13 +175,15 @@ describe('BittreesResearchEquity', function () {
                     );
             });
 
-            it.only('should transfer BTREE from otherUser to btreeTreasury', async function () {
-                await setupAndMint(
+            it('should transfer BTREE from otherUser to btreeTreasury', async function () {
+                await setupForMint(
                     btreeContract,
                     contract,
                     treasuryWallet,
                     otherWallet
                 );
+
+                contract.mintWithBTREE(otherWallet.address);
 
                 // erc-20 balance of otherWallet should be 1000 less than before
                 // erc-20 balance for treasury should be 1000 more than before
@@ -226,20 +204,18 @@ describe('BittreesResearchEquity', function () {
             });
 
             it('should be owned by otherWallet', async function () {
-                await contract.setMintPriceBTREE(
-                    hre.ethers.utils.parseEther('10.0')
+                await setupForMint(
+                    btreeContract,
+                    contract,
+                    treasuryWallet,
+                    otherWallet
                 );
-                await contract.setBTREEContract(btreeContract.address);
-                await contract.setBTREETreasury(treasuryWallet.address);
-
                 // other user should initially have balance of zero
                 await expect(
                     await contract.balanceOf(otherWallet.address, 1)
                 ).to.equal(0);
 
-                await contract.mintWithBTREE(otherWallet.address, {
-                    value: hre.ethers.utils.parseEther('10.0'),
-                });
+                await contract.mintWithBTREE(otherWallet.address);
 
                 await expect(
                     await contract.balanceOf(otherWallet.address, 1)
@@ -247,11 +223,12 @@ describe('BittreesResearchEquity', function () {
             });
 
             it('non-owner should also be successful and emit a TransferSingle', async function () {
-                await contract.setMintPriceBTREE(
-                    hre.ethers.utils.parseEther('10.0')
+                await setupForMint(
+                    btreeContract,
+                    contract,
+                    treasuryWallet,
+                    otherWallet
                 );
-                await contract.setBTREEContract(btreeContract.address);
-                await contract.setBTREETreasury(treasuryWallet.address);
 
                 const topic1 = otherWallet.address;
                 const topic2_from =
@@ -280,15 +257,13 @@ describe('BittreesResearchEquity', function () {
 
     describe('withdrawal', () => {
         it('should withdraw funds if DEFAULT_ADMIN_ROLE', async () => {
-            await contract.setMintPriceBTREE(
-                hre.ethers.utils.parseEther('22.0')
+            await setupForMint(
+                btreeContract,
+                contract,
+                treasuryWallet,
+                otherWallet
             );
-            await contract.setBTREEContract(btreeContract.address);
-            await contract.setBTREETreasury(treasuryWallet.address);
-
-            await contract.mintWithBTREE(otherWallet.address, {
-                value: hre.ethers.utils.parseEther('22.0'),
-            });
+            await contract.mintWithBTREE(otherWallet.address);
 
             const ownerBalance = await hre.ethers.provider.getBalance(
                 owner.address
@@ -316,15 +291,13 @@ describe('BittreesResearchEquity', function () {
         });
 
         it('should not withdraw funds if not DEFAULT_ADMIN_ROLE', async () => {
-            await contract.setMintPriceBTREE(
-                hre.ethers.utils.parseEther('22.0')
+            await setupForMint(
+                btreeContract,
+                contract,
+                treasuryWallet,
+                otherWallet
             );
-            await contract.setBTREEContract(btreeContract.address);
-            await contract.setBTREETreasury(treasuryWallet.address);
-
-            await contract.mintWithBTREE(otherWallet.address, {
-                value: hre.ethers.utils.parseEther('22.0'),
-            });
+            await contract.mintWithBTREE(otherWallet.address);
 
             await expect(
                 contract.connect(otherWallet).withdraw()

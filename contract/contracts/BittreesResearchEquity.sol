@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
@@ -113,7 +113,6 @@ contract BittreesResearchEquity is
             btreeContract.allowance(to, address(this)) >= mintPriceBTREE,
             "Insufficient allowance"
         );
-
         bool successfulTransfer = IERC20(btreeContract).transferFrom(
             to,
             btreeTreasury,
