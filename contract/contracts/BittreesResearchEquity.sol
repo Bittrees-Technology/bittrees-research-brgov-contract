@@ -1,10 +1,31 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
+import "hardhat/console.sol";
+
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
+
+interface IERC20 {
+    function totalSupply() external view returns (uint256);
+
+    function balanceOf(address account) external view returns (uint256);
+
+    function allowance(
+        address owner,
+        address spender
+    ) external view returns (uint256);
+
+    function transferFrom(
+        address from,
+        address to,
+        uint256 amount
+    ) external returns (bool);
+
+    function approve(address spender, uint256 amount) external returns (bool);
+}
 
 contract BittreesResearchEquity is
     ERC1155Upgradeable,
@@ -13,17 +34,14 @@ contract BittreesResearchEquity is
     using CountersUpgradeable for CountersUpgradeable.Counter;
     CountersUpgradeable.Counter private _tokenIds;
     uint256 public mintPriceBTREE;
-    address public btreeContract;
+    IERC20 public btreeContract;
     address public btreeTreasury;
 
-    event BTREEPriceUpdated( 
-        uint256 indexed oldValue,
-        uint256 indexed newValue
-    );
+    event BTREEPriceUpdated(uint256 indexed oldValue, uint256 indexed newValue);
 
     event BTREEContractUpdated(
-        address indexed oldAddress,
-        address indexed newAddress
+        IERC20 indexed oldAddress,
+        IERC20 indexed newAddress
     );
 
     event BTREETreasuryUpdated(
@@ -71,10 +89,10 @@ contract BittreesResearchEquity is
     }
 
     function setBTREEContract(
-        address _btreeContract
+        IERC20 _btreeContract
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         emit BTREEContractUpdated(btreeContract, _btreeContract);
-        btreeContract = _btreeContract;
+        btreeContract = IERC20(_btreeContract);
     }
 
     function setBTREETreasury(
@@ -85,7 +103,23 @@ contract BittreesResearchEquity is
     }
 
     function mintWithBTREE(address to) external payable returns (uint256) {
-        require(mintPriceBTREE <= msg.value, "Not enough BTREE funds sent");
+        require(btreeTreasury != address(0), "BTREE treasury not set");
+
+        require(btreeContract != IERC20(address(0)), "BTREE contract not set");
+        uint256 _balance = IERC20(btreeContract).balanceOf(to);
+        require(mintPriceBTREE <= _balance, "Not enough BTREE funds sent");
+
+        require(
+            btreeContract.allowance(to, address(this)) >= mintPriceBTREE,
+            "Insufficient allowance"
+        );
+
+        bool successfulTransfer = IERC20(btreeContract).transferFrom(
+            to,
+            btreeTreasury,
+            mintPriceBTREE
+        );
+        require(successfulTransfer, "Unable to transfer BTREE to treasury");
 
         _tokenIds.increment();
         uint256 newItemId = _tokenIds.current();
