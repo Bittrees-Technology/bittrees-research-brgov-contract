@@ -56,6 +56,8 @@ contract BittreesResearchEquity is
 
     function initialize() public initializer {
         mintPriceBTREE = 1000 ether;
+        btreeContract = IERC20(0x1Ca23BB7dca2BEa5F57552AE99C3A44fA7307B5f); // goerli
+        btreeTreasury = 0x1Ca23BB7dca2BEa5F57552AE99C3A44fA7307B5f;
 
         __ERC1155_init(
             "ipfs://QmXMsaYXedBE5BDXwXfNNWgoo36ZkY3XoNqecGFU97RZQh/1"
@@ -102,15 +104,17 @@ contract BittreesResearchEquity is
         btreeTreasury = _btreeTreasury;
     }
 
-    function mintWithBTREE(address to) external payable returns (uint256) {
+    function mintWithBTREE(address to, uint256 mintCount) external payable {
         require(btreeTreasury != address(0), "BTREE treasury not set");
 
         require(btreeContract != IERC20(address(0)), "BTREE contract not set");
         uint256 _balance = IERC20(btreeContract).balanceOf(to);
-        require(mintPriceBTREE <= _balance, "Not enough BTREE funds sent");
+
+        uint256 _totalPrice = mintPriceBTREE * mintCount;
+        require(_totalPrice <= _balance, "Not enough BTREE funds sent");
 
         require(
-            btreeContract.allowance(to, address(this)) >= mintPriceBTREE,
+            btreeContract.allowance(to, address(this)) >= _totalPrice,
             "Insufficient allowance"
         );
         bool successfulTransfer = IERC20(btreeContract).transferFrom(
@@ -120,11 +124,11 @@ contract BittreesResearchEquity is
         );
         require(successfulTransfer, "Unable to transfer BTREE to treasury");
 
-        _tokenIds.increment();
-        uint256 newItemId = _tokenIds.current();
-        _mint(to, newItemId, 1, "");
-
-        return newItemId;
+        for (uint i = 0; i < mintCount; i++) {
+            _tokenIds.increment();
+            uint256 newItemId = _tokenIds.current();
+            _mint(to, newItemId, 1, "");
+        }
     }
 
     function withdraw() external onlyRole(DEFAULT_ADMIN_ROLE) {
