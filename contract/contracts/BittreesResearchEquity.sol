@@ -120,11 +120,11 @@ contract BittreesResearchEquity is
         bool successfulTransfer = IERC20(btreeContract).transferFrom(
             to,
             btreeTreasury,
-            mintPriceBTREE
+            _totalPrice
         );
         require(successfulTransfer, "Unable to transfer BTREE to treasury");
 
-        for (uint i = 0; i < mintCount; i++) {
+        for (uint256 i = 0; i < mintCount; i++) {
             _tokenIds.increment();
             uint256 newItemId = _tokenIds.current();
             _mint(to, newItemId, 1, "");
