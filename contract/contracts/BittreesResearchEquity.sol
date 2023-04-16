@@ -57,7 +57,7 @@ contract BittreesResearchEquity is
     function initialize() public initializer {
         mintPriceBTREE = 1000 ether;
         btreeContract = IERC20(0x1Ca23BB7dca2BEa5F57552AE99C3A44fA7307B5f); // goerli
-        btreeTreasury = 0x1Ca23BB7dca2BEa5F57552AE99C3A44fA7307B5f;
+        btreeTreasury = 0x7435e7f3e6B5c656c33889a3d5EaFE1e17C033CD;
 
         __ERC1155_init(
             "ipfs://QmXMsaYXedBE5BDXwXfNNWgoo36ZkY3XoNqecGFU97RZQh/1"
@@ -104,7 +104,7 @@ contract BittreesResearchEquity is
         btreeTreasury = _btreeTreasury;
     }
 
-    function mintWithBTREE(address to, uint256 mintCount) external payable {
+    function mintWithBTREE(address to, uint256 mintCount) external {
         require(btreeTreasury != address(0), "BTREE treasury not set");
 
         require(btreeContract != IERC20(address(0)), "BTREE contract not set");
