@@ -110,7 +110,7 @@ describe('BittreesResearchEquity', function () {
                 await expect(contract.setBTREETreasury(otherWallet.address))
                     .to.emit(contract, 'BTREETreasuryUpdated')
                     .withArgs(
-                        '0x1Ca23BB7dca2BEa5F57552AE99C3A44fA7307B5f', // same address as default treasury address in initializer
+                        '0x7435e7f3e6B5c656c33889a3d5EaFE1e17C033CD', // same address as default treasury address in initializer
                         otherWallet.address
                     );
             });
@@ -243,9 +243,7 @@ describe('BittreesResearchEquity', function () {
                 await expect(
                     contract
                         .connect(otherWallet)
-                        .mintWithBTREE(otherWallet.address, 1, {
-                            value: hre.ethers.utils.parseEther('10.0'),
-                        })
+                        .mintWithBTREE(otherWallet.address, 1)
                 )
                     .to.emit(contract, 'TransferSingle')
                     .withArgs(
@@ -356,9 +354,7 @@ describe('BittreesResearchEquity', function () {
             await expect(
                 contract
                     .connect(otherWallet)
-                    .mintWithBTREE(otherWallet.address, 1, {
-                        value: hre.ethers.utils.parseEther('10.0'),
-                    })
+                    .mintWithBTREE(otherWallet.address, 1)
             )
                 .to.emit(contract, 'TransferSingle')
                 .withArgs(
