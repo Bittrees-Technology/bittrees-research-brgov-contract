@@ -1,32 +1,27 @@
 # Testing steps
 
-## GOERLI
-
 Deployer wallet public key: 0x7435e7f3e6B5c656c33889a3d5EaFE1e17C033CD
-OpenZeppelin Proxy deployed to 0xe0a513F4519386B26848BD8CBE39a800391a3Dbe
 
-CONTACT: 0x6e8c260cB878489c8066Dd75536e5E9B5ca4C288
+-   Equity contract is at https://goerli.etherscan.io/address/0x81Ed0A98c0BD6A75240fD4F65E5e2c43d7b343D9 to run `mintWithBTREE()` - which points to contract at https://goerli.etherscan.io/address/0x28b5b603cdb94f70d4a6c0fedff24aebc2377ea8#code
+-   BTREE ERC-20 contract is at https://goerli.etherscan.io/address/0x1Ca23BB7dca2BEa5F57552AE99C3A44fA7307B5f to mint new BTREE tokens to play with and to run `increaseAllowance` method.
 
-Set Mint Price a bit cheaper to 0.001 ETH: 1000000000000000
+## Testing Minting Equity using BTREE tokens on GOERLI
 
-Mint Membership (Token 1) with 0.001 ETH to address: 0x7435e7f3e6B5c656c33889a3d5EaFE1e17C033CD
+1. Choose your wallet.
 
-Check balance with `balanceOf` token 1
+2. As admin on ERC-20, mint your wallet 1000 BTREE tokens (in WEI, so 1000 tokens is 1000000000000000000000 wei) so you have enough to buy an Equity token.
 
-Check Token 1 expiration via `expirationTimestamps` and run in browser console via `new Date(timestamp * 1000)` and `isExpired` should also be false
+3. Now you have tokens to pay, but need to set your allowance on the ERC-20 to approve Equity contract spending those tokens. Visit the `increaseAllowance()` method on the ERC-20 contract (in WEI, so 1000 tokens is 1000000000000000000000 wei) to the spender (use the contract address of 0x81Ed0A98c0BD6A75240fD4F65E5e2c43d7b343D9). Essentially the logged in wallet is the token owner, and you're granting permissions for spender (the contract) to spend those owner's tokens.
 
-Test gating via paragraph.xyz? Says supports ERC721 and ERC20 -- not 1155?
+4. Visit the equity contract at https://goerli.etherscan.io/address/0x81Ed0A98c0BD6A75240fD4F65E5e2c43d7b343D9
 
-Test Expiration
+5. Try to mint 1 equity token with `mintWithBTREE()` -- should succeed as long as you have enough tokens and have approved those tokens to be spent
 
--   Try expiration -- set it to nearby future (3 min from now) -- e.g. `Math.floor(Date.now()/1000) + 180` and query `isExpired`. Then try `balanceOf` to see owner no longer has that token since expired.
+6. Did it all work?
 
--   Test setting a longer expiration, then minting, then double-check date
-
-Test URI
-
--   try `setURI` to `ipfs://cid/{id}`
--   try `uri` to see results come back
+-   Verify BTREE tokens left users wallet (say, in metamask)
+-   Verify treasury wallet received BTREE tokens -- https://goerli.etherscan.io/address/0x7435e7f3e6B5c656c33889a3d5EaFE1e17C033CD
+-   Verify user owns an Equity token via `balanceOf()` on Equity contract.
 
 Permissions
 
@@ -37,32 +32,3 @@ Permissions
 Withdraw
 
 -   Try withdraw
-
-Test Minting Site at https://builders-advocacy-group.netlify.app
-
-## MAINNET
-
-### IPFS
-
-Upload files to IPFS and test.
-
-### DEPLOY
-
-Deploy to `mainnet`
-
-        npx hardhat run --network mainnet scripts/deploy.js
-
-Deploy wallet balance: 0.12577493580778607
-Deployer wallet public key: 0x7435e7f3e6B5c656c33889a3d5EaFE1e17C033CD
-OpenZeppelin Proxy deployed to 0x6e8c260cB878489c8066Dd75536e5E9B5ca4C288
-
-Implementation contract: 0xca6f24a651bc4ab545661a41a81ef387086a34c2
-ProxyAdmin: https://etherscan.io/address/0xe4249d51593d590fb5120f48e2dabc36a550f698
-
-        npx hardhat verify --network mainnet 0xca6f24a651bc4ab545661a41a81ef387086a34c2
-
-### Setup Defender for contract Upgrades
-
--   Setup Defender: https://docs.openzeppelin.com/defender/guide-upgrades
--   Make sure `.env` has proper DEFENDER API keys
--   Transfer ProxyAdmin contract (`0xe4249d51593d590fb5120f48e2dabc36a550f698`) to Multisig Safe address of `eth:0x41Be6bDB81695c44631162e906Ba19e5233D3144` by updating `transfer-ownership.js` script to have proper Safe address, then run `npx hardhat run --network mainnet scripts/transfer-ownership.js`
