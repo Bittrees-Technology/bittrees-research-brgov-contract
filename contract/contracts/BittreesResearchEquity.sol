@@ -31,20 +31,41 @@ contract BittreesResearchEquity is
     ERC1155Upgradeable,
     AccessControlUpgradeable
 {
+    enum TokenType {
+        BTREE,
+        WBTC
+    }
     using CountersUpgradeable for CountersUpgradeable.Counter;
+
+    struct ERC20TOKEN {
+        uint256 mintPrice; // Mint price in wei
+        IERC20 erc20Contract;
+        address treasuryAddress;
+    }
+
     CountersUpgradeable.Counter private _tokenIds;
+
+    // TODO: defunct, to be removed for next full contract deployemnt
     uint256 public mintPriceBTREE;
     IERC20 public btreeContract;
     address public btreeTreasury;
 
-    event BTREEPriceUpdated(uint256 indexed oldValue, uint256 indexed newValue);
+    mapping(TokenType => ERC20TOKEN) public tokens;
 
-    event BTREEContractUpdated(
+    event PriceUpdated(
+        TokenType indexed tokenType,
+        uint256 indexed oldValue,
+        uint256 indexed newValue
+    );
+
+    event ERC20ContractUpdated(
+        TokenType indexed tokenType,
         IERC20 indexed oldAddress,
         IERC20 indexed newAddress
     );
 
-    event BTREETreasuryUpdated(
+    event TreasuryAddressUpdated(
+        TokenType indexed tokenType,
         address indexed oldAddress,
         address indexed newAddress
     );
@@ -55,9 +76,19 @@ contract BittreesResearchEquity is
     }
 
     function initialize() public initializer {
-        mintPriceBTREE = 1000 ether;
-        btreeContract = IERC20(0x1Ca23BB7dca2BEa5F57552AE99C3A44fA7307B5f); // goerli
-        btreeTreasury = 0x7435e7f3e6B5c656c33889a3d5EaFE1e17C033CD;
+        tokens[TokenType.BTREE].mintPrice = 1000 ether;
+        tokens[TokenType.BTREE].erc20Contract = IERC20(
+            0x1Ca23BB7dca2BEa5F57552AE99C3A44fA7307B5f
+        ); // goerli
+        tokens[TokenType.BTREE]
+            .treasuryAddress = 0x7435e7f3e6B5c656c33889a3d5EaFE1e17C033CD;
+
+        tokens[TokenType.WBTC].mintPrice = .001 ether;
+        tokens[TokenType.WBTC].erc20Contract = IERC20(
+            0x26bE8Ef5aBf9109384856dD25ce1b4344aFd88b0
+        ); // goerli test WBTC
+        tokens[TokenType.WBTC]
+            .treasuryAddress = 0x7435e7f3e6B5c656c33889a3d5EaFE1e17C033CD;
 
         __ERC1155_init(
             "ipfs://QmXMsaYXedBE5BDXwXfNNWgoo36ZkY3XoNqecGFU97RZQh/1"
@@ -82,47 +113,84 @@ contract BittreesResearchEquity is
         _setURI(newuri);
     }
 
-    function setMintPriceBTREE(
+    function mintPrice(TokenType _tokenType) external view returns (uint256) {
+        return tokens[_tokenType].mintPrice;
+    }
+
+    function setMintPrice(
+        TokenType _tokenType,
         uint256 _newPrice
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         // Mint price in wei
-        emit BTREEPriceUpdated(mintPriceBTREE, _newPrice);
-        mintPriceBTREE = _newPrice;
+        emit PriceUpdated(_tokenType, tokens[_tokenType].mintPrice, _newPrice);
+        tokens[_tokenType].mintPrice = _newPrice;
     }
 
-    function setBTREEContract(
-        IERC20 _btreeContract
+    function erc20Contract(
+        TokenType _tokenType
+    ) external view returns (IERC20) {
+        return tokens[_tokenType].erc20Contract;
+    }
+
+    function setERC20Contract(
+        TokenType _tokenType,
+        IERC20 _erc20Contract
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        emit BTREEContractUpdated(btreeContract, _btreeContract);
-        btreeContract = IERC20(_btreeContract);
+        emit ERC20ContractUpdated(
+            _tokenType,
+            tokens[_tokenType].erc20Contract,
+            _erc20Contract
+        );
+        tokens[_tokenType].erc20Contract = _erc20Contract;
     }
 
-    function setBTREETreasury(
-        address _btreeTreasury
+    function treasuryAddress(
+        TokenType _tokenType
+    ) external view returns (address) {
+        return tokens[_tokenType].treasuryAddress;
+    }
+
+    function setTreasuryAddress(
+        TokenType _tokenType,
+        address _treasuryAddress
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        emit BTREETreasuryUpdated(btreeTreasury, _btreeTreasury);
-        btreeTreasury = _btreeTreasury;
+        emit TreasuryAddressUpdated(
+            _tokenType,
+            tokens[_tokenType].treasuryAddress,
+            _treasuryAddress
+        );
+        tokens[_tokenType].treasuryAddress = _treasuryAddress;
     }
 
-    function mintWithBTREE(address to, uint256 mintCount) external {
-        require(btreeTreasury != address(0), "BTREE treasury not set");
-
-        require(btreeContract != IERC20(address(0)), "BTREE contract not set");
-        uint256 _balance = IERC20(btreeContract).balanceOf(to);
-
-        uint256 _totalPrice = mintPriceBTREE * mintCount;
-        require(_totalPrice <= _balance, "Not enough BTREE funds sent");
+    function mint(
+        TokenType _tokenType,
+        address to,
+        uint256 mintCount
+    ) external {
+        require(
+            tokens[_tokenType].treasuryAddress != address(0),
+            "treasury address not set"
+        );
 
         require(
-            btreeContract.allowance(to, address(this)) >= _totalPrice,
+            tokens[_tokenType].erc20Contract != IERC20(address(0)),
+            "erc20 contract not set"
+        );
+        uint256 _balance = IERC20(tokens[_tokenType].erc20Contract).balanceOf(
+            to
+        );
+
+        uint256 _totalPrice = tokens[_tokenType].mintPrice * mintCount;
+        require(_totalPrice <= _balance, "not enough erc20 funds sent");
+
+        require(
+            tokens[_tokenType].erc20Contract.allowance(to, address(this)) >=
+                _totalPrice,
             "Insufficient allowance"
         );
-        bool successfulTransfer = IERC20(btreeContract).transferFrom(
-            to,
-            btreeTreasury,
-            _totalPrice
-        );
-        require(successfulTransfer, "Unable to transfer BTREE to treasury");
+        bool successfulTransfer = IERC20(tokens[_tokenType].erc20Contract)
+            .transferFrom(to, tokens[_tokenType].treasuryAddress, _totalPrice);
+        require(successfulTransfer, "Unable to transfer erc20 to treasury");
 
         for (uint256 i = 0; i < mintCount; i++) {
             _tokenIds.increment();
