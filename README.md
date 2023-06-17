@@ -1,8 +1,8 @@
-# Bittrees Research - Equity Contract
+# Bittrees Research (BRGOV) Equity Contract
 
-![Solidity tests](https://github.com/Bittrees-Technology/bittrees-research-equity-contract/actions/workflows/continuous-integration.yaml/badge.svg)
+![Solidity tests](https://github.com/Bittrees-Technology/bittrees-research-brgov-contract/actions/workflows/continuous-integration.yaml/badge.svg)
 
-Bittrees Research Equity Contract (based on ERC-1155)
+Bittrees Research (BRGOV) Equity Contract (based on ERC-1155)
 
 Includes:
 
