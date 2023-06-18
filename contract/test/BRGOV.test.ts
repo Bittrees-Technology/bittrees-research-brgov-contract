@@ -30,7 +30,7 @@ async function setupForMint(
         .approve(contract.address, totalPrice);
 }
 
-describe('BittreesResearchEquity', function () {
+describe('BRGOV', function () {
     let btreeContract: Contract;
     let contract: Contract;
     let owner: SignerWithAddress;
@@ -45,9 +45,7 @@ describe('BittreesResearchEquity', function () {
         btreeContract = await BTREEContract.deploy();
         await btreeContract.deployed();
 
-        const Contract = await hre.ethers.getContractFactory(
-            'BittreesResearchEquity'
-        );
+        const Contract = await hre.ethers.getContractFactory('BRGOV');
 
         const [_owner, _otherWallet, _treasuryWallet] =
             await hre.ethers.getSigners();

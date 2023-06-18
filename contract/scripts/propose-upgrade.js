@@ -5,9 +5,9 @@ const { ethers } = require('hardhat');
 async function main() {
     const proxyAddress = process.env.UPGRADEABLE_PROXY_ADDRESS;
 
-    const BittreesResearchEquity = await ethers.getContractFactory('BittreesResearchEquity');
+    const BRGOV = await ethers.getContractFactory('BRGOV');
     console.log('Preparing proposal...');
-    const proposal = await defender.proposeUpgrade(proxyAddress, BittreesResearchEquity);
+    const proposal = await defender.proposeUpgrade(proxyAddress, BRGOV);
     console.log('Upgrade proposal created at:', proposal.url);
 }
 
