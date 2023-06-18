@@ -27,10 +27,7 @@ interface IERC20 {
     function approve(address spender, uint256 amount) external returns (bool);
 }
 
-contract BittreesResearchEquity is
-    ERC1155Upgradeable,
-    AccessControlUpgradeable
-{
+contract BRGOV is ERC1155Upgradeable, AccessControlUpgradeable {
     enum TokenType {
         BTREE,
         WBTC

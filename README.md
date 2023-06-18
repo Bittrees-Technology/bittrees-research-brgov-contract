@@ -136,7 +136,7 @@ Now that you've connected to your contract above via `hardhat console`, let's pl
 // - if you're interacting with a contract on testnet or mainnet and you should see your public wallet account (the match for your private key in your `.env` file)
 await ethers.provider.listAccounts();
 
-const Contract = await ethers.getContractFactory('BittreesResearchEquity');
+const Contract = await ethers.getContractFactory('BRGOV');
 const contract = await Contract.attach('<proxy contract address goes here>');
 await contract.setMintPrice('1000000000000000');   // this wei represents 0.001 whole coin (e.g. ETH or MATIC)
 // you'll need to wait a bit until value is stored on the blockchain before retrieving in next step
