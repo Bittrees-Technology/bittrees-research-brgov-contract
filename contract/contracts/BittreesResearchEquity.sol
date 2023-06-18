@@ -83,7 +83,7 @@ contract BittreesResearchEquity is
         tokens[TokenType.BTREE]
             .treasuryAddress = 0x7435e7f3e6B5c656c33889a3d5EaFE1e17C033CD;
 
-        tokens[TokenType.WBTC].mintPrice = .001 ether;
+        tokens[TokenType.WBTC].mintPrice = 100000; // 0.001 * (10 ** 8)
         tokens[TokenType.WBTC].erc20Contract = IERC20(
             0x26bE8Ef5aBf9109384856dD25ce1b4344aFd88b0
         ); // goerli test WBTC
