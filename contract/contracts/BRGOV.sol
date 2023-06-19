@@ -47,6 +47,8 @@ contract BRGOV is ERC1155Upgradeable, AccessControlUpgradeable {
         address treasuryAddress;
     }
 
+    string public baseURI;
+
     // three different NFT types 1, 10, 100
     CountersUpgradeable.Counter private _tokenIds;
     CountersUpgradeable.Counter private _tokenTenIds;
@@ -78,6 +80,8 @@ contract BRGOV is ERC1155Upgradeable, AccessControlUpgradeable {
     }
 
     function initialize() public initializer {
+        baseURI = "ipfs://QmXMsaYXedBE5BDXwXfNNWgoo36ZkY3XoNqecGFU97RZQh/";
+
         tokens[TokenType.BTREE].mintPrice = 1000 ether;
         tokens[TokenType.BTREE].erc20Contract = IERC20(
             0x1Ca23BB7dca2BEa5F57552AE99C3A44fA7307B5f
@@ -92,9 +96,6 @@ contract BRGOV is ERC1155Upgradeable, AccessControlUpgradeable {
         tokens[TokenType.WBTC]
             .treasuryAddress = 0x7435e7f3e6B5c656c33889a3d5EaFE1e17C033CD;
 
-        __ERC1155_init(
-            "ipfs://QmXMsaYXedBE5BDXwXfNNWgoo36ZkY3XoNqecGFU97RZQh/1"
-        );
         __AccessControl_init();
 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -111,8 +112,25 @@ contract BRGOV is ERC1155Upgradeable, AccessControlUpgradeable {
         return super.supportsInterface(interfaceId);
     }
 
-    function setURI(string memory newuri) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        _setURI(newuri);
+    function uri(
+        uint256 tokenID
+    ) public view virtual override returns (string memory) {
+        if (tokenID <= MAX_BRGOV_TOKENID_ONE) {
+            return string.concat(baseURI, "1");
+        }
+        if (tokenID <= MAX_BRGOV_TOKENID_TEN) {
+            return string.concat(baseURI, "10");
+        }
+        if (tokenID <= MAX_BRGOV_TOKENID_HUNDRED) {
+            return string.concat(baseURI, "100");
+        }
+        return "";
+    }
+
+    function setBaseURI(
+        string memory _newBaseURI
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        baseURI = _newBaseURI;
     }
 
     function mintPrice(TokenType _tokenType) external view returns (uint256) {
