@@ -28,6 +28,10 @@ interface IERC20 {
 }
 
 contract BRGOV is ERC1155Upgradeable, AccessControlUpgradeable {
+    uint256 public constant MAX_BRGOV_TOKENID_ONE = 1 * 10 ** 12; // 1 - 1,000,000,000,000
+    uint256 public constant MAX_BRGOV_TOKENID_TEN = 2 * 10 ** 12; // 1,000,000,000,001 - 2,000,000,000,000
+    uint256 public constant MAX_BRGOV_TOKENID_HUNDRED = 3 * 10 ** 12; // 2,000,000,000,001 - 3,000,000,000,000
+
     enum TokenType {
         BTREE,
         WBTC
@@ -40,12 +44,10 @@ contract BRGOV is ERC1155Upgradeable, AccessControlUpgradeable {
         address treasuryAddress;
     }
 
+    // three different NFT types 1, 10, 100
     CountersUpgradeable.Counter private _tokenIds;
-
-    // TODO: defunct, to be removed for next full contract deployemnt
-    uint256 public mintPriceBTREE;
-    IERC20 public btreeContract;
-    address public btreeTreasury;
+    CountersUpgradeable.Counter private _tokenTenIds;
+    CountersUpgradeable.Counter private _tokenHundredIds;
 
     mapping(TokenType => ERC20TOKEN) public tokens;
 
@@ -192,6 +194,43 @@ contract BRGOV is ERC1155Upgradeable, AccessControlUpgradeable {
         for (uint256 i = 0; i < mintCount; i++) {
             _tokenIds.increment();
             uint256 newItemId = _tokenIds.current();
+            _mint(to, newItemId, 1, "");
+        }
+    }
+
+    function mintTen(
+        TokenType _tokenType,
+        address to,
+        uint256 mintCount
+    ) external {
+        require(
+            tokens[_tokenType].treasuryAddress != address(0),
+            "treasury address not set"
+        );
+
+        require(
+            tokens[_tokenType].erc20Contract != IERC20(address(0)),
+            "erc20 contract not set"
+        );
+        uint256 _balance = IERC20(tokens[_tokenType].erc20Contract).balanceOf(
+            to
+        );
+
+        uint256 _totalPrice = tokens[_tokenType].mintPrice * mintCount * 10;
+        require(_totalPrice <= _balance, "not enough erc20 funds sent");
+
+        require(
+            tokens[_tokenType].erc20Contract.allowance(to, address(this)) >=
+                _totalPrice,
+            "Insufficient allowance"
+        );
+        bool successfulTransfer = IERC20(tokens[_tokenType].erc20Contract)
+            .transferFrom(to, tokens[_tokenType].treasuryAddress, _totalPrice);
+        require(successfulTransfer, "Unable to transfer erc20 to treasury");
+
+        for (uint256 i = 0; i < mintCount; i++) {
+            _tokenTenIds.increment();
+            uint256 newItemId = MAX_BRGOV_TOKENID_ONE + _tokenTenIds.current();
             _mint(to, newItemId, 1, "");
         }
     }
