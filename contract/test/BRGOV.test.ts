@@ -109,10 +109,10 @@ describe('BRGOV', function () {
 
     describe('setters', function () {
         describe('owner', function () {
-            it('should successfully set and retrieve URI', async () => {
-                const newURI = 'ipfs://testuri/{id}';
-                await contract.setURI(newURI);
-                await expect(await contract.uri(1)).to.equal(newURI);
+            it('should successfully set baseURI', async () => {
+                const newURI = 'ipfs://testuri/';
+                await contract.setBaseURI(newURI);
+                await expect(await contract.baseURI()).to.equal(newURI);
             });
 
             it('should successfully set and retrieve BTREE MintPrice', async () => {
@@ -178,7 +178,7 @@ describe('BRGOV', function () {
         describe('non-owner', function () {
             it('should not be able to setURI', async () => {
                 await expect(
-                    contract.connect(otherWallet).setURI('ipfs://123/')
+                    contract.connect(otherWallet).setBaseURI('ipfs://123/')
                 ).to.be.revertedWith(
                     'AccessControl: account 0x70997970c51812dc3a010c7d01b50e0d17dc79c8 is missing role 0x0000000000000000000000000000000000000000000000000000000000000000'
                 );
@@ -213,7 +213,7 @@ describe('BRGOV', function () {
         });
 
         describe('upon successful mint (when value is equal to mintPrice)', function () {
-            it('should emit a TransferSingle', async function () {
+            it('should emit a TransferSingle with proper tokenId', async function () {
                 await setupForMint(
                     btreeContract,
                     contract,
@@ -236,6 +236,15 @@ describe('BRGOV', function () {
                         topic4_id,
                         topic5_value
                     );
+            });
+
+            it('should have proper uri for Denomination 1', async function () {
+                const newURI = 'ipfs://testuri/';
+                await contract.setBaseURI(newURI);
+                await expect(await contract.uri(1)).to.equal(`${newURI}1`);
+                await expect(await contract.uri(1_000_000_000_000)).to.equal(
+                    `${newURI}1`
+                );
             });
 
             it('should transfer BTREE from otherUser to treasuryAddress', async function () {
@@ -342,6 +351,17 @@ describe('BRGOV', function () {
                     );
             });
 
+            it('should have proper uri(1000000000001)', async function () {
+                const newURI = 'ipfs://testuri/';
+                await contract.setBaseURI(newURI);
+                await expect(await contract.uri(1_000_000_000_001)).to.equal(
+                    `${newURI}10`
+                );
+                await expect(await contract.uri(2_000_000_000_000)).to.equal(
+                    `${newURI}10`
+                );
+            });
+
             it('should not mint if value is below the minimum mintPrice * 10', async function () {
                 await setupForMintDenomination10(
                     btreeContract,
@@ -386,6 +406,17 @@ describe('BRGOV', function () {
                             topic4_id,
                             topic5_value
                         );
+                });
+
+                it('should have proper uri(2000000000001)', async function () {
+                    const newURI = 'ipfs://testuri/';
+                    await contract.setBaseURI(newURI);
+                    await expect(
+                        await contract.uri(2_000_000_000_001)
+                    ).to.equal(`${newURI}100`);
+                    await expect(
+                        await contract.uri(3_000_000_000_000)
+                    ).to.equal(`${newURI}100`);
                 });
 
                 it('should not mint if value is below the minimum mintPrice * 100', async function () {
