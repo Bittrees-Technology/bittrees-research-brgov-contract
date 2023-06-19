@@ -30,6 +30,56 @@ async function setupForMint(
         .approve(contract.address, totalPrice);
 }
 
+async function setupForMintDenomination10(
+    erc20Contract: Contract,
+    contract: Contract,
+    treasuryWallet: SignerWithAddress,
+    otherWallet: SignerWithAddress,
+    mintCount: number = 1 // default to paying for 1 mint
+) {
+    await contract.setMintPrice(BTREE, hre.ethers.utils.parseEther('1000.0'));
+    await contract.setERC20Contract(BTREE, erc20Contract.address);
+    await contract.setTreasuryAddress(BTREE, treasuryWallet.address);
+
+    // multiple by 10 since price is 10x
+    const totalPrice = hre.ethers.utils.parseEther(
+        (1000 * mintCount * 10).toString()
+    );
+
+    // mint mintCount * 1000 BTREE ERC-20 tokens to otherWallet, then mint()
+    await erc20Contract.mint(otherWallet.address, totalPrice);
+
+    // approve mintCount * 1000 BTREE tokens to transfer
+    await erc20Contract
+        .connect(otherWallet)
+        .approve(contract.address, totalPrice);
+}
+
+async function setupForMintDenomination100(
+    erc20Contract: Contract,
+    contract: Contract,
+    treasuryWallet: SignerWithAddress,
+    otherWallet: SignerWithAddress,
+    mintCount: number = 1 // default to paying for 1 mint
+) {
+    await contract.setMintPrice(BTREE, hre.ethers.utils.parseEther('1000.0'));
+    await contract.setERC20Contract(BTREE, erc20Contract.address);
+    await contract.setTreasuryAddress(BTREE, treasuryWallet.address);
+
+    // multiple by 10 since price is 10x
+    const totalPrice = hre.ethers.utils.parseEther(
+        (1000 * mintCount * 100).toString()
+    );
+
+    // mint mintCount * 1000 BTREE ERC-20 tokens to otherWallet, then mint()
+    await erc20Contract.mint(otherWallet.address, totalPrice);
+
+    // approve mintCount * 1000 BTREE tokens to transfer
+    await erc20Contract
+        .connect(otherWallet)
+        .approve(contract.address, totalPrice);
+}
+
 describe('BRGOV', function () {
     let btreeContract: Contract;
     let contract: Contract;
@@ -263,6 +313,98 @@ describe('BRGOV', function () {
                         topic4_id,
                         topic5_value
                     );
+            });
+        });
+
+        describe('mint BRGOV (Denomination 10) with BTREE', function () {
+            it('should mint and emit a TransferSinglem with proper tokenId', async function () {
+                await setupForMintDenomination10(
+                    btreeContract,
+                    contract,
+                    treasuryWallet,
+                    otherWallet
+                );
+
+                const topic1 = owner.address;
+                const topic2_from =
+                    '0x0000000000000000000000000000000000000000';
+                const topic3_to = otherWallet.address;
+                const topic4_id = 1000000000001;
+                const topic5_value = 1;
+                await expect(contract.mintTen(BTREE, otherWallet.address, 1))
+                    .to.emit(contract, 'TransferSingle')
+                    .withArgs(
+                        topic1,
+                        topic2_from,
+                        topic3_to,
+                        topic4_id,
+                        topic5_value
+                    );
+            });
+
+            it('should not mint if value is below the minimum mintPrice * 10', async function () {
+                await setupForMintDenomination10(
+                    btreeContract,
+                    contract,
+                    treasuryWallet,
+                    otherWallet
+                );
+
+                // double the price
+                await contract.setMintPrice(
+                    BTREE,
+                    hre.ethers.utils.parseEther('2000.0')
+                );
+                await expect(
+                    contract.mintTen(BTREE, otherWallet.address, 1)
+                ).to.be.revertedWith('not enough erc20 funds sent');
+            });
+
+            describe('mint BRGOV (Denomination 100) with BTREE', function () {
+                it('should mint and emit a TransferSinglem with proper tokenId', async function () {
+                    await setupForMintDenomination100(
+                        btreeContract,
+                        contract,
+                        treasuryWallet,
+                        otherWallet
+                    );
+
+                    const topic1 = owner.address;
+                    const topic2_from =
+                        '0x0000000000000000000000000000000000000000';
+                    const topic3_to = otherWallet.address;
+                    const topic4_id = 2000000000001;
+                    const topic5_value = 1;
+                    await expect(
+                        contract.mintHundred(BTREE, otherWallet.address, 1)
+                    )
+                        .to.emit(contract, 'TransferSingle')
+                        .withArgs(
+                            topic1,
+                            topic2_from,
+                            topic3_to,
+                            topic4_id,
+                            topic5_value
+                        );
+                });
+
+                it('should not mint if value is below the minimum mintPrice * 100', async function () {
+                    await setupForMintDenomination100(
+                        btreeContract,
+                        contract,
+                        treasuryWallet,
+                        otherWallet
+                    );
+
+                    // double the price
+                    await contract.setMintPrice(
+                        BTREE,
+                        hre.ethers.utils.parseEther('2000.0')
+                    );
+                    await expect(
+                        contract.mintHundred(BTREE, otherWallet.address, 1)
+                    ).to.be.revertedWith('not enough erc20 funds sent');
+                });
             });
         });
     });

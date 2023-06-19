@@ -28,6 +28,13 @@ interface IERC20 {
 }
 
 contract BRGOV is ERC1155Upgradeable, AccessControlUpgradeable {
+    uint256 public constant MAX_BRGOV_TOKENID_ONE = 1 * 10 ** 12; // 1 - 1,000,000,000,000
+    uint256 public constant MAX_BRGOV_TOKENID_TEN = 2 * 10 ** 12; // 1,000,000,000,001 - 2,000,000,000,000
+    uint256 public constant MAX_BRGOV_TOKENID_HUNDRED = 3 * 10 ** 12; // 2,000,000,000,001 - 3,000,000,000,000
+    uint8 public constant MULTIPLIER_ONE = 1;
+    uint8 public constant MULTIPLIER_TEN = 10;
+    uint8 public constant MULTIPLIER_HUNDRED = 100;
+
     enum TokenType {
         BTREE,
         WBTC
@@ -40,12 +47,10 @@ contract BRGOV is ERC1155Upgradeable, AccessControlUpgradeable {
         address treasuryAddress;
     }
 
+    // three different NFT types 1, 10, 100
     CountersUpgradeable.Counter private _tokenIds;
-
-    // TODO: defunct, to be removed for next full contract deployemnt
-    uint256 public mintPriceBTREE;
-    IERC20 public btreeContract;
-    address public btreeTreasury;
+    CountersUpgradeable.Counter private _tokenTenIds;
+    CountersUpgradeable.Counter private _tokenHundredIds;
 
     mapping(TokenType => ERC20TOKEN) public tokens;
 
@@ -159,11 +164,13 @@ contract BRGOV is ERC1155Upgradeable, AccessControlUpgradeable {
         tokens[_tokenType].treasuryAddress = _treasuryAddress;
     }
 
-    function mint(
+    function _mintHelper(
         TokenType _tokenType,
+        uint256 tokenIdBase,
+        uint8 mintPriceMultiplier,
         address to,
         uint256 mintCount
-    ) external {
+    ) internal {
         require(
             tokens[_tokenType].treasuryAddress != address(0),
             "treasury address not set"
@@ -177,7 +184,9 @@ contract BRGOV is ERC1155Upgradeable, AccessControlUpgradeable {
             to
         );
 
-        uint256 _totalPrice = tokens[_tokenType].mintPrice * mintCount;
+        uint256 _totalPrice = tokens[_tokenType].mintPrice *
+            mintCount *
+            mintPriceMultiplier;
         require(_totalPrice <= _balance, "not enough erc20 funds sent");
 
         require(
@@ -191,9 +200,45 @@ contract BRGOV is ERC1155Upgradeable, AccessControlUpgradeable {
 
         for (uint256 i = 0; i < mintCount; i++) {
             _tokenIds.increment();
-            uint256 newItemId = _tokenIds.current();
+            uint256 newItemId = tokenIdBase + _tokenIds.current();
             _mint(to, newItemId, 1, "");
         }
+    }
+
+    function mint(
+        TokenType _tokenType,
+        address to,
+        uint256 mintCount
+    ) external {
+        _mintHelper(_tokenType, 0, MULTIPLIER_ONE, to, mintCount);
+    }
+
+    function mintTen(
+        TokenType _tokenType,
+        address to,
+        uint256 mintCount
+    ) external {
+        _mintHelper(
+            _tokenType,
+            MAX_BRGOV_TOKENID_ONE,
+            MULTIPLIER_TEN,
+            to,
+            mintCount
+        );
+    }
+
+    function mintHundred(
+        TokenType _tokenType,
+        address to,
+        uint256 mintCount
+    ) external {
+        _mintHelper(
+            _tokenType,
+            MAX_BRGOV_TOKENID_TEN,
+            MULTIPLIER_HUNDRED,
+            to,
+            mintCount
+        );
     }
 
     function withdraw() external onlyRole(DEFAULT_ADMIN_ROLE) {
