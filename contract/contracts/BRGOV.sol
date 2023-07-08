@@ -80,7 +80,7 @@ contract BRGOV is ERC1155Upgradeable, AccessControlUpgradeable {
     }
 
     function initialize() public initializer {
-        baseURI = "ipfs://QmXMsaYXedBE5BDXwXfNNWgoo36ZkY3XoNqecGFU97RZQh/";
+        baseURI = "ipfs://QmXj39Ukat3Tx9BMsQSb4B78vtyZufQmLcdMcspjvYBWYB/";
 
         tokens[TokenType.BTREE].mintPrice = 1000 ether;
         tokens[TokenType.BTREE].erc20Contract = IERC20(
