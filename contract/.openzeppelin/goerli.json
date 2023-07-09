@@ -1,20 +1,20 @@
 {
   "manifestVersion": "3.2",
   "admin": {
-    "address": "0x1E68e38712319e556ADe0Cf1D7706610fC73BD68",
-    "txHash": "0x30e5862b4fcd80ba859a5db661e0f13d0d01521fd30ea6b587108b1655640fa2"
+    "address": "0x29B99E832C097AB1e249A8A5A8521065785706Fe",
+    "txHash": "0x6f563b97bd9d468f3ed3f45a89450d709629062b3627d97aa5514317e646a8a1"
   },
   "proxies": [
     {
-      "address": "0x873Ac694eFeb2Ee5918AACE9699b4E3f3732514E",
-      "txHash": "0xe5f453205c8345f234e3f3795626f9d460eaa4dd8c493355f4cebcb030fa233f",
+      "address": "0x14dBB93a78B5e89540e902d1E6Ee26C989e08ef0",
+      "txHash": "0xd1201cf8838561bef66f17add9500fa701bd5b9f64c2335e16eaf171ad013784",
       "kind": "transparent"
     }
   ],
   "impls": {
-    "e973cb0c960a87878170bf102a01c3d5d260cc4ffd1af48cd0abf4b0cf9ceff4": {
-      "address": "0x81Be8114951268803584Ab9e194bCc85CfdeE976",
-      "txHash": "0x8107e4c13171cd68d722e511ce2c3a9463252cad4d09b28d4d6c2c1e2e559ce8",
+    "f8323ed1ab40deb290f6ab6cbd0b34e5c36bcbbb2eda9e632e7850519abc4884": {
+      "address": "0x522Ea1E9Db6b05702071584D6dD5C7F7361b0801",
+      "txHash": "0x79a4d2e8cf84ee6dff937f4cd436b45d33b80543c4d5aab6adeb6266bd75bd61",
       "layout": {
         "solcVersion": "0.8.17",
         "storage": [
@@ -100,44 +100,44 @@
             "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:259"
           },
           {
-            "label": "_tokenIds",
+            "label": "baseURI",
             "offset": 0,
             "slot": "201",
-            "type": "t_struct(Counter)2332_storage",
+            "type": "t_string_storage",
             "contract": "BRGOV",
-            "src": "contracts/BRGOV.sol:43"
+            "src": "contracts/BRGOV.sol:50"
           },
           {
-            "label": "mintPriceBTREE",
+            "label": "_tokenIds",
             "offset": 0,
             "slot": "202",
-            "type": "t_uint256",
+            "type": "t_struct(Counter)2332_storage",
             "contract": "BRGOV",
-            "src": "contracts/BRGOV.sol:46"
+            "src": "contracts/BRGOV.sol:53"
           },
           {
-            "label": "btreeContract",
+            "label": "_tokenTenIds",
             "offset": 0,
             "slot": "203",
-            "type": "t_contract(IERC20)3544",
+            "type": "t_struct(Counter)2332_storage",
             "contract": "BRGOV",
-            "src": "contracts/BRGOV.sol:47"
+            "src": "contracts/BRGOV.sol:54"
           },
           {
-            "label": "btreeTreasury",
+            "label": "_tokenHundredIds",
             "offset": 0,
             "slot": "204",
-            "type": "t_address",
+            "type": "t_struct(Counter)2332_storage",
             "contract": "BRGOV",
-            "src": "contracts/BRGOV.sol:48"
+            "src": "contracts/BRGOV.sol:55"
           },
           {
             "label": "tokens",
             "offset": 0,
             "slot": "205",
-            "type": "t_mapping(t_enum(TokenType)3551,t_struct(ERC20TOKEN)3563_storage)",
+            "type": "t_mapping(t_enum(TokenType)3581,t_struct(ERC20TOKEN)3593_storage)",
             "contract": "BRGOV",
-            "src": "contracts/BRGOV.sol:50"
+            "src": "contracts/BRGOV.sol:57"
           }
         ],
         "types": {
@@ -169,7 +169,7 @@
             "label": "contract IERC20",
             "numberOfBytes": "20"
           },
-          "t_enum(TokenType)3551": {
+          "t_enum(TokenType)3581": {
             "label": "enum BRGOV.TokenType",
             "members": [
               "BTREE",
@@ -193,7 +193,7 @@
             "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_enum(TokenType)3551,t_struct(ERC20TOKEN)3563_storage)": {
+          "t_mapping(t_enum(TokenType)3581,t_struct(ERC20TOKEN)3593_storage)": {
             "label": "mapping(enum BRGOV.TokenType => struct BRGOV.ERC20TOKEN)",
             "numberOfBytes": "32"
           },
@@ -217,7 +217,7 @@
             ],
             "numberOfBytes": "32"
           },
-          "t_struct(ERC20TOKEN)3563_storage": {
+          "t_struct(ERC20TOKEN)3593_storage": {
             "label": "struct BRGOV.ERC20TOKEN",
             "members": [
               {

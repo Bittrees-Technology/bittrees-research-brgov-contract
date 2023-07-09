@@ -3,6 +3,7 @@ on:
     push:
         paths-ignore:
             - '**.md'
+            - 'ipfs/**'
 jobs:
     run-tests:
         runs-on: ubuntu-latest
