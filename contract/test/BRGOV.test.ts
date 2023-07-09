@@ -437,6 +437,82 @@ describe('BRGOV', function () {
                     ).to.be.revertedWith('not enough erc20 funds sent');
                 });
             });
+            describe('mint BRGOV (all 3 denominations) with BTREE', function () {
+                it('should all 3 and ensure tokenId counters are independently incrementing', async function () {
+                    await setupForMint(
+                        btreeContract,
+                        contract,
+                        treasuryWallet,
+                        otherWallet
+                    );
+
+                    const topic1 = owner.address;
+                    const topic2_from =
+                        '0x0000000000000000000000000000000000000000';
+                    const topic3_to = otherWallet.address;
+                    const topic4_id = 1;
+                    const topic5_value = 1;
+                    await expect(contract.mint(BTREE, otherWallet.address, 1))
+                        .to.emit(contract, 'TransferSingle')
+                        .withArgs(
+                            topic1,
+                            topic2_from,
+                            topic3_to,
+                            topic4_id,
+                            topic5_value
+                        );
+
+                    await setupForMintDenomination10(
+                        btreeContract,
+                        contract,
+                        treasuryWallet,
+                        otherWallet
+                    );
+
+                    const tenTopic1 = owner.address;
+                    const tenTopic2_from =
+                        '0x0000000000000000000000000000000000000000';
+                    const tenTopic3_to = otherWallet.address;
+                    const tenTopic4_id = 1000000000001;
+                    const tenTopic5_value = 1;
+                    await expect(
+                        contract.mintTen(BTREE, otherWallet.address, 1)
+                    )
+                        .to.emit(contract, 'TransferSingle')
+                        .withArgs(
+                            tenTopic1,
+                            tenTopic2_from,
+                            tenTopic3_to,
+                            tenTopic4_id,
+                            tenTopic5_value
+                        );
+
+                    await setupForMintDenomination100(
+                        btreeContract,
+                        contract,
+                        treasuryWallet,
+                        otherWallet
+                    );
+
+                    const hundredTopic1 = owner.address;
+                    const hundredTopic2_from =
+                        '0x0000000000000000000000000000000000000000';
+                    const hundredTopic3_to = otherWallet.address;
+                    const hundredTopic4_id = 2000000000001;
+                    const hundredTopic5_value = 1;
+                    await expect(
+                        contract.mintHundred(BTREE, otherWallet.address, 1)
+                    )
+                        .to.emit(contract, 'TransferSingle')
+                        .withArgs(
+                            hundredTopic1,
+                            hundredTopic2_from,
+                            hundredTopic3_to,
+                            hundredTopic4_id,
+                            hundredTopic5_value
+                        );
+                });
+            });
         });
     });
 

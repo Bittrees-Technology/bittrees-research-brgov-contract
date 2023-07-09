@@ -217,8 +217,22 @@ contract BRGOV is ERC1155Upgradeable, AccessControlUpgradeable {
         require(successfulTransfer, "Unable to transfer erc20 to treasury");
 
         for (uint256 i = 0; i < mintCount; i++) {
-            _tokenIds.increment();
-            uint256 newItemId = tokenIdBase + _tokenIds.current();
+            uint256 newItemId;
+            if (tokenIdBase == 0) {
+                // increment denomination 1 counter
+                _tokenIds.increment();
+                newItemId = tokenIdBase + _tokenIds.current();
+            }
+            if (tokenIdBase == MAX_BRGOV_TOKENID_ONE) {
+                // increment denomination 10 counter
+                _tokenTenIds.increment();
+                newItemId = tokenIdBase + _tokenTenIds.current();
+            }
+            if (tokenIdBase == MAX_BRGOV_TOKENID_TEN) {
+                // increment denomination 100 counter
+                _tokenHundredIds.increment();
+                newItemId = tokenIdBase + _tokenHundredIds.current();
+            }
             _mint(to, newItemId, 1, "");
         }
     }
