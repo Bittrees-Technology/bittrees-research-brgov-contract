@@ -1,5 +1,17 @@
 # Bittrees Research (BRGOV) Equity Contract
 
+## mainnet contract addresses
+
+- BRGOV Proxy - https://etherscan.io/address/0x1a8b6b0f57876f5a1a17539c25f9e4235cf7060c
+- BRGOV Contact - https://etherscan.io/address/0xf62075e5bf74bf2f37f02368e40949298f07da4b
+- ProxyAdmin - https://etherscan.io/address/0x9561a4d6006aa6148b343a9afddf9591acc6abdf
+
+## goerli contract addresses
+
+- BRGOV Proxy - https://goerli.etherscan.io/address/0x14dBB93a78B5e89540e902d1E6Ee26C989e08ef0
+- BRGOV Contact - https://goerli.etherscan.io/address/0x522ea1e9db6b05702071584d6dd5c7f7361b0801#internaltx
+- ProxyAdmin - https://goerli.etherscan.io/address/0x29b99e832c097ab1e249a8a5a8521065785706fe
+
 ![Solidity tests](https://github.com/Bittrees-Technology/bittrees-research-brgov-contract/actions/workflows/continuous-integration.yaml/badge.svg)
 
 Bittrees Research (BRGOV) Equity Contract (based on ERC-1155)

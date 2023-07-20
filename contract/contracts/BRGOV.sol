@@ -84,17 +84,17 @@ contract BRGOV is ERC1155Upgradeable, AccessControlUpgradeable {
 
         tokens[TokenType.BTREE].mintPrice = 1000 ether;
         tokens[TokenType.BTREE].erc20Contract = IERC20(
-            0x1Ca23BB7dca2BEa5F57552AE99C3A44fA7307B5f
-        ); // goerli
+            0x6bDdE71Cf0C751EB6d5EdB8418e43D3d9427e436
+        ); // mainnet
         tokens[TokenType.BTREE]
-            .treasuryAddress = 0x7435e7f3e6B5c656c33889a3d5EaFE1e17C033CD;
+            .treasuryAddress = 0x2F8f86e6E1Ff118861BEB7E583DE90f0449A264f;
 
         tokens[TokenType.WBTC].mintPrice = 100000; // 0.001 * (10 ** 8)
         tokens[TokenType.WBTC].erc20Contract = IERC20(
-            0x26bE8Ef5aBf9109384856dD25ce1b4344aFd88b0
-        ); // goerli test WBTC
+            0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599
+        ); // mainnet WBTC - https://wbtc.network/
         tokens[TokenType.WBTC]
-            .treasuryAddress = 0x7435e7f3e6B5c656c33889a3d5EaFE1e17C033CD;
+            .treasuryAddress = 0x2F8f86e6E1Ff118861BEB7E583DE90f0449A264f;
 
         __AccessControl_init();
 
