@@ -1,16 +1,33 @@
 # Bittrees Research (BRGOV) Equity Contract
 
+## Base Sepolia contract addresses
+
+Deployed by 0x7435e7f3e6B5c656c33889a3d5EaFE1e17C033CD
+<https://sepolia.basescan.org/address/0x7435e7f3e6B5c656c33889a3d5EaFE1e17C033CD>
+
+-   BRGOV Proxy - 0x3b66BDdd1FfA50B3F816D8398e55B7FF269a7a42
+-   BRGOV Contact - 0x4DE534be4793C52ACc69A230A0318fF1A06aF8A0
+-   ProxyAdmin - 0x3ed570c2917EC8bEa558174697F28B24fc09ec09
+
+## Base mainnet contract addresses
+
+-   BRGOV Proxy -
+-   BRGOV Contact -
+-   ProxyAdmin -
+
+cbBTC contract: https://basescan.org/token/0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf
+
 ## mainnet contract addresses
 
-- BRGOV Proxy - https://etherscan.io/address/0x1a8b6b0f57876f5a1a17539c25f9e4235cf7060c
-- BRGOV Contact - https://etherscan.io/address/0xf62075e5bf74bf2f37f02368e40949298f07da4b
-- ProxyAdmin - https://etherscan.io/address/0x9561a4d6006aa6148b343a9afddf9591acc6abdf
+-   BRGOV Proxy - https://etherscan.io/address/0x1a8b6b0f57876f5a1a17539c25f9e4235cf7060c
+-   BRGOV Contact - https://etherscan.io/address/0xf62075e5bf74bf2f37f02368e40949298f07da4b
+-   ProxyAdmin - https://etherscan.io/address/0x9561a4d6006aa6148b343a9afddf9591acc6abdf
 
 ## goerli contract addresses
 
-- BRGOV Proxy - https://goerli.etherscan.io/address/0x14dBB93a78B5e89540e902d1E6Ee26C989e08ef0
-- BRGOV Contact - https://goerli.etherscan.io/address/0x522ea1e9db6b05702071584d6dd5c7f7361b0801#internaltx
-- ProxyAdmin - https://goerli.etherscan.io/address/0x29b99e832c097ab1e249a8a5a8521065785706fe
+-   BRGOV Proxy - https://goerli.etherscan.io/address/0x14dBB93a78B5e89540e902d1E6Ee26C989e08ef0
+-   BRGOV Contact - https://goerli.etherscan.io/address/0x522ea1e9db6b05702071584d6dd5c7f7361b0801#internaltx
+-   ProxyAdmin - https://goerli.etherscan.io/address/0x29b99e832c097ab1e249a8a5a8521065785706fe
 
 ![Solidity tests](https://github.com/Bittrees-Technology/bittrees-research-brgov-contract/actions/workflows/continuous-integration.yaml/badge.svg)
 
@@ -39,7 +56,7 @@ Install dependencies and run tests to make sure things are working.
 
     cd contract
     npm install
-    npm test
+    npm run test:ci -or- npm test
 
     npm run test:gas    # to also show gas reporting
     npm run test:coverage   # to show coverage, details in contract/coverage/index.html
