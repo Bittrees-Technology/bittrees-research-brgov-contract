@@ -158,7 +158,9 @@ _Running console session on mainnet_
 
 Now that you've connected to your contract above via `hardhat console`, let's play with it.
 
-```
+Let's setup all the initial contract settings from
+
+```javascript
 // first let's ensure we have the right wallet
 // run `listAccounts`
 // - if you're running on local hardhat you'll see a bunch of accounts created
@@ -167,14 +169,33 @@ await ethers.provider.listAccounts();
 
 const Contract = await ethers.getContractFactory('BRGOV');
 const contract = await Contract.attach('<proxy contract address goes here>');
-await contract.setMintPrice('1000000000000000');   // this wei represents 0.001 whole coin (e.g. ETH or MATIC)
-// you'll need to wait a bit until value is stored on the blockchain before retrieving in next step
-await contract.mintPrice('0x0'); // or '0x1' for WBTC
 
-// let's mint an NFT using our same owner who deployed the contract for convenience
-const owner = (await ethers.provider.listAccounts())[0];
-await contract.mintItem(owner, {value: '1000000000000000'});
-await contract.ownerOf(1);
+// set these to the contract addresses you want to use
+await contract.setERC20Contract(
+    '0x0',
+    '0xCa6f24a651bc4Ab545661a41a81EF387086a34C2'
+); // BTREE
+await contract.setERC20Contract(
+    '0x1',
+    '0x5beB73bc1611111C3d5F692a286b31DCDd03Af81'
+); // WBTC
+
+//
+// these are just for reference, already set by default when contract deployed
+//
+await contract.setBaseURI(
+    'ipfs://QmbAXCWwNfZmqCwvuKhVpK3FQ3vE813wWZgVcxfM88QUne/'
+);
+await contract.setMintPrice('0x0', '1000000000000000000000'); // 1000 BTREE
+await contract.setMintPrice('0x1', '100000'); // 0.001 WBTC
+await contract.setTreasuryAddress(
+    '0x0',
+    '0x2F8f86e6E1Ff118861BEB7E583DE90f0449A264f'
+); // BTREE
+await contract.setTreasuryAddress(
+    '0x1',
+    '0x2F8f86e6E1Ff118861BEB7E583DE90f0449A264f'
+); // WBTC
 ```
 
 ## Check out your NFT on OpenSea
