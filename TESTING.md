@@ -8,12 +8,6 @@ Base Sepolia testnet is used for testing. The following addresses are used:
 -   BTREE (ERC-20): https://sepolia.basescan.org/address/0xCa6f24a651bc4Ab545661a41a81EF387086a34C2
 -   WBTC (ERC-20): https://sepolia.basescan.org/address/0x5beB73bc1611111C3d5F692a286b31DCDd03Af81
 
-Etherum GOERLI testnet is used for testing. The following addresses are used:
-
--   BRGOV Proxy: 0x14dBB93a78B5e89540e902d1E6Ee26C989e08ef0
--   BTREE (ERC-20): 0x1Ca23BB7dca2BEa5F57552AE99C3A44fA7307B5f
--   WBTC (ERC-20): 0x26bE8Ef5aBf9109384856dD25ce1b4344aFd88b0
-
 ## Contact Setup
 
 Use values from Etherum Mainnet contact: <https://etherscan.io/address/0x1a8b6b0f57876f5a1a17539c25f9e4235cf7060c>
