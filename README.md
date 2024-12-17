@@ -154,7 +154,7 @@ _Running console session on mainnet_
 
 Now that you've connected to your contract above via `hardhat console`, let's play with it.
 
-Let's setup all the initial contract settings from
+To configure the contract:
 
 ```javascript
 // first let's ensure we have the right wallet
