@@ -1,16 +1,29 @@
 # Bittrees Research (BRGOV) Equity Contract
 
-## mainnet contract addresses
+## MAINNET: Ethereum
 
-- BRGOV Proxy - https://etherscan.io/address/0x1a8b6b0f57876f5a1a17539c25f9e4235cf7060c
-- BRGOV Contact - https://etherscan.io/address/0xf62075e5bf74bf2f37f02368e40949298f07da4b
-- ProxyAdmin - https://etherscan.io/address/0x9561a4d6006aa6148b343a9afddf9591acc6abdf
+-   BRGOV Proxy - https://etherscan.io/address/0x1a8b6b0f57876f5a1a17539c25f9e4235cf7060c
+-   BRGOV Contact - https://etherscan.io/address/0xf62075e5bf74bf2f37f02368e40949298f07da4b
+-   ProxyAdmin - https://etherscan.io/address/0x9561a4d6006aa6148b343a9afddf9591acc6abdf
+-   BTREE - https://etherscan.io/address/0x6bDdE71Cf0C751EB6d5EdB8418e43D3d9427e436
 
-## goerli contract addresses
+## MAINNET: Base
 
-- BRGOV Proxy - https://goerli.etherscan.io/address/0x14dBB93a78B5e89540e902d1E6Ee26C989e08ef0
-- BRGOV Contact - https://goerli.etherscan.io/address/0x522ea1e9db6b05702071584d6dd5c7f7361b0801#internaltx
-- ProxyAdmin - https://goerli.etherscan.io/address/0x29b99e832c097ab1e249a8a5a8521065785706fe
+-   BRGOV Proxy - https://basescan.org/address/0xCa6f24a651bc4Ab545661a41a81EF387086a34C2
+-   BRGOV Contact - https://basescan.org/address/0x3ed570c2917ec8bea558174697f28b24fc09ec09
+-   ProxyAdmin - https://basescan.org/address/0x3b66bddd1ffa50b3f816d8398e55b7ff269a7a42
+-   cbBTC contract: https://basescan.org/token/0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf
+-   BTREE: https://basescan.org/address/0x4DE534be4793C52ACc69A230A0318fF1A06aF8A0
+
+## TESTNET: Base Sepolia
+
+Deployed by 0x7435e7f3e6B5c656c33889a3d5EaFE1e17C033CD
+<https://sepolia.basescan.org/address/0x7435e7f3e6B5c656c33889a3d5EaFE1e17C033CD>
+
+-   BRGOV Proxy - 0x3b66BDdd1FfA50B3F816D8398e55B7FF269a7a42
+-   BRGOV Contact - 0x4DE534be4793C52ACc69A230A0318fF1A06aF8A0
+-   ProxyAdmin - 0x3ed570c2917EC8bEa558174697F28B24fc09ec09
+-   BTREE - 0xCa6f24a651bc4Ab545661a41a81EF387086a34C2
 
 ![Solidity tests](https://github.com/Bittrees-Technology/bittrees-research-brgov-contract/actions/workflows/continuous-integration.yaml/badge.svg)
 
@@ -39,7 +52,7 @@ Install dependencies and run tests to make sure things are working.
 
     cd contract
     npm install
-    npm test
+    npm run test:ci -or- npm test
 
     npm run test:gas    # to also show gas reporting
     npm run test:coverage   # to show coverage, details in contract/coverage/index.html
@@ -141,7 +154,9 @@ _Running console session on mainnet_
 
 Now that you've connected to your contract above via `hardhat console`, let's play with it.
 
-```
+To configure the contract:
+
+```javascript
 // first let's ensure we have the right wallet
 // run `listAccounts`
 // - if you're running on local hardhat you'll see a bunch of accounts created
@@ -150,14 +165,33 @@ await ethers.provider.listAccounts();
 
 const Contract = await ethers.getContractFactory('BRGOV');
 const contract = await Contract.attach('<proxy contract address goes here>');
-await contract.setMintPrice('1000000000000000');   // this wei represents 0.001 whole coin (e.g. ETH or MATIC)
-// you'll need to wait a bit until value is stored on the blockchain before retrieving in next step
-await contract.mintPrice('0x0'); // or '0x1' for WBTC
 
-// let's mint an NFT using our same owner who deployed the contract for convenience
-const owner = (await ethers.provider.listAccounts())[0];
-await contract.mintItem(owner, {value: '1000000000000000'});
-await contract.ownerOf(1);
+// set these to the contract addresses you want to use
+await contract.setERC20Contract(
+    '0x0',
+    '0x4DE534be4793C52ACc69A230A0318fF1A06aF8A0'
+); // BTREE
+await contract.setERC20Contract(
+    '0x1',
+    '0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf'
+); // WBTC
+
+//
+// these are just for reference, already set by default when contract deployed
+//
+await contract.setBaseURI(
+    'ipfs://QmbAXCWwNfZmqCwvuKhVpK3FQ3vE813wWZgVcxfM88QUne/'
+);
+await contract.setMintPrice('0x0', '1000000000000000000000'); // 1000 BTREE
+await contract.setMintPrice('0x1', '100000'); // 0.001 WBTC
+await contract.setTreasuryAddress(
+    '0x0',
+    '0x2F8f86e6E1Ff118861BEB7E583DE90f0449A264f'
+); // BTREE
+await contract.setTreasuryAddress(
+    '0x1',
+    '0x2F8f86e6E1Ff118861BEB7E583DE90f0449A264f'
+); // WBTC
 ```
 
 ## Check out your NFT on OpenSea
