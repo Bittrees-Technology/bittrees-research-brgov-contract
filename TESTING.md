@@ -2,11 +2,24 @@
 
 Deployer wallet public key: 0x7435e7f3e6B5c656c33889a3d5EaFE1e17C033CD
 
-GOERLI testnet is used for testing. The following addresses are used:
+Base Sepolia testnet is used for testing. The following addresses are used:
 
--   BRGOV Proxy: 0x14dBB93a78B5e89540e902d1E6Ee26C989e08ef0
--   BTREE (ERC-20): 0x1Ca23BB7dca2BEa5F57552AE99C3A44fA7307B5f
--   WBTC (ERC-20): 0x26bE8Ef5aBf9109384856dD25ce1b4344aFd88b0
+-   BRGOV Proxy: https://sepolia.basescan.org/address/0x3b66BDdd1FfA50B3F816D8398e55B7FF269a7a42
+-   BTREE (ERC-20): https://sepolia.basescan.org/address/0xCa6f24a651bc4Ab545661a41a81EF387086a34C2
+-   WBTC (ERC-20): https://sepolia.basescan.org/address/0x5beB73bc1611111C3d5F692a286b31DCDd03Af81
+
+## Contact Setup
+
+Use values from Etherum Mainnet contact: <https://etherscan.io/address/0x1a8b6b0f57876f5a1a17539c25f9e4235cf7060c>
+
+Follow steps in `README.md` in `**Second, Interact with your Contract**` section to setup the contract settings, starting with:
+
+```javascript
+const Contract = await ethers.getContractFactory('BRGOV');
+const contract = await Contract.attach(
+    '0x3b66BDdd1FfA50B3F816D8398e55B7FF269a7a42'
+); // base sepolia
+```
 
 ## Pre-testing
 
