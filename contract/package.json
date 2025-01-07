@@ -23,7 +23,7 @@
         "@nomicfoundation/hardhat-toolbox": "^2.0.0",
         "@nomiclabs/hardhat-ethers": "^2.0.0",
         "@nomiclabs/hardhat-etherscan": "^3.0.0",
-        "@openzeppelin/contracts": "^4.8.2",
+        "@openzeppelin/contracts": "^4.9.2",
         "@openzeppelin/contracts-upgradeable": "^4.6.0",
         "@openzeppelin/hardhat-defender": "^1.8.1",
         "@openzeppelin/hardhat-upgrades": "^1.17.0",
