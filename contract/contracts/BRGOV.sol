@@ -1,281 +1,172 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.19;
 
-// import "hardhat/console.sol";
-
-import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 interface IERC20 {
-    function totalSupply() external view returns (uint256);
-
     function balanceOf(address account) external view returns (uint256);
-
-    function allowance(
-        address owner,
-        address spender
-    ) external view returns (uint256);
-
-    function transferFrom(
-        address from,
-        address to,
-        uint256 amount
-    ) external returns (bool);
-
-    function approve(address spender, uint256 amount) external returns (bool);
+    function allowance(address owner, address spender) external view returns (uint256);
+    function transferFrom(address from, address to, uint256 amount) external returns (bool);
 }
 
-contract BRGOV is ERC1155Upgradeable, AccessControlUpgradeable {
-    uint256 public constant MAX_BRGOV_TOKENID_ONE = 1 * 10 ** 12; // 1 - 1,000,000,000,000
-    uint256 public constant MAX_BRGOV_TOKENID_TEN = 2 * 10 ** 12; // 1,000,000,000,001 - 2,000,000,000,000
-    uint256 public constant MAX_BRGOV_TOKENID_HUNDRED = 3 * 10 ** 12; // 2,000,000,000,001 - 3,000,000,000,000
-    uint8 public constant MULTIPLIER_ONE = 1;
-    uint8 public constant MULTIPLIER_TEN = 10;
-    uint8 public constant MULTIPLIER_HUNDRED = 100;
+contract BRGOV is ERC1155, Ownable {
+    using Strings for uint256;
 
-    enum TokenType {
-        BTREE,
-        WBTC
-    }
-    using CountersUpgradeable for CountersUpgradeable.Counter;
+    // 3 ID constants
+    uint256 public constant ID_ONE = 1;
+    uint256 public constant ID_TEN = 10;
+    uint256 public constant ID_HUNDRED = 100;
 
-    struct ERC20TOKEN {
-        uint256 mintPrice; // Mint price in wei
-        IERC20 erc20Contract;
-        address treasuryAddress;
-    }
+    // Price multipliers
+    uint256 public constant MULTIPLIER_ONE = 1;
+    uint256 public constant MULTIPLIER_TEN = 10;
+    uint256 public constant MULTIPLIER_HUNDRED = 100;
 
-    string public baseURI;
-
-    // three different NFT types 1, 10, 100
-    CountersUpgradeable.Counter private _tokenIds;
-    CountersUpgradeable.Counter private _tokenTenIds;
-    CountersUpgradeable.Counter private _tokenHundredIds;
-
-    mapping(TokenType => ERC20TOKEN) public tokens;
-
-    event PriceUpdated(
-        TokenType indexed tokenType,
-        uint256 indexed oldValue,
-        uint256 indexed newValue
-    );
-
-    event ERC20ContractUpdated(
-        TokenType indexed tokenType,
-        IERC20 indexed oldAddress,
-        IERC20 indexed newAddress
-    );
-
-    event TreasuryAddressUpdated(
-        TokenType indexed tokenType,
-        address indexed oldAddress,
-        address indexed newAddress
-    );
-
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
+    // Payment token config
+    struct PaymentToken {
+        bool active;           // can it be used?
+        uint256 mintPrice;     // price for "1" unit, in ERC20's smallest units
     }
 
-    function initialize() public initializer {
-        baseURI = "ipfs://QmbAXCWwNfZmqCwvuKhVpK3FQ3vE813wWZgVcxfM88QUne/";
+    // Map from tokenAddress => PaymentToken config
+    mapping(address => PaymentToken) public paymentTokens;
 
-        tokens[TokenType.BTREE].mintPrice = 1000 ether;
-        tokens[TokenType.BTREE].erc20Contract = IERC20(
-            0x6bDdE71Cf0C751EB6d5EdB8418e43D3d9427e436
-        ); // mainnet
-        tokens[TokenType.BTREE]
-            .treasuryAddress = 0x2F8f86e6E1Ff118861BEB7E583DE90f0449A264f;
+    // Single treasury for all tokens
+    address public treasury;
 
-        tokens[TokenType.WBTC].mintPrice = 100000; // 0.001 * (10 ** 8)
-        tokens[TokenType.WBTC].erc20Contract = IERC20(
-            0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599
-        ); // mainnet WBTC - https://wbtc.network/
-        tokens[TokenType.WBTC]
-            .treasuryAddress = 0x2F8f86e6E1Ff118861BEB7E583DE90f0449A264f;
+    // Base URI
+    string private _baseMetadataURI;
 
-        __AccessControl_init();
+    /**
+     * @dev Regular constructor: sets up base URI, treasury, optionally
+     *      mints some tokens to the treasury for airdrop if you choose.
+     */
+    constructor(
+        string memory baseURI_,
+        address treasury_,
+        uint256 amountOne,
+        uint256 amountTen,
+        uint256 amountHundred
+    ) ERC1155("") {
+        _baseMetadataURI = baseURI_;
+        treasury = treasury_;
 
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-    }
-
-    function supportsInterface(
-        bytes4 interfaceId
-    )
-        public
-        view
-        override(ERC1155Upgradeable, AccessControlUpgradeable)
-        returns (bool)
-    {
-        return super.supportsInterface(interfaceId);
-    }
-
-    function uri(
-        uint256 tokenID
-    ) public view virtual override returns (string memory) {
-        if (tokenID <= MAX_BRGOV_TOKENID_ONE) {
-            return string.concat(baseURI, "1");
+        // For migration purposes. Mint tokens to the treasury for each already issued by
+        // the deprecated contract so they can be airdropped to current holders
+        if (amountOne > 0) {
+            _mint(treasury, ID_ONE, amountOne, "");
         }
-        if (tokenID <= MAX_BRGOV_TOKENID_TEN) {
-            return string.concat(baseURI, "10");
+        if (amountTen > 0) {
+            _mint(treasury, ID_TEN, amountTen, "");
         }
-        if (tokenID <= MAX_BRGOV_TOKENID_HUNDRED) {
-            return string.concat(baseURI, "100");
+        if (amountHundred > 0) {
+            _mint(treasury, ID_HUNDRED, amountHundred, "");
         }
-        return "";
+
     }
 
-    function setBaseURI(
-        string memory _newBaseURI
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        baseURI = _newBaseURI;
+    /**
+     * @dev Override ERC1155 uri() to show "base + tokenId"
+     */
+    function uri(uint256 tokenId) public view override returns (string memory) {
+        return string(abi.encodePacked(_baseMetadataURI, tokenId.toString()));
     }
 
-    function mintPrice(TokenType _tokenType) external view returns (uint256) {
-        return tokens[_tokenType].mintPrice;
+    // -----------------------------
+    // Owner (admin) methods
+    // -----------------------------
+
+    /**
+     * @dev Set base metadata URI
+     */
+    function setBaseURI(string memory newBaseURI) external onlyOwner {
+        _baseMetadataURI = newBaseURI;
     }
 
-    function setMintPrice(
-        TokenType _tokenType,
-        uint256 _newPrice
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        // Mint price in wei
-        emit PriceUpdated(_tokenType, tokens[_tokenType].mintPrice, _newPrice);
-        tokens[_tokenType].mintPrice = _newPrice;
+    /**
+     * @dev Update the treasury address
+     */
+    function setTreasury(address newTreasury) external onlyOwner {
+        treasury = newTreasury;
     }
 
-    function erc20Contract(
-        TokenType _tokenType
-    ) external view returns (IERC20) {
-        return tokens[_tokenType].erc20Contract;
+    /**
+     * @dev Enable or update a payment token
+     * e.g. setPaymentToken(0xWBTC, true, 100_000);
+     * means "this contract is active, price is 0.001 WBTC for 1 base token"
+     */
+    function setPaymentToken(
+        address token,
+        bool active,
+        uint256 mintPrice
+    ) external onlyOwner {
+        paymentTokens[token] = PaymentToken({
+            active: active,
+            mintPrice: mintPrice
+        });
     }
 
-    function setERC20Contract(
-        TokenType _tokenType,
-        IERC20 _erc20Contract
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        emit ERC20ContractUpdated(
-            _tokenType,
-            tokens[_tokenType].erc20Contract,
-            _erc20Contract
-        );
-        tokens[_tokenType].erc20Contract = _erc20Contract;
+    /**
+     * @dev Disable a payment token by setting `active=false`
+     */
+    function disablePaymentToken(address token) external onlyOwner {
+        paymentTokens[token].active = false;
     }
 
-    function treasuryAddress(
-        TokenType _tokenType
-    ) external view returns (address) {
-        return tokens[_tokenType].treasuryAddress;
-    }
+    // -----------------------------
+    // Public minting logic
+    // -----------------------------
 
-    function setTreasuryAddress(
-        TokenType _tokenType,
-        address _treasuryAddress
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        emit TreasuryAddressUpdated(
-            _tokenType,
-            tokens[_tokenType].treasuryAddress,
-            _treasuryAddress
-        );
-        tokens[_tokenType].treasuryAddress = _treasuryAddress;
-    }
-
-    function _mintHelper(
-        TokenType _tokenType,
-        uint256 tokenIdBase,
-        uint8 mintPriceMultiplier,
-        address to,
-        uint256 mintCount
-    ) internal {
-        require(
-            tokens[_tokenType].treasuryAddress != address(0),
-            "treasury address not set"
-        );
-
-        require(
-            tokens[_tokenType].erc20Contract != IERC20(address(0)),
-            "erc20 contract not set"
-        );
-        uint256 _balance = IERC20(tokens[_tokenType].erc20Contract).balanceOf(
-            to
-        );
-
-        uint256 _totalPrice = tokens[_tokenType].mintPrice *
-            mintCount *
-            mintPriceMultiplier;
-        require(_totalPrice <= _balance, "not enough erc20 funds sent");
-
-        require(
-            tokens[_tokenType].erc20Contract.allowance(to, address(this)) >=
-                _totalPrice,
-            "Insufficient allowance"
-        );
-        bool successfulTransfer = IERC20(tokens[_tokenType].erc20Contract)
-            .transferFrom(to, tokens[_tokenType].treasuryAddress, _totalPrice);
-        require(successfulTransfer, "Unable to transfer erc20 to treasury");
-
-        for (uint256 i = 0; i < mintCount; i++) {
-            uint256 newItemId;
-            if (tokenIdBase == 0) {
-                // increment denomination 1 counter
-                _tokenIds.increment();
-                newItemId = tokenIdBase + _tokenIds.current();
-            }
-            if (tokenIdBase == MAX_BRGOV_TOKENID_ONE) {
-                // increment denomination 10 counter
-                _tokenTenIds.increment();
-                newItemId = tokenIdBase + _tokenTenIds.current();
-            }
-            if (tokenIdBase == MAX_BRGOV_TOKENID_TEN) {
-                // increment denomination 100 counter
-                _tokenHundredIds.increment();
-                newItemId = tokenIdBase + _tokenHundredIds.current();
-            }
-            _mint(to, newItemId, 1, "");
-        }
-    }
-
-    function mint(
-        TokenType _tokenType,
-        address to,
-        uint256 mintCount
+    /**
+     * @dev Mint multiple IDs in a single call, paying with a chosen ERC20.
+     * @param paymentToken The ERC20 to pay with
+     * @param tokenIds Array of token IDs (e.g. [1,10,100,1])
+     * @param amounts Matching array of amounts (e.g. [5,3,1,2])
+     * Note that each "ID_TEN" effectively costs 10x the "ID_ONE" mintPrice, etc.
+     */
+    function mintBatch(
+        address paymentToken,
+        uint256[] memory tokenIds,
+        uint256[] memory amounts
     ) external {
-        _mintHelper(_tokenType, 0, MULTIPLIER_ONE, to, mintCount);
-    }
+        require(tokenIds.length == amounts.length, "Mismatched array lengths");
+        require(tokenIds.length > 0, "Nothing to mint");
 
-    function mintTen(
-        TokenType _tokenType,
-        address to,
-        uint256 mintCount
-    ) external {
-        _mintHelper(
-            _tokenType,
-            MAX_BRGOV_TOKENID_ONE,
-            MULTIPLIER_TEN,
-            to,
-            mintCount
+        PaymentToken memory pt = paymentTokens[paymentToken];
+        require(pt.active, "Payment token not active");
+
+        // Sum total cost
+        uint256 totalCost;
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            require(
+                tokenIds[i] == ID_ONE || tokenIds[i] == ID_TEN || tokenIds[i] == ID_HUNDRED,
+                "Invalid tokenId"
+            );
+            require(amounts[i] > 0, "Mint amount zero?");
+
+            // figure out multiplier
+            uint256 multiplier = (
+                tokenIds[i] == ID_ONE
+                    ? MULTIPLIER_ONE
+                    : (tokenIds[i] == ID_TEN ? MULTIPLIER_TEN : MULTIPLIER_HUNDRED)
+            );
+
+            uint256 costForThisLine = pt.mintPrice * multiplier * amounts[i];
+            totalCost += costForThisLine;
+        }
+
+        // Pull the total ERC20 in one go
+        IERC20 erc20 = IERC20(paymentToken);
+        require(
+            erc20.allowance(msg.sender, address(this)) >= totalCost,
+            "Allowance not set"
         );
-    }
+        bool ok = erc20.transferFrom(msg.sender, treasury, totalCost);
+        require(ok, "TransferFrom failed");
 
-    function mintHundred(
-        TokenType _tokenType,
-        address to,
-        uint256 mintCount
-    ) external {
-        _mintHelper(
-            _tokenType,
-            MAX_BRGOV_TOKENID_TEN,
-            MULTIPLIER_HUNDRED,
-            to,
-            mintCount
-        );
-    }
-
-    function withdraw() external onlyRole(DEFAULT_ADMIN_ROLE) {
-        uint256 _balance = address(this).balance;
-        (bool success, ) = payable(msg.sender).call{value: _balance}("");
-        require(success, "Unable to withdraw");
+        // Now do batch mint
+        _mintBatch(msg.sender, tokenIds, amounts, "");
     }
 }
