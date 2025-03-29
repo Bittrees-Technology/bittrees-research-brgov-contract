@@ -13,7 +13,7 @@
 -   BRGOV Contact - https://basescan.org/address/0x3ed570c2917ec8bea558174697f28b24fc09ec09
 -   ProxyAdmin - https://basescan.org/address/0x3b66bddd1ffa50b3f816d8398e55b7ff269a7a42
 -   cbBTC contract: https://basescan.org/token/0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf
--   BTREE: https://basescan.org/address/0x4DE534be4793C52ACc69A230A0318fF1A06aF8A0
+-   BTREE: https://basescan.org/address/0x4aCFF883f2879e69e67B7003ccec56C73ee41F6f
 
 ## TESTNET: Base Sepolia
 
