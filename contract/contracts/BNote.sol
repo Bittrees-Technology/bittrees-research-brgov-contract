@@ -5,10 +5,20 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract BNote is Initializable, ERC1155Upgradeable, AccessControlUpgradeable, UUPSUpgradeable {
-
+contract BNote is
+Initializable,
+ERC1155Upgradeable,
+AccessControlUpgradeable,
+UUPSUpgradeable,
+ReentrancyGuardUpgradeable,
+PausableUpgradeable
+{
+    using SafeERC20 for IERC20;
 
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
@@ -30,6 +40,7 @@ contract BNote is Initializable, ERC1155Upgradeable, AccessControlUpgradeable, U
     event TreasuryUpdated(address newTreasury);
     event PaymentTokenUpdated(address token, bool active, uint256 mintPrice);
     event TokensMinted(address indexed account, uint256[] tokenIds, uint256[] amounts);
+    event TokensRescued(address token, address to, uint256 amount);
 
     // provided by both inherited contract so must be overridden to avoid conflicts
     function supportsInterface(bytes4 interfaceId)
@@ -56,6 +67,11 @@ contract BNote is Initializable, ERC1155Upgradeable, AccessControlUpgradeable, U
         __ERC1155_init(baseURI_);
         __AccessControl_init();
         __UUPSUpgradeable_init();
+        __ReentrancyGuard_init();
+        __Pausable_init();
+
+        // Validate treasury address
+        require(treasury_ != address(0), "Treasury cannot be zero address");
 
         // Grant roles
         _grantRole(DEFAULT_ADMIN_ROLE, admin_);    // Bittrees Research multisig
@@ -74,44 +90,93 @@ contract BNote is Initializable, ERC1155Upgradeable, AccessControlUpgradeable, U
         }
     }
 
+    // ADMIN FUNCTIONS
+
     function setBaseURI(string memory newBaseURI) external onlyRole(ADMIN_ROLE) {
         _baseMetadataURI = newBaseURI;
         emit BaseURIUpdated(newBaseURI);
     }
 
     function setTreasury(address newTreasury) external onlyRole(ADMIN_ROLE) {
+        require(newTreasury != address(0), "Treasury cannot be zero address");
         treasury = newTreasury;
         emit TreasuryUpdated(newTreasury);
     }
 
     function setPaymentToken(address token, bool active, uint256 mintPrice) external onlyRole(ADMIN_ROLE) {
+        require(token != address(0), "Token cannot be zero address");
         paymentTokens[token] = PaymentToken(active, mintPrice);
         emit PaymentTokenUpdated(token, active, mintPrice);
     }
 
-    function mintBatch(uint256[] memory tokenIds, uint256[] memory amounts, address paymentToken) external {
+    function pause() external onlyRole(ADMIN_ROLE) {
+        _pause();
+    }
+
+    function unpause() external onlyRole(ADMIN_ROLE) {
+        _unpause();
+    }
+
+    // Batch set multiple payment tokens at once for efficiency
+    function setPaymentTokenBatch(
+        address[] memory tokens,
+        bool[] memory actives,
+        uint256[] memory mintPrices
+    ) external onlyRole(ADMIN_ROLE) {
+        require(
+            tokens.length == actives.length && tokens.length == mintPrices.length,
+            "Array length mismatch"
+        );
+
+        for (uint256 i = 0; i < tokens.length; i++) {
+            require(tokens[i] != address(0), "Token cannot be zero address");
+            paymentTokens[tokens[i]] = PaymentToken(actives[i], mintPrices[i]);
+            emit PaymentTokenUpdated(tokens[i], actives[i], mintPrices[i]);
+        }
+    }
+
+    // Rescue accidentally sent ERC20 tokens
+    function rescueERC20(address token, address to, uint256 amount) external onlyRole(ADMIN_ROLE) {
+        require(to != address(0), "Cannot send to zero address");
+        IERC20(token).safeTransfer(to, amount);
+        emit TokensRescued(token, to, amount);
+    }
+
+    // USER FUNCTIONS
+
+    function mintBatch(uint256[] memory tokenIds, uint256[] memory amounts, address paymentToken)
+    external
+    nonReentrant
+    whenNotPaused
+    {
         require(tokenIds.length == amounts.length, "Array length mismatch");
         require(paymentTokens[paymentToken].active, "Payment token not accepted");
 
         uint256 totalCost = 0;
+
+        // Check if all mints are valid and calculate total cost
         for (uint256 i = 0; i < tokenIds.length; i++) {
-            uint tokenId = tokenIds[i];
+            uint256 tokenId = tokenIds[i];
             require(
-                tokenId == 1 || tokenId == 10 || tokenId == 100,
-                "Invalid tokenId");
+                tokenId == ID_ONE || tokenId == ID_TEN || tokenId == ID_HUNDRED,
+                "Invalid tokenId"
+            );
+
             totalCost +=
                 paymentTokens[paymentToken].mintPriceForOneNote
                 * amounts[i]
                 * tokenId;
         }
 
-        require(
-            IERC20(paymentToken).transferFrom(msg.sender, treasury, totalCost),
-            "Payment failed"
-        );
+        // Process payment with SafeERC20
+        IERC20(paymentToken).safeTransferFrom(msg.sender, treasury, totalCost);
+
+        // Mint tokens to purchaser after payment is complete
         _mintBatch(msg.sender, tokenIds, amounts, "");
         emit TokensMinted(msg.sender, tokenIds, amounts);
     }
+
+    // VIEW FUNCTIONS
 
     function baseMetadataURI() external view returns (string memory) {
         return _baseMetadataURI;

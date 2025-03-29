@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-// purely for testing the chainId logic in the BNote initialize function
+/**
+ * Mock contract to test chain ID logic
+ */
 contract MockChainId {
     // Mimics the chainId check in the BNote contract
     function wouldMintOnChain(uint256 targetChainId) public pure returns (bool) {
