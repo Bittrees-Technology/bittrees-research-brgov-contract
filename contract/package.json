@@ -11,7 +11,7 @@
   },
   "author": "donluv & Brian Gershon",
   "license": "MIT",
-  "description": "An upgradeable ERC1155 for purchasing Bittrees Reasearch preferred stock",
+  "description": "An upgradeable ERC1155 for purchasing Bittrees Reasearch Preferred Stock",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@openzeppelin/contracts": "^5.2.0",
