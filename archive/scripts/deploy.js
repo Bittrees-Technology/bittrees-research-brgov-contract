@@ -1,36 +1,20 @@
 // scripts/deploy.js
-const { ethers } = require('hardhat');
+const { ethers, upgrades } = require('hardhat');
 
 async function main() {
-    // Grab the first signer as deployer
+    // deploy upgradeable contract
     const [deployer] = await ethers.getSigners();
-    console.log("Deploying with account:", deployer.address);
-    console.log("Account balance:", ethers.utils.formatEther(await deployer.getBalance()), "ETH");
-
-    // Get the contract factory
-    const BRGOV = await ethers.getContractFactory("BRGOV");
-
-    // Here are your constructor arguments
-    // Adjust these values as needed:
-    const baseURI = "ipfs://YOUR_BASE_URI/";
-    const treasury = "0xTREASURY_ADDRESS_HERE";
-    const amountOne = 100;     // For migration mint
-    const amountTen = 20;      // For migration mint
-    const amountHundred = 5;   // For migration mint
-
-    // Deploy normally (non-upgradeable)
-    const brgovContract = await BRGOV.deploy(
-        baseURI,
-        treasury,
-        amountOne,
-        amountTen,
-        amountHundred
+    console.log(
+        'Deploy wallet balance:',
+        ethers.utils.formatEther(await deployer.getBalance())
     );
+    console.log('Deployer wallet public key:', deployer.address);
 
-    // Wait for deployment to finish
-    await brgovContract.deployed();
+    const Contract = await ethers.getContractFactory('BRGOV');
+    const proxyContract = await upgrades.deployProxy(Contract);
+    await proxyContract.deployed();
 
-    console.log("BRGOV contract deployed at:", brgovContract.address);
+    console.log(`OpenZeppelin Proxy deployed to ${proxyContract.address}\n\n`);
 }
 
 main()
