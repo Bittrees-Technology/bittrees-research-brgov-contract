@@ -1,12 +1,13 @@
 import { ethers, network } from "hardhat";
-import { keccak256 } from "ethers";
 import fs from "fs";
-import Safe from "@safe-global/safe-core-sdk";
-import { SafeTransactionDataPartial } from "@safe-global/safe-core-sdk-types";
-import SafeServiceClient from "@safe-global/safe-service-client";
-import EthersAdapter from "@safe-global/safe-ethers-lib";
-import { providers, Wallet, utils as ethersV5Utils } from "ethers-v5";  // Import ethers v5 explicitly
 import dotenv from "dotenv";
+import {
+    calculateCreate2Address,
+    generateCompatibleSalt,
+    CREATE2_FACTORY_ABI,
+    encodeFactoryDeploy,
+    getSafeWebUrl
+} from './helpers';
 
 dotenv.config();
 
@@ -32,39 +33,14 @@ const CONFIG = {
     ledgerAddress: process.env.LEDGER_ADDRESS || "",
 };
 
-// CREATE2 Factory ABI - only the functions we need
-const CREATE2_FACTORY_ABI = [
-    {
-        "inputs": [
-            { "internalType": "bytes32", "name": "salt", "type": "bytes32" },
-            { "internalType": "bytes", "name": "initCode", "type": "bytes" }
-        ],
-        "name": "deploy",
-        "outputs": [{ "internalType": "address", "name": "createdContract", "type": "address" }],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            { "internalType": "bytes32", "name": "salt", "type": "bytes32" },
-            { "internalType": "bytes", "name": "initCode", "type": "bytes" }
-        ],
-        "name": "computeAddress",
-        "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
-        "stateMutability": "view",
-        "type": "function"
-    }
-];
-
 async function main() {
     console.log(`\nNetwork: ${network.name}`);
     console.log("==== BNote Deployment Information ====");
 
     // Generate deterministic salt from project name
-    const saltText = CONFIG.projectName;
-    const salt = keccak256(ethers.toUtf8Bytes(saltText));
-    console.log(`\nSalt Text: ${saltText}`);
-    console.log(`Salt (hex): ${salt}`);
+    const implSalt = generateCompatibleSalt(CONFIG.safeAddress, `${CONFIG.projectName}_impl`);
+    console.log(`\nSalt Text: ${CONFIG.projectName}_impl`);
+    console.log(`Compatible Salt (hex): ${implSalt}`);
 
     // Get contract factories
     const BNoteFactory = await ethers.getContractFactory("BNote");
@@ -73,16 +49,10 @@ async function main() {
     // Get implementation bytecode
     const implementationBytecode = BNoteFactory.bytecode;
 
-    // Create the CREATE2 factory instance
-    const create2Factory = new ethers.Contract(
-        CONFIG.create2FactoryAddress,
-        CREATE2_FACTORY_ABI,
-        (await ethers.getSigners())[0]
-    );
-
     // Calculate implementation address
-    const implAddress = await create2Factory.computeAddress(
-        salt,
+    const implAddress = calculateCreate2Address(
+        CONFIG.create2FactoryAddress,
+        implSalt,
         implementationBytecode
     );
 
@@ -102,8 +72,12 @@ async function main() {
         ProxyFactory.interface.encodeDeploy([implAddress, initData]).slice(2);
 
     // Calculate proxy address
-    const proxySalt = keccak256(ethers.toUtf8Bytes(`${saltText}_proxy`));
-    const proxyAddress = await create2Factory.computeAddress(
+    const proxySalt = generateCompatibleSalt(CONFIG.safeAddress, `${CONFIG.projectName}_proxy`);
+    console.log(`\nProxy Salt Text: ${CONFIG.projectName}_proxy`);
+    console.log(`Compatible Proxy Salt (hex): ${proxySalt}`);
+
+    const proxyAddress = calculateCreate2Address(
+        CONFIG.create2FactoryAddress,
         proxySalt,
         proxyCreationCode
     );
@@ -117,7 +91,7 @@ async function main() {
     // Save deployment data to file
     const deploymentData = {
         network: network.name,
-        implementationSalt: salt,
+        implementationSalt: implSalt,
         proxySalt: proxySalt,
         create2Factory: CONFIG.create2FactoryAddress,
         implementation: {
@@ -139,222 +113,69 @@ async function main() {
     fs.writeFileSync(outputFile, JSON.stringify(deploymentData, null, 2));
     console.log(`\nDeployment data saved to ${outputFile}`);
 
-    // Create and propose Safe transactions
-    if (CONFIG.proposeTxToSafe) {
-        console.log("\n==== Creating Safe Transactions ====");
+    console.log("\n==== Transaction Information ====");
 
-        // Get the signer - either from ledger or default hardhat
-        let signer;
-        if (CONFIG.useLedger) {
-            console.log(`Using Ledger with address: ${CONFIG.ledgerAddress}`);
-            signer = await ethers.getSigner(CONFIG.ledgerAddress);
-        } else {
-            const signers = await ethers.getSigners();
-            signer = signers[0];
-            console.log(`Using signer: ${await signer.getAddress()}`);
-        }
-
-        // Create an ethers v5 compatible provider and wallet for Safe SDK
-        const signerAddress = await signer.getAddress();
-        const privateKey = await getSignerPrivateKey(signer);
-
-        const providerUrl = (network.config as any).url || "http://localhost:8545";
-        const ethersV5Provider = new providers.JsonRpcProvider(providerUrl);
-        const ethersV5Wallet = new Wallet(privateKey, ethersV5Provider);
-
-        // Create ethers adapter for Safe SDK - ethers v5 specific
-        const ethAdapter = new EthersAdapter({
-            ethers: { Signer: Wallet, provider: ethersV5Provider } as any,
-            signerOrProvider: ethersV5Wallet
-        });
-
-        // Initialize Safe SDK
-        const safeSdk = await Safe.create({
-            ethAdapter,
-            safeAddress: CONFIG.safeAddress
-        });
-
-        // Initialize Safe Service client for transaction proposal
-        const safeService = new SafeServiceClient({
-            txServiceUrl: CONFIG.safeServiceUrl,
-            ethAdapter
-        });
-
-        // Get next nonce
-        const nextNonce = await safeService.getNextNonce(CONFIG.safeAddress);
-
-        // Create a factory interface for ethers v5
-        const v5FactoryInterface = new ethersV5Utils.Interface(CREATE2_FACTORY_ABI);
-
-        // Encode the call to deploy the implementation contract
-        const implDeployCalldata = v5FactoryInterface.encodeFunctionData("deploy", [
-            salt,
-            implementationBytecode
-        ]);
-
-        // Prepare implementation deployment transaction
-        const implTxData: SafeTransactionDataPartial = {
-            to: CONFIG.create2FactoryAddress,  // CREATE2 factory address
-            value: "0",
-            data: implDeployCalldata,
-            operation: 0,  // Regular call
-            safeTxGas: 0,
-            baseGas: 0,
-            gasPrice: 0,
-            gasToken: ethers.ZeroAddress,
-            refundReceiver: ethers.ZeroAddress,
-            nonce: nextNonce
-        };
-
-        // Create the transaction
-        const implSafeTx = await safeSdk.createTransaction({ safeTransactionData: implTxData });
-
-        const implSafeTxHash = await safeSdk.getTransactionHash(implSafeTx)
-
-        // Sign the transaction
-        const signedImplTx = await safeSdk.signTransaction(implSafeTx);
-
-        // Propose transaction to Safe
-        const implTxHash = await safeService.proposeTransaction({
-            safeAddress: CONFIG.safeAddress,
-            safeTransactionData: implSafeTx.data,
-            safeTxHash: implSafeTxHash,
-            senderAddress: signerAddress,
-            senderSignature: signedImplTx.signatures.get(signerAddress.toLowerCase())!.data,
-        });
-
-        console.log(`\nImplementation transaction proposed to Safe:`);
-        console.log(`Safe Transaction Hash: ${implTxHash}`);
-        console.log(`Check the transaction in the Safe UI: ${getSafeWebUrl(network.name, CONFIG.safeAddress)}`);
-
-        // Encode the call to deploy the proxy contract
-        const proxyDeployCalldata = v5FactoryInterface.encodeFunctionData("deploy", [
-            proxySalt,
-            proxyCreationCode
-        ]);
-
-        console.log("\nThe proxy transaction must be executed AFTER the implementation transaction completes.");
-        console.log("Would you like to propose the proxy deployment transaction now? (Usually wait for implementation to be deployed first)");
-
-        const proposeProxyNow = process.env.PROPOSE_PROXY_TX === "true";
-
-        if (proposeProxyNow) {
-            // Prepare proxy deployment transaction
-            const proxyTxData: SafeTransactionDataPartial = {
-                to: CONFIG.create2FactoryAddress,  // CREATE2 factory address
-                value: "0",
-                data: proxyDeployCalldata,
-                operation: 0,  // Regular call
-                safeTxGas: 0,
-                baseGas: 0,
-                gasPrice: 0,
-                gasToken: ethers.ZeroAddress,
-                refundReceiver: ethers.ZeroAddress,
-                nonce: nextNonce + 1  // Increment nonce for second transaction
-            };
-
-            // Create the transaction
-            const proxySafeTx = await safeSdk.createTransaction({ safeTransactionData: proxyTxData });
-
-            const proxySafeTxHash = await safeSdk.getTransactionHash(proxySafeTx);
-
-            // Sign the transaction
-            const signedProxyTx = await safeSdk.signTransaction(proxySafeTx);
-
-            // Propose transaction to Safe
-            const proxyTxHash = await safeService.proposeTransaction({
-                safeAddress: CONFIG.safeAddress,
-                safeTransactionData: proxySafeTx.data,
-                safeTxHash: proxySafeTxHash,
-                senderAddress: signerAddress,
-                senderSignature: signedProxyTx.signatures.get(signerAddress.toLowerCase())!.data,
-            });
-
-            console.log(`\nProxy transaction proposed to Safe:`);
-            console.log(`Safe Transaction Hash: ${proxyTxHash}`);
-            console.log(`Check the transaction in the Safe UI: ${getSafeWebUrl(network.name, CONFIG.safeAddress)}`);
-        } else {
-            console.log("\nTo propose the proxy transaction later, run this script with PROPOSE_PROXY_TX=true");
-        }
-    } else {
-        // Output manual instructions for Safe UI
-        console.log("\n==== For Manual Safe Transaction Creation ====");
-
-        // Create interface for encoding
-        const factoryInterface = new ethers.Interface(CREATE2_FACTORY_ABI);
-
-        // Encode implementation deployment call
-        const implDeployCalldata = factoryInterface.encodeFunctionData("deploy", [
-            salt,
-            implementationBytecode
-        ]);
-
-        console.log("\nStep 1: Deploy Implementation Contract via CREATE2 Factory");
-        console.log(`To address: ${CONFIG.create2FactoryAddress} (CREATE2 Factory)`);
-        console.log("Value: 0");
-        console.log("Operation: 0 (Call)");
-        console.log(`Data: ${implDeployCalldata}`);
-
-        // Encode proxy deployment call
-        const proxyDeployCalldata = factoryInterface.encodeFunctionData("deploy", [
-            proxySalt,
-            proxyCreationCode
-        ]);
-
-        console.log("\nStep 2: Deploy Proxy Contract via CREATE2 Factory (after implementation deploys)");
-        console.log(`To address: ${CONFIG.create2FactoryAddress} (CREATE2 Factory)`);
-        console.log("Value: 0");
-        console.log("Operation: 0 (Call)");
-        console.log(`Data: ${proxyDeployCalldata}`);
-    }
-}
-
-// Helper function to get private key from a signer - WARNING: This is for development only!
-// In production, you should use Ledger integration instead of extracting private keys
-async function getSignerPrivateKey(signer: any): Promise<string> {
+    // Get the signer - either from ledger or default hardhat
+    let signer;
     if (CONFIG.useLedger) {
-        throw new Error("Cannot extract private key from Ledger. Use a different approach for production.");
+        console.log(`Using Ledger with address: ${CONFIG.ledgerAddress}`);
+        signer = await ethers.getSigner(CONFIG.ledgerAddress);
+        console.log("Ledger connected successfully!");
+    } else {
+        const signers = await ethers.getSigners();
+        signer = signers[0];
+        console.log(`Using signer: ${await signer.getAddress()}`);
     }
 
-    // This is a development-only approach for hardhat
-    if (network.name === "hardhat" || network.name === "localhost") {
-        // For hardhat, we can access the private key
-        return (signer as any).privateKey;
+    // Create interface for encoding
+    const factoryInterface = new ethers.Interface(CREATE2_FACTORY_ABI);
+
+    // Encode implementation deployment call
+    const implDeployCalldata = encodeFactoryDeploy(implSalt, implementationBytecode);
+
+    // Check if code exists at implementation address
+    const implCodeSize = await ethers.provider.getCode(implAddress).then(c => c.length);
+    if (implCodeSize > 2) { // More than just '0x'
+        console.log(`\n⚠️ Implementation already deployed at ${implAddress}`);
     }
 
-    // For other networks, you should pass the private key via env var
-    if (process.env.PRIVATE_KEY) {
-        return process.env.PRIVATE_KEY;
+    console.log("\n==== Implementation Transaction ====");
+    console.log(`To address: ${CONFIG.create2FactoryAddress} (CREATE2 Factory)`);
+    console.log("Value: 0");
+    console.log("Operation: 0 (Call)");
+    console.log(`Data: ${implDeployCalldata.slice(0, 66)}...${implDeployCalldata.slice(-64)}`);
+    console.log("Gas: 1,500,000 (suggested minimum)");
+
+    // Encode proxy deployment call
+    const proxyDeployCalldata = encodeFactoryDeploy(proxySalt, proxyCreationCode);
+
+    // Check if code exists at proxy address
+    const proxyCodeSize = await ethers.provider.getCode(proxyAddress).then(c => c.length);
+    if (proxyCodeSize > 2) { // More than just '0x'
+        console.log(`\n⚠️ Proxy already deployed at ${proxyAddress}`);
     }
 
-    throw new Error("Private key not available. Please provide a PRIVATE_KEY env variable for non-local networks.");
-}
+    console.log("\n==== Proxy Transaction (execute after implementation) ====");
+    console.log(`To address: ${CONFIG.create2FactoryAddress} (CREATE2 Factory)`);
+    console.log("Value: 0");
+    console.log("Operation: 0 (Call)");
+    console.log(`Data: ${proxyDeployCalldata.slice(0, 66)}...${proxyDeployCalldata.slice(-64)}`);
+    console.log("Gas: 1,000,000 (suggested minimum)");
 
-// Helper function to get the Safe web interface URL based on network
-function getSafeWebUrl(
-    networkName: string,
-    safeAddress: string
-): string {
-    let baseUrl;
+    console.log("\n==== Safe UI Instructions ====");
+    console.log("1. Go to your Safe UI: " + getSafeWebUrl(network.name, CONFIG.safeAddress));
+    console.log("2. Create the implementation transaction first (use above details)");
+    console.log("3. Set at least 1,500,000 gas for implementation deployment");
+    console.log("4. Execute and wait for confirmation");
+    console.log("5. Create the proxy transaction (only after implementation is deployed)");
+    console.log("6. Set at least 1,000,000 gas for proxy deployment");
 
-    switch (networkName) {
-        case "mainnet":
-            baseUrl = "https://app.safe.global/eth";
-            break;
-        case "goerli":
-            baseUrl = "https://app.safe.global/gor";
-            break;
-        case "sepolia":
-            baseUrl = "https://app.safe.global/sep";
-            break;
-        case "polygon":
-            baseUrl = "https://app.safe.global/matic";
-            break;
-        default:
-            baseUrl = "https://app.safe.global";
-    }
-
-    return `${baseUrl}:${safeAddress}/transactions/queue`;
+    // Include full data for reference
+    console.log("\n==== Full Transaction Data for Reference ====");
+    console.log("Implementation Transaction Data:");
+    console.log(implDeployCalldata);
+    console.log("\nProxy Transaction Data:");
+    console.log(proxyDeployCalldata);
 }
 
 // Execute the deployment script
