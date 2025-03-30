@@ -20,6 +20,11 @@ PausableUpgradeable
 {
     using SafeERC20 for IERC20;
 
+    // Contract identification
+    string public constant NAME = "Bittrees Preferred Stock Notes";
+    string public constant SYMBOL = "BNOTE";
+    string public constant VERSION = "2.0.0";
+
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
     uint256 public constant ID_ONE = 1;
@@ -42,7 +47,7 @@ PausableUpgradeable
     event TokensMinted(address indexed account, uint256[] tokenIds, uint256[] amounts);
     event TokensRescued(address token, address to, uint256 amount);
 
-    // provided by both inherited contract so must be overridden to avoid conflicts
+    // provided by both inherited contracts so must be overridden to avoid conflicts
     function supportsInterface(bytes4 interfaceId)
     public
     view
@@ -81,9 +86,10 @@ PausableUpgradeable
         treasury = treasury_;
         _baseMetadataURI = baseURI_;
 
-        // One-time mint logic
-        // Only used on Ethereum mainnet for airdropping existing holders as part of the contract migration
-        if (block.chainid == 1) {
+        // ===== ONE-TIME MINT LOGIC =====
+        // Only used on Ethereum mainnet and testnet for airdropping existing holders as part of the
+        // non-upgrade migration from contract v1 to v2
+        if (block.chainid == 1 || block.chainid == 11155111) {
             _mint(treasury_, ID_ONE, 1000, "");
             _mint(treasury_, ID_TEN, 100, "");
             _mint(treasury_, ID_HUNDRED, 10, "");
