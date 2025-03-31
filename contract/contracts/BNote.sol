@@ -43,7 +43,7 @@ PausableUpgradeable
 
     event BaseURIUpdated(string newBaseURI);
     event TreasuryUpdated(address newTreasury);
-    event PaymentTokenUpdated(address token, bool active, uint256 mintPrice);
+    event PaymentTokenUpdated(address indexed token, bool active, uint256 mintPrice);
     event TokensMinted(address indexed account, uint256[] tokenIds, uint256[] amounts);
     event TokensRescued(address token, address to, uint256 amount);
 
@@ -186,5 +186,14 @@ PausableUpgradeable
 
     function baseMetadataURI() external view returns (string memory) {
         return _baseMetadataURI;
+    }
+
+    function uri(uint256 id) public view override returns (string memory) {
+        require(id == ID_ONE || id == ID_TEN || id == ID_HUNDRED, "Invalid token ID");
+        return string.concat(_baseMetadataURI, id.toString(), ".json");
+    }
+
+    function contractURI() public view returns (string memory) {
+        return string.concat(_baseMetadataURI, "contract.json");
     }
 }
