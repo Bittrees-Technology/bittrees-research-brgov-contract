@@ -14,7 +14,7 @@ dotenv.config();
 // Configuration - Move these to .env or hardhat.config.ts in practice
 const CONFIG = {
     // Contract deployment details
-    baseURI: "https://bittrees.com/metadata/",
+    baseURI: "https://research.bittrees.org/",
     treasuryAddress: process.env.TREASURY_ADDRESS || "0x...",
     adminAddress: process.env.ADMIN_ADDRESS || "0x...",
     projectName: "BittreesPreferredStockNotes_v1",

@@ -92,9 +92,9 @@ PausableUpgradeable
         // Only used on Ethereum mainnet and testnet for airdropping existing holders as part of the
         // non-upgrade migration from contract v1 to v2
         if (block.chainid == 1 || block.chainid == 11155111) {
-            _mint(treasury_, ID_ONE, 1000, "");
-            _mint(treasury_, ID_TEN, 100, "");
-            _mint(treasury_, ID_HUNDRED, 10, "");
+            _mint(treasury_, ID_ONE, 50, "");
+            _mint(treasury_, ID_TEN, 55, "");
+            _mint(treasury_, ID_HUNDRED, 48, "");
         }
     }
 
