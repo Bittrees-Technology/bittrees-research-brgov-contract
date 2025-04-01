@@ -229,10 +229,19 @@ describe("BNote (UUPS upgradeable)", () => {
     });
   });
 
-  describe("URI Functionality", () => {
+  describe("URI public view Functionality", () => {
     it("should return correct token URI", async () => {
-      // Test the URI for ID_ONE
-      expect(await bNoteProxy.uri(1)).to.equal(baseURI);
+      expect(await bNoteProxy.connect(user).uri(1)).to.equal(`${baseURI}1.json`);
+      expect(await bNoteProxy.connect(user).uri(10)).to.equal(`${baseURI}10.json`);
+      expect(await bNoteProxy.connect(user).uri(100)).to.equal(`${baseURI}100.json`);
+    });
+
+    it("should return correct contract URI", async () => {
+      expect(await bNoteProxy.connect(user).contractURI()).to.equal(`${baseURI}contract.json`);
+    });
+
+    it("should return correct base metadata URI", async () => {
+      expect(await bNoteProxy.connect(user).baseMetadataURI()).to.equal(baseURI);
     });
   });
 
