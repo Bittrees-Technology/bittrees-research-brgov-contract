@@ -2,15 +2,20 @@
 
 ## MAINNET: Ethereum
 
--   BRGOV Proxy - https://etherscan.io/address/0x1a8b6b0f57876f5a1a17539c25f9e4235cf7060c
--   BRGOV Contact - https://etherscan.io/address/0xf62075e5bf74bf2f37f02368e40949298f07da4b
+-   BNote Proxy - https://etherscan.io/address/0x53da448d2CF3f3Bce37D0C9669b94ed9a59aB558
+-   BNote Contact - https://etherscan.io/address/0x05817107460e6a3B0B719171fDe700f7eFe4E8F5
 -   ProxyAdmin - https://etherscan.io/address/0x9561a4d6006aa6148b343a9afddf9591acc6abdf
 -   BTREE - https://etherscan.io/address/0x6bDdE71Cf0C751EB6d5EdB8418e43D3d9427e436
 
+## TESTNET: Sepolia
+
+-   BNote Proxy - https://sepolia.etherscan.io/address/0x53da448d2CF3f3Bce37D0C9669b94ed9a59aB558
+-   BNote Contact - https://sepolia.etherscan.io/address/0x05817107460e6a3B0B719171fDe700f7eFe4E8F5
+
 ## MAINNET: Base
 
--   BRGOV Proxy - https://basescan.org/address/0xCa6f24a651bc4Ab545661a41a81EF387086a34C2
--   BRGOV Contact - https://basescan.org/address/0x3ed570c2917ec8bea558174697f28b24fc09ec09
+-   BNote Proxy - https://basescan.org/address/0x53da448d2CF3f3Bce37D0C9669b94ed9a59aB558
+-   BNote Contact - https://basescan.org/address/0x05817107460e6a3B0B719171fDe700f7eFe4E8F5
 -   ProxyAdmin - https://basescan.org/address/0x3b66bddd1ffa50b3f816d8398e55b7ff269a7a42
 -   cbBTC contract: https://basescan.org/token/0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf
 -   BTREE: https://basescan.org/address/0x4aCFF883f2879e69e67B7003ccec56C73ee41F6f
@@ -20,8 +25,8 @@
 Deployed by 0x7435e7f3e6B5c656c33889a3d5EaFE1e17C033CD
 <https://sepolia.basescan.org/address/0x7435e7f3e6B5c656c33889a3d5EaFE1e17C033CD>
 
--   BRGOV Proxy - 0x3b66BDdd1FfA50B3F816D8398e55B7FF269a7a42
--   BRGOV Contact - 0x4DE534be4793C52ACc69A230A0318fF1A06aF8A0
+-   BNote Proxy - https://sepolia.basescan.org/address/0x53da448d2CF3f3Bce37D0C9669b94ed9a59aB558
+-   BNote Contact - https://sepolia.basescan.org/address/0x05817107460e6a3B0B719171fDe700f7eFe4E8F5
 -   ProxyAdmin - 0x3ed570c2917EC8bEa558174697F28B24fc09ec09
 -   BTREE - 0xCa6f24a651bc4Ab545661a41a81EF387086a34C2
 
