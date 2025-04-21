@@ -128,12 +128,97 @@ describe("BNote (UUPS upgradeable)", () => {
 
       const paymentToken = await bNoteProxy.paymentTokens(mockTokenAddress);
       expect(paymentToken.active).to.equal(active);
-      expect(paymentToken.mintPriceForOneNote).to.equal(price);
+      expect(paymentToken.unitMintPrice).to.equal(price);
+    });
+
+    it("should add new payment token to paymentTokenAddresses", async () => {
+      const mockTokenAddress = await mockERC20.getAddress();
+      const mockTokenAddress2 = await nonCompliantERC20.getAddress();
+      const active = true;
+      const price = ethers.parseEther("1");
+
+      expect(await bNoteProxy.connect(user).getAllPaymentTokenAddresses())
+          .to.deep.equal([]);
+
+      await expect(bNoteProxy.connect(admin).setPaymentToken(mockTokenAddress, active, price))
+          .to.emit(bNoteProxy, "PaymentTokenUpdated")
+          .withArgs(mockTokenAddress, active, price);
+
+      expect(await bNoteProxy.connect(user).getAllPaymentTokenAddresses())
+          .to.deep.equal([mockTokenAddress]);
+
+      let paymentToken = await bNoteProxy.paymentTokens(mockTokenAddress);
+      expect(paymentToken.active).to.equal(active);
+      expect(paymentToken.unitMintPrice).to.equal(price);
+
+      await expect(bNoteProxy.connect(admin).setPaymentToken(mockTokenAddress2, active, price))
+          .to.emit(bNoteProxy, "PaymentTokenUpdated")
+          .withArgs(mockTokenAddress2, active, price);
+
+      expect(await bNoteProxy.connect(user).getAllPaymentTokenAddresses())
+          .to.deep.equal([mockTokenAddress, mockTokenAddress2]);
+
+      paymentToken = await bNoteProxy.paymentTokens(mockTokenAddress2);
+      expect(paymentToken.active).to.equal(active);
+      expect(paymentToken.unitMintPrice).to.equal(price);
+    });
+
+    it("should not add payment token to paymentTokenAddresses again when updating existing payment token", async () => {
+      const mockTokenAddress = await mockERC20.getAddress();
+      const active = true;
+      const price = ethers.parseEther("1");
+      const newPrice = ethers.parseEther("2");
+
+      // No payment tokens set
+      expect(await bNoteProxy.connect(user).getAllPaymentTokenAddresses())
+          .to.deep.equal([]);
+
+      // Set payment token
+      await expect(bNoteProxy.connect(admin).setPaymentToken(mockTokenAddress, active, price))
+          .to.emit(bNoteProxy, "PaymentTokenUpdated")
+          .withArgs(mockTokenAddress, active, price);
+
+      // Check paymentToken address was pushed onto paymentTokenAddresses array
+      expect(await bNoteProxy.connect(user).getAllPaymentTokenAddresses())
+          .to.deep.equal([mockTokenAddress]);
+
+      // Check paymentToken was set correctly
+      let paymentToken = await bNoteProxy.paymentTokens(mockTokenAddress);
+      expect(paymentToken.active).to.equal(active);
+      expect(paymentToken.unitMintPrice).to.equal(price);
+
+      // Update paymentToken.active to false
+      await expect(bNoteProxy.connect(admin).setPaymentToken(mockTokenAddress, !active, price))
+          .to.emit(bNoteProxy, "PaymentTokenUpdated")
+          .withArgs(mockTokenAddress, !active, price);
+
+      // Check paymentTokenAddresses was updated not updated as the paymentToken updated already existed
+      expect(await bNoteProxy.connect(user).getAllPaymentTokenAddresses())
+          .to.deep.equal([mockTokenAddress]);
+
+      // Check paymentToken update was successful
+      paymentToken = await bNoteProxy.paymentTokens(mockTokenAddress);
+      expect(paymentToken.active).to.equal(!active);
+      expect(paymentToken.unitMintPrice).to.equal(price);
+
+      // Update paymentToken.unitMintPrice to new price and paymentToken.active to true
+      await expect(bNoteProxy.connect(admin).setPaymentToken(mockTokenAddress, !active, newPrice))
+          .to.emit(bNoteProxy, "PaymentTokenUpdated")
+          .withArgs(mockTokenAddress, !active, newPrice);
+
+      // Check paymentTokenAddresses was updated not updated as the paymentToken updated already existed
+      expect(await bNoteProxy.connect(user).getAllPaymentTokenAddresses())
+          .to.deep.equal([mockTokenAddress]);
+
+      // Check paymentToken update was successful
+      paymentToken = await bNoteProxy.paymentTokens(mockTokenAddress);
+      expect(paymentToken.active).to.equal(!active);
+      expect(paymentToken.unitMintPrice).to.equal(newPrice);
     });
 
     it("should not allow setting zero address as payment token", async () => {
       await expect(bNoteProxy.connect(admin).setPaymentToken(ZeroAddress, true, ethers.parseEther("1")))
-          .to.be.revertedWith("Token cannot be zero address");
+          .to.be.revertedWith("PaymentToken cannot be zero address");
     });
 
     it("should not allow non-admin to configure payment tokens", async () => {
@@ -155,9 +240,9 @@ describe("BNote (UUPS upgradeable)", () => {
       const paymentToken2 = await bNoteProxy.paymentTokens(token2);
 
       expect(paymentToken1.active).to.equal(true);
-      expect(paymentToken1.mintPriceForOneNote).to.equal(ethers.parseEther("1"));
+      expect(paymentToken1.unitMintPrice).to.equal(ethers.parseEther("1"));
       expect(paymentToken2.active).to.equal(true);
-      expect(paymentToken2.mintPriceForOneNote).to.equal(ethers.parseEther("2"));
+      expect(paymentToken2.unitMintPrice).to.equal(ethers.parseEther("2"));
     });
 
     it("should require equal length arrays for batch payment token configuration", async () => {
@@ -329,17 +414,17 @@ describe("BNote (UUPS upgradeable)", () => {
 
     it("should handle minting multiple token types", async () => {
       const tokenIds = [1, 10, 100];
-      const amounts = [5, 3, 1];
+      const amounts = [5, 3, 2];
       const mockTokenAddress = await mockERC20.getAddress();
 
       // Calculate expected cost: 5*1*price + 3*10*price + 1*100*price
-      const expectedCost = mintPrice * BigInt(5*1 + 3*10 + 1*100);
+      const expectedCost = mintPrice * BigInt(5*1 + 3*10 + 2*100);
 
       await bNoteProxy.connect(user).mintBatch(tokenIds, amounts, mockTokenAddress);
 
       expect(await bNoteProxy.balanceOf(user.address, 1)).to.equal(5);
       expect(await bNoteProxy.balanceOf(user.address, 10)).to.equal(3);
-      expect(await bNoteProxy.balanceOf(user.address, 100)).to.equal(1);
+      expect(await bNoteProxy.balanceOf(user.address, 100)).to.equal(2);
 
       // Verify payment went to treasury
       expect(await mockERC20.balanceOf(treasury.address)).to.equal(expectedCost);

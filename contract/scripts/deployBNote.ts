@@ -1,46 +1,42 @@
-import { ethers, network } from "hardhat";
+import { ethers, network } from 'hardhat';
+import { CONFIG } from "./config";
 import fs from "fs";
-import dotenv from "dotenv";
 import {
     calculateCreate2Address,
     generateCompatibleSalt,
-    CREATE2_FACTORY_ABI,
-    encodeFactoryDeploy,
-    getSafeWebUrl
+    encodeCreate2FactoryDeploymentTxData,
+    askForConfirmation,
+    proposeTxBundleToSafe,
+    logTransactionDetailsToConsole,
 } from './helpers';
 
-dotenv.config();
-
-// Configuration - Move these to .env or hardhat.config.ts in practice
-const CONFIG = {
-    // Contract deployment details
-    baseURI: "https://research.bittrees.org/",
-    treasuryAddress: process.env.TREASURY_ADDRESS || "0x...",
-    adminAddress: process.env.ADMIN_ADDRESS || "0x...",
-    projectName: "BittreesPreferredStockNotes_v1",
-
-    // Safe details
-    safeAddress: process.env.SAFE_ADDRESS || "0x...",
-    safeServiceUrl: process.env.SAFE_SERVICE_URL || "https://safe-transaction-mainnet.safe.global",
-
-    // CREATE2 Factory Address - Same across all networks!
-    // This is the official Gnosis CREATE2 Factory
-    create2FactoryAddress: "0x0000000000FFe8B47B3e2130213B802212439497",
-
-    // Execution mode
-    proposeTxToSafe: process.env.PROPOSE_TX === "true",
-    useLedger: process.env.USE_LEDGER === "true",
-    ledgerAddress: process.env.LEDGER_ADDRESS || "",
-};
-
 async function main() {
+    if(CONFIG.create2FactoryCallerAddress !== CONFIG.bittreesTechnologyGnosisSafeAddress) {
+        const question =
+            `⚠️Configured create2FactoryCallerAddress address(${
+                CONFIG.create2FactoryCallerAddress
+            }) does not match the bittreesTechnologyGnosisSafeAddress address(${
+                CONFIG.bittreesTechnologyGnosisSafeAddress
+            })!`
+            + `\n⚠️If this is for an official deployment, abort and set the value`
+            + ` appropriately in the .env file.`
+            + `\n⚠️Otherwise, enter 'yes' to continue:`
+        await askForConfirmation(question);
+    } else {
+        console.log(
+            `\n✅create2FactoryCallerAddress matches the bittreesTechnologySafe address: ${
+                CONFIG.create2FactoryCallerAddress
+            }`
+        );
+    }
+
     console.log(`\nNetwork: ${network.name}`);
     console.log("==== BNote Deployment Information ====");
 
     // Generate deterministic salt from project name
-    const implSalt = generateCompatibleSalt(CONFIG.safeAddress, `${CONFIG.projectName}_impl`);
-    console.log(`\nSalt Text: ${CONFIG.projectName}_impl`);
-    console.log(`Compatible Salt (hex): ${implSalt}`);
+    const implSalt = generateCompatibleSalt(CONFIG.create2FactoryCallerAddress, `${CONFIG.projectName}_impl`);
+    console.log(`\nImplementation Salt Text: ${CONFIG.projectName}_impl`);
+    console.log(`Implementation Salt (hex): ${implSalt}`);
 
     // Get contract factories
     const BNoteFactory = await ethers.getContractFactory("BNote");
@@ -51,7 +47,7 @@ async function main() {
 
     // Calculate implementation address
     const implAddress = calculateCreate2Address(
-        CONFIG.create2FactoryAddress,
+        CONFIG.gnosisCreate2FactoryAddress,
         implSalt,
         implementationBytecode
     );
@@ -72,12 +68,12 @@ async function main() {
         ProxyFactory.interface.encodeDeploy([implAddress, initData]).slice(2);
 
     // Calculate proxy address
-    const proxySalt = generateCompatibleSalt(CONFIG.safeAddress, `${CONFIG.projectName}_proxy`);
+    const proxySalt = generateCompatibleSalt(CONFIG.create2FactoryCallerAddress, `${CONFIG.projectName}_proxy`);
     console.log(`\nProxy Salt Text: ${CONFIG.projectName}_proxy`);
     console.log(`Compatible Proxy Salt (hex): ${proxySalt}`);
 
     const proxyAddress = calculateCreate2Address(
-        CONFIG.create2FactoryAddress,
+        CONFIG.gnosisCreate2FactoryAddress,
         proxySalt,
         proxyCreationCode
     );
@@ -86,21 +82,26 @@ async function main() {
     console.log("Proxy Creation Bytecode Length:", proxyCreationCode.length / 2 - 1, "bytes");
     console.log("Proxy Salt:", proxySalt);
     console.log("Proxy Address (via CREATE2):", proxyAddress);
-    console.log("This will be your main contract address for BNote");
+    console.log("This will be the main contract address for BNote");
 
     // Save deployment data to file
     const deploymentData = {
         network: network.name,
         implementationSalt: implSalt,
         proxySalt: proxySalt,
-        create2Factory: CONFIG.create2FactoryAddress,
-        implementation: {
+        create2Factory: CONFIG.gnosisCreate2FactoryAddress,
+        'implementationV2.0.0': {
             bytecode: implementationBytecode,
             address: implAddress,
         },
+        currentImplementation: 'implementationV2.0.0',
         proxy: {
             bytecode: proxyCreationCode,
             address: proxyAddress,
+            proxyArgs: [
+                implAddress,
+                initData
+            ]
         },
         config: {
             baseURI: CONFIG.baseURI,
@@ -109,29 +110,11 @@ async function main() {
         }
     };
 
-    const outputFile = `bnote-deployment-${network.name}.json`;
+    const outputFile = `./deployments/bnote-deployment-${network.name}.json`;
     fs.writeFileSync(outputFile, JSON.stringify(deploymentData, null, 2));
     console.log(`\nDeployment data saved to ${outputFile}`);
 
     console.log("\n==== Transaction Information ====");
-
-    // Get the signer - either from ledger or default hardhat
-    let signer;
-    if (CONFIG.useLedger) {
-        console.log(`Using Ledger with address: ${CONFIG.ledgerAddress}`);
-        signer = await ethers.getSigner(CONFIG.ledgerAddress);
-        console.log("Ledger connected successfully!");
-    } else {
-        const signers = await ethers.getSigners();
-        signer = signers[0];
-        console.log(`Using signer: ${await signer.getAddress()}`);
-    }
-
-    // Create interface for encoding
-    const factoryInterface = new ethers.Interface(CREATE2_FACTORY_ABI);
-
-    // Encode implementation deployment call
-    const implDeployCalldata = encodeFactoryDeploy(implSalt, implementationBytecode);
 
     // Check if code exists at implementation address
     const implCodeSize = await ethers.provider.getCode(implAddress).then(c => c.length);
@@ -139,43 +122,35 @@ async function main() {
         console.log(`\n⚠️ Implementation already deployed at ${implAddress}`);
     }
 
-    console.log("\n==== Implementation Transaction ====");
-    console.log(`To address: ${CONFIG.create2FactoryAddress} (CREATE2 Factory)`);
-    console.log("Value: 0");
-    console.log("Operation: 0 (Call)");
-    console.log(`Data: ${implDeployCalldata.slice(0, 66)}...${implDeployCalldata.slice(-64)}`);
-    console.log("Gas: 1,500,000 (suggested minimum)");
-
-    // Encode proxy deployment call
-    const proxyDeployCalldata = encodeFactoryDeploy(proxySalt, proxyCreationCode);
-
     // Check if code exists at proxy address
     const proxyCodeSize = await ethers.provider.getCode(proxyAddress).then(c => c.length);
     if (proxyCodeSize > 2) { // More than just '0x'
         console.log(`\n⚠️ Proxy already deployed at ${proxyAddress}`);
     }
 
-    console.log("\n==== Proxy Transaction (execute after implementation) ====");
-    console.log(`To address: ${CONFIG.create2FactoryAddress} (CREATE2 Factory)`);
-    console.log("Value: 0");
-    console.log("Operation: 0 (Call)");
-    console.log(`Data: ${proxyDeployCalldata.slice(0, 66)}...${proxyDeployCalldata.slice(-64)}`);
-    console.log("Gas: 1,000,000 (suggested minimum)");
+    // Encode implementation deployment call
+    const implDeployCalldata = encodeCreate2FactoryDeploymentTxData(implSalt, implementationBytecode);
 
-    console.log("\n==== Safe UI Instructions ====");
-    console.log("1. Go to your Safe UI: " + getSafeWebUrl(network.name, CONFIG.safeAddress));
-    console.log("2. Create the implementation transaction first (use above details)");
-    console.log("3. Set at least 1,500,000 gas for implementation deployment");
-    console.log("4. Execute and wait for confirmation");
-    console.log("5. Create the proxy transaction (only after implementation is deployed)");
-    console.log("6. Set at least 1,000,000 gas for proxy deployment");
+    // Encode proxy deployment call
+    const proxyDeployCalldata = encodeCreate2FactoryDeploymentTxData(proxySalt, proxyCreationCode);
 
-    // Include full data for reference
-    console.log("\n==== Full Transaction Data for Reference ====");
-    console.log("Implementation Transaction Data:");
-    console.log(implDeployCalldata);
-    console.log("\nProxy Transaction Data:");
-    console.log(proxyDeployCalldata);
+    const transactions = [{
+        to: CONFIG.gnosisCreate2FactoryAddress,
+        value: '0',
+        data: implDeployCalldata,
+        transactionInfoLog: '\n==== Implementation Transaction ====',
+    }, {
+        to: CONFIG.gnosisCreate2FactoryAddress,
+        value: '0',
+        data: proxyDeployCalldata,
+        transactionInfoLog: '\n==== Proxy Transaction (execute after implementation) ====',
+    }]
+
+    if(CONFIG.proposeTxToSafe) {
+        await proposeTxBundleToSafe(transactions, CONFIG.create2FactoryCallerAddress);
+    } else {
+        logTransactionDetailsToConsole(transactions);
+    }
 }
 
 // Execute the deployment script

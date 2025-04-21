@@ -1,64 +1,11 @@
-import { ethers, network } from "hardhat";
-import { keccak256, Contract } from "ethers";
-import Safe from "@safe-global/safe-core-sdk";
-import { SafeTransactionDataPartial } from "@safe-global/safe-core-sdk-types";
-import SafeServiceClient from "@safe-global/safe-service-client";
-import EthersAdapter from "@safe-global/safe-ethers-lib";
-import { providers, Wallet, utils as ethersV5Utils } from "ethers-v5";
-
-// CREATE2 Factory ABI - with the CORRECT function names
-export const CREATE2_FACTORY_ABI = [
-    {
-        "inputs": [
-            { "internalType": "bytes32", "name": "salt", "type": "bytes32" },
-            { "internalType": "bytes", "name": "initializer", "type": "bytes" }
-        ],
-        "name": "safeCreate2",
-        "outputs": [{ "internalType": "address", "name": "proxy", "type": "address" }],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            { "internalType": "bytes32", "name": "salt", "type": "bytes32" },
-            { "internalType": "bytes", "name": "initializer", "type": "bytes" }
-        ],
-        "name": "findCreate2Address",
-        "outputs": [{ "internalType": "address", "name": "proxy", "type": "address" }],
-        "stateMutability": "view",
-        "type": "function"
-    }
-];
-
-// ERC1967 Proxy ABI parts we need for upgrades
-export const ERC1967_PROXY_ABI = [
-    {
-        "inputs": [],
-        "name": "implementation",
-        "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            { "internalType": "address", "name": "newImplementation", "type": "address" }
-        ],
-        "name": "upgradeTo",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            { "internalType": "address", "name": "newImplementation", "type": "address" },
-            { "internalType": "bytes", "name": "data", "type": "bytes" }
-        ],
-        "name": "upgradeToAndCall",
-        "outputs": [],
-        "stateMutability": "payable",
-        "type": "function"
-    }
-];
+import * as readline from 'readline';
+import { ethers, network } from 'hardhat';
+import { CREATE2_FACTORY_ABI } from './gnosis.create2Factory.abi';
+import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers';
+import { CONFIG } from './config';
+import { MetaTransactionData } from '@safe-global/types-kit';
+import Safe from '@safe-global/protocol-kit';
+import SafeApiKit from '@safe-global/api-kit';
 
 export function generateCompatibleSalt(safeAddress: string, saltText: string): string {
     // Remove '0x' from the safe address
@@ -99,8 +46,21 @@ export function calculateCreate2Address(
     return ethers.getAddress(create2Address);
 }
 
-// Helper to encode CREATE2 factory deploy call - WITH CORRECT FUNCTION NAME
-export function encodeFactoryDeploy(
+/**
+ * Helper to encode deployments using the safeCreate2 method on the Gnosis
+ * CREATE2 factory contract
+ * @param salt 32 bytes hex encoded string. First 20 bytes should match the lower
+ * cased address of the address calling the create2 factory
+ * @param bytecode Bytecode of the contract to deploy. If the contract takes init
+ * arguments, the bytecode string should append those using
+ * `ContractFactoryInstance.interface.encodeDeploy(initData)` - see deployBNote.ts
+ * proxyCreationCode for example
+ * @returns a string to be used as the `data` property on a transaction deploying the
+ * contract. The `to` property should be the address of the Gnosis CREATE2 factory.
+ * The `value` property should be 0. The `operation` property should be 0 (usually
+ * optional and defaults to 0).
+ * */
+export function encodeCreate2FactoryDeploymentTxData(
     salt: string,
     bytecode: string
 ): string {
@@ -108,35 +68,142 @@ export function encodeFactoryDeploy(
     return factoryInterface.encodeFunctionData("safeCreate2", [salt, bytecode]);
 }
 
-// Get Safe Web URL
+/**
+ * Function to prompt the user and wait for their input
+ * @param question The question to ask the user
+ * @returns A Promise that resolves to true for yes/continue or false for no/abort
+ */
+export function askForConfirmation(question: string): Promise<boolean> {
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
+
+    return new Promise<boolean>((resolve) => {
+        rl.question(`${question} (y/n): `, (answer: string) => {
+            // Close the interface to prevent the program from hanging
+            rl.close();
+
+            const normalizedAnswer = answer.trim().toLowerCase();
+
+            // Check if the answer is a variant of "yes"
+            const isYes = normalizedAnswer === 'y' || normalizedAnswer === 'yes';
+
+            resolve(isYes);
+        });
+    });
+}
+
+export async function proposeTxBundleToSafe(transactions: MetaTransactionData[], safeAddress: string) {
+    // Get the signer - either from ledger or default hardhat
+    const signer = await getSigner();
+
+    const { chainId } = await ethers.provider.getNetwork();
+
+    const safe = await Safe.init({
+        provider: network.provider,
+        signer: signer.address,
+        safeAddress,
+    })
+
+    const unsignedSafeTx = await safe.createTransaction({
+        transactions
+    })
+
+    const signedSafeTx = await safe.signTransaction(unsignedSafeTx);
+
+    const signature = signedSafeTx.getSignature(signer.address);
+
+    if (!signature) {
+        throw new Error("Signature not found");
+    }
+
+    const safeService = new SafeApiKit({
+        chainId
+    });
+
+    await safeService.proposeTransaction({
+        senderAddress: signer.address,
+        safeTransactionData: signedSafeTx.data,
+        safeTxHash: await safe.getTransactionHash(signedSafeTx),
+        senderSignature: signature.data,
+        safeAddress,
+    })
+
+    console.log("\n==== Safe UI Instructions ====");
+    console.log(
+        "Go to your Safe UI to approve an execute the transaction bundle:\n"
+        + getSafeWebUrl(network.name, CONFIG.create2FactoryCallerAddress)
+    );
+}
+
+/**
+ * Logs details about the transactions to console. Intended for use when CONFIG.proposeTxToSafe is false
+ * and the script is being run to check output for testing or confirmation purposes (such
+ * as confirming the proposed TXs add to the safe by one of the other multisig signers)
+ * */
+export function logTransactionDetailsToConsole(transactions: (
+    MetaTransactionData & {transactionInfoLog: string })[]
+) {
+    transactions.map(tx => {
+        console.log(tx.transactionInfoLog);
+        console.log(`To address: ${tx.to}`);
+        console.log(`Value: ${tx.value}`);
+        console.log(`Operation: ${tx.operation || 0}`);
+        console.log(`Data: ${tx.data.slice(0, 66)}...${tx.data.slice(-64)}`);
+        console.log('\n');
+    });
+}
+
+/**
+ * @returns A HardhatEthersSigner. Either a ledger signer as configured in the
+ * .env under LEDGER_ADDRESS and retrieved in config.ts, or a local signer as
+ * configured in the .env under PRIVATE_KEY and retrieved in hardhat.config.ts
+ * */
+export async function getSigner(): Promise<HardhatEthersSigner> {
+    let signer: HardhatEthersSigner;
+    if (CONFIG.useLedger) {
+        console.log(`Using Ledger with address: ${CONFIG.ledgerAddress}`);
+        signer = await ethers.getSigner(CONFIG.ledgerAddress);
+        console.log("Ledger connected successfully!");
+    } else {
+        const signers = await ethers.getSigners();
+        signer = signers[0];
+        console.log(`Using signer: ${await signer.getAddress()}`);
+    }
+    return signer;
+}
+
+/**
+ * Returns the gnosis safe UI url where you can expect to find
+ * the queue of proposed transactions
+ * */
 export function getSafeWebUrl(
     networkName: string,
     safeAddress: string
 ): string {
-    let baseUrl;
+    const baseUrl = 'https://app.safe.global';
+    let query = 'safe=';
 
     switch (networkName) {
+        // Mainnets
         case "mainnet":
-            baseUrl = "https://app.safe.global/eth";
-            break;
-        case "goerli":
-            baseUrl = "https://app.safe.global/gor";
-            break;
-        case "sepolia":
-            baseUrl = "https://app.safe.global/sep";
+            query = `${query}eth:${safeAddress}`;
             break;
         case "base":
-            baseUrl = "https://app.safe.global/base";
+            query = `${query}base:${safeAddress}`;
+            break;
+
+        // Testnets
+        case "sepolia":
+            query = `${query}sep:${safeAddress}`;
             break;
         case "baseSepolia":
-            baseUrl = "https://app.safe.global/base-sep";
-            break;
-        case "polygon":
-            baseUrl = "https://app.safe.global/matic";
+            query = `${query}basesep:${safeAddress}`;
             break;
         default:
-            baseUrl = "https://app.safe.global";
+            query = `${query}${safeAddress}`;
     }
 
-    return `${baseUrl}:${safeAddress}/transactions/queue`;
+    return `${baseUrl}/transactions/queue?${query}`;
 }

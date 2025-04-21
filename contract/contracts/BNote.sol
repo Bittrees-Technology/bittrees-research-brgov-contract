@@ -23,7 +23,7 @@ PausableUpgradeable
     using SafeERC20 for IERC20;
 
     // Contract identification
-    string public constant NAME = "Bittrees Preferred Stock Notes";
+    string public constant NAME = "Bittrees Research Preferred Stock";
     string public constant SYMBOL = "BNOTE";
     string public constant VERSION = "2.0.0";
 
@@ -38,10 +38,12 @@ PausableUpgradeable
 
     struct PaymentToken {
         bool active;
-        uint256 mintPriceForOneNote;
+        uint256 unitMintPrice;
     }
 
     mapping(address => PaymentToken) public paymentTokens;
+    mapping(address => bool) public paymentTokenExists;
+    address[] public paymentTokenAddresses;
 
     event BaseURIUpdated(string newBaseURI);
     event TreasuryUpdated(address newTreasury);
@@ -89,8 +91,8 @@ PausableUpgradeable
         _baseMetadataURI = baseURI_;
 
         // ===== ONE-TIME MINT LOGIC =====
-        // Only used on Ethereum mainnet and testnet for airdropping existing holders as part of the
-        // non-upgrade migration from contract v1 to v2
+        // Only used on Ethereum mainnet and sepolia testnet for airdropping existing holders as part of the
+        // non-upgrade migration from contract v1() to v2
         if (block.chainid == 1 || block.chainid == 11155111) {
             _mint(treasury_, ID_ONE, 50, "");
             _mint(treasury_, ID_TEN, 55, "");
@@ -111,18 +113,24 @@ PausableUpgradeable
         emit TreasuryUpdated(newTreasury);
     }
 
-    function setPaymentToken(address token, bool active, uint256 mintPrice) external onlyRole(ADMIN_ROLE) {
-        require(token != address(0), "Token cannot be zero address");
+    function _setPaymentToken(address token, bool active, uint256 mintPrice) internal {
+        require(token != address(0), "PaymentToken cannot be zero address");
         paymentTokens[token] = PaymentToken(active, mintPrice);
+
+        if (!paymentTokenExists[token]) {
+            paymentTokenAddresses.push(token);
+            paymentTokenExists[token] = true;
+        }
+
         emit PaymentTokenUpdated(token, active, mintPrice);
     }
 
-    function pause() external onlyRole(ADMIN_ROLE) {
-        _pause();
-    }
-
-    function unpause() external onlyRole(ADMIN_ROLE) {
-        _unpause();
+    function setPaymentToken(
+        address token,
+        bool active,
+        uint256 mintPrice
+    ) external onlyRole(ADMIN_ROLE) {
+        _setPaymentToken(token, active, mintPrice);
     }
 
     // Batch set multiple payment tokens at once for efficiency
@@ -137,11 +145,18 @@ PausableUpgradeable
         );
 
         for (uint256 i = 0; i < tokens.length; i++) {
-            require(tokens[i] != address(0), "Token cannot be zero address");
-            paymentTokens[tokens[i]] = PaymentToken(actives[i], mintPrices[i]);
-            emit PaymentTokenUpdated(tokens[i], actives[i], mintPrices[i]);
+            _setPaymentToken(tokens[i], actives[i], mintPrices[i]);
         }
     }
+
+    function pause() external onlyRole(ADMIN_ROLE) {
+        _pause();
+    }
+
+    function unpause() external onlyRole(ADMIN_ROLE) {
+        _unpause();
+    }
+
 
     // Rescue accidentally sent ERC20 tokens
     function rescueERC20(address token, address to, uint256 amount) external onlyRole(ADMIN_ROLE) {
@@ -171,7 +186,7 @@ PausableUpgradeable
             );
 
             totalCost +=
-                paymentTokens[paymentToken].mintPriceForOneNote
+                paymentTokens[paymentToken].unitMintPrice
                 * amounts[i]
                 * tokenId;
         }
@@ -185,6 +200,15 @@ PausableUpgradeable
     }
 
     // VIEW FUNCTIONS
+
+    /**
+    * @dev get the array of all paymentTokens added to the contract - convenience for frontend
+    * the returned array should not contain any duplicates, is not ordered, and includes paymentTokens
+    * irrespective of the paymentToken.active value being true or false
+    */
+    function getAllPaymentTokenAddresses() external view returns (address[] memory) {
+        return paymentTokenAddresses;
+    }
 
     function baseMetadataURI() external view returns (string memory) {
         return _baseMetadataURI;

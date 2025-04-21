@@ -1,8 +1,9 @@
 {
   "name": "bnote-contract",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "main": "index.js",
   "scripts": {
+    "clean": "rm -rf ",
     "test": "echo \"Error: no test specified\" && exit 1",
     "test:ci": "hardhat test"
   },
@@ -10,7 +11,7 @@
   "engines": {
     "node": "22.14.0"
   },
-  "author": "donluv & Brian Gershon",
+  "author": "donluv.eth & Brian Gershon",
   "license": "MIT",
   "description": "An upgradeable ERC1155 for purchasing Bittrees Reasearch Preferred Stock",
   "devDependencies": {
@@ -20,9 +21,9 @@
     "@openzeppelin/contracts": "^5.2.0",
     "@openzeppelin/contracts-upgradeable": "^5.2.0",
     "@openzeppelin/hardhat-upgrades": "^3.9.0",
-    "@safe-global/safe-core-sdk": "^3.3.5",
-    "@safe-global/safe-ethers-lib": "^1.9.4",
-    "@safe-global/safe-service-client": "^2.0.3",
+    "@safe-global/api-kit": "^3.0.1",
+    "@safe-global/protocol-kit": "^6.0.3",
+    "@safe-global/types-kit": "^2.0.1",
     "dotenv": "^16.4.7",
     "ethers-v5": "npm:ethers@^5.7.2",
     "hardhat": "^2.22.19",
