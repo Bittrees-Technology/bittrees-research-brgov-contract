@@ -1,44 +1,75 @@
 import { HardhatUserConfig } from 'hardhat/config';
 import '@nomicfoundation/hardhat-toolbox';
 import '@openzeppelin/hardhat-upgrades';
-import '@openzeppelin/hardhat-defender';
-import 'hardhat-watcher';
-
+import '@nomicfoundation/hardhat-ledger';
 import dotenv from 'dotenv';
+
 dotenv.config();
 
-// default values are there to avoid failures when running tests in CI
-const TESTNET_RPC = process.env.TESTNET_RPC || '1'.repeat(32);
-const MAINNET_RPC = process.env.MAINNET_RPC || '1'.repeat(32);
-const PRIVATE_KEY = process.env.PRIVATE_KEY || '1'.repeat(64);
-
 const config: HardhatUserConfig = {
-    solidity: {
-        version: '0.8.17',
-        settings: {
-            optimizer: {
-                enabled: true,
-                runs: 1000,
-            },
-        },
-    },
-    defender: {
-        apiKey: process.env.DEFENDER_TEAM_API_KEY || '',
-        apiSecret: process.env.DEFENDER_TEAM_API_SECRET_KEY || '',
-    },
+    solidity: '0.8.28',
+
     networks: {
-        testnet: {
-            url: TESTNET_RPC,
-            accounts: [PRIVATE_KEY],
+        hardhat: {
+            // This setting helps testing chainId conditionals
+            chainId: 31337,
         },
+
+        // ===== Mainnet Networks =====
         mainnet: {
-            url: MAINNET_RPC,
-            accounts: [PRIVATE_KEY],
+            url: process.env.MAINNET_RPC_URL,
+            chainId: 1,
+            // When using Ledger, include your address here
+            ledgerAccounts: process.env.USE_LEDGER === 'true' && process.env.LEDGER_ADDRESS
+                ? [process.env.LEDGER_ADDRESS]
+                : [],
+            // Or use regular accounts for testing
+            accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
         },
+        base: {
+            url: process.env.BASE_RPC_URL,
+            chainId: 8453,
+            ledgerAccounts: process.env.USE_LEDGER === 'true' && process.env.LEDGER_ADDRESS
+                ? [process.env.LEDGER_ADDRESS]
+                : [],
+            accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+        },
+
+        // ===== Testnet Networks =====
+        sepolia: {
+            url: process.env.SEPOLIA_RPC_URL,
+            chainId: 11155111,
+            ledgerAccounts: process.env.USE_LEDGER === 'true' && process.env.LEDGER_ADDRESS
+                ? [process.env.LEDGER_ADDRESS]
+                : [],
+            accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+        },
+        baseSepolia: {
+            url: process.env.BASE_SEPOLIA_RPC_URL,
+            chainId: 84532,
+            ledgerAccounts: process.env.USE_LEDGER === 'true' && process.env.LEDGER_ADDRESS
+                ? [process.env.LEDGER_ADDRESS]
+                : [],
+            accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+        },
+
     },
     etherscan: {
-        apiKey: process.env.ETHERSCAN_API_KEY ?? '',
+        apiKey: {
+            mainnet: process.env.ETHERSCAN_API_KEY || '',
+            base: process.env.BASESCAN_API_KEY || '',
+            sepolia: process.env.ETHERSCAN_API_KEY || '',
+            baseSepolia: process.env.BASESCAN_API_KEY || '',
+        },
         customChains: [
+            {
+                network: 'mainnet',
+                chainId: 1,
+                urls: {
+                    apiURL: 'https://api.etherscan.io/api',
+                    browserURL: 'https://etherscan.io',
+                },
+            },
             {
                 network: 'base',
                 chainId: 8453,
@@ -48,33 +79,29 @@ const config: HardhatUserConfig = {
                 },
             },
             {
-              network: "base sepolia",
-              chainId: 84532,
-              urls: {
-                apiURL: "https://api-sepolia.basescan.org/api",
-                browserURL: "https://sepolia.basescan.org/"
-              }
-            }
-          ]
-    },
-    gasReporter: {
-        enabled: process.env.REPORT_GAS ? true : false,
-    },
-    watcher: {
-        test: {
-            tasks: [
-                {
-                    command: 'test',
-                    params: {
-                        testFiles: ['{path}'],
-                    },
+                network: 'sepolia',
+                chainId: 11155111,
+                urls: {
+                    apiURL: 'https://api-sepolia.etherscan.io/api',
+                    browserURL: 'https://sepolia.etherscan.io',
                 },
-            ],
-            files: ['./test/**/*'],
-            verbose: true,
-            clearOnStart: true,
-            start: 'echo Running test task now...',
-        },
+            },
+            {
+                network: 'baseSepolia',
+                chainId: 84532,
+                urls: {
+                    apiURL: 'https://api-sepolia.basescan.org/api',
+                    browserURL: 'https://sepolia.basescan.org/',
+                },
+            },
+        ],
+    },
+    sourcify: {
+        enabled: true
+    },
+    typechain: {
+        outDir: 'typechain-types',
+        target: 'ethers-v6',
     },
 };
 

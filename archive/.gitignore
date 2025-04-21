@@ -1,0 +1,8 @@
+node_modules
+artifacts
+cache
+.env
+typechain-types
+coverage
+coverage.json
+unknown-31337.json

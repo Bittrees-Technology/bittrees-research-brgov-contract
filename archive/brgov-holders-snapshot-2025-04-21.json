@@ -1,0 +1,141 @@
+{
+  "denomination1": {
+    "totalSupply": 50,
+    "holders": [
+      {
+        "address": "0xE5350D96FC3161BF5c385843ec5ee24E8B465B2f",
+        "amount": "6"
+      },
+      {
+        "address": "0x09d4851F7f65B3Ac4Ba71BE4Cb1f84079e02800b",
+        "amount": "3"
+      },
+      {
+        "address": "0x193c5aceB2760444821A9E949aEB3a17367ABF4e",
+        "amount": "1"
+      },
+      {
+        "address": "0xa949A14Ec10cae8952c523df2d60962be34330B4",
+        "amount": "2"
+      },
+      {
+        "address": "0x63a3f07A644Bf6d76e143ba5E10F799D7c6824EA",
+        "amount": "23"
+      },
+      {
+        "address": "0x0f30920F6E3045deB39C697700CE6b0e241aFa0e",
+        "amount": "1"
+      },
+      {
+        "address": "0xa6085130BA935Eb4cE6DBe8b5dF23c0e8c29575e",
+        "amount": "8"
+      },
+      {
+        "address": "0x93F7BeafA6A0cd73B387F027c9C14f47Dc192822",
+        "amount": "1"
+      },
+      {
+        "address": "0x959112b5a6261447080a8BfA78e9505576B9F85e",
+        "amount": "5"
+      }
+    ]
+  },
+  "denomination10": {
+    "totalSupply": 55,
+    "holders": [
+      {
+        "address": "0x80B9A849a18AA403bFA8D2b28d016C02AeA65090",
+        "amount": "5"
+      },
+      {
+        "address": "0x09d4851F7f65B3Ac4Ba71BE4Cb1f84079e02800b",
+        "amount": "5"
+      },
+      {
+        "address": "0x4da4A2f69Cb2f61A49EfB7423B1F093B79C6f1F2",
+        "amount": "2"
+      },
+      {
+        "address": "0xfe47cbfB906b65759f34424CA1478BE180228c61",
+        "amount": "6"
+      },
+      {
+        "address": "0x6e4063a6481ab48FED6eeEBceA440d3bFe1e5Dcd",
+        "amount": "5"
+      },
+      {
+        "address": "0xE5350D96FC3161BF5c385843ec5ee24E8B465B2f",
+        "amount": "3"
+      },
+      {
+        "address": "0x63a3f07A644Bf6d76e143ba5E10F799D7c6824EA",
+        "amount": "11"
+      },
+      {
+        "address": "0x162E63D4B367F16CB4F893e2b593E0CDB2294012",
+        "amount": "1"
+      },
+      {
+        "address": "0x5Edf80D3E691582742Aa7d0bb7d469832Fd51C89",
+        "amount": "7"
+      },
+      {
+        "address": "0x5385e86D54da6337d9B5BB40aa139f6DC659d53f",
+        "amount": "1"
+      },
+      {
+        "address": "0x8450948B2060912B24D0AF50F2FaA3A4B808680f",
+        "amount": "9"
+      }
+    ]
+  },
+  "denomination100": {
+    "totalSupply": 48,
+    "holders": [
+      {
+        "address": "0xE5350D96FC3161BF5c385843ec5ee24E8B465B2f",
+        "amount": "4"
+      },
+      {
+        "address": "0x2268E2b8F7640a29752C5c58b8735906F4E84F60",
+        "amount": "2"
+      },
+      {
+        "address": "0x8450948B2060912B24D0AF50F2FaA3A4B808680f",
+        "amount": "1"
+      },
+      {
+        "address": "0x63a3f07A644Bf6d76e143ba5E10F799D7c6824EA",
+        "amount": "1"
+      },
+      {
+        "address": "0x6cd22DE89b7C775b715e09a6634F3918CA7eCFbc",
+        "amount": "1"
+      },
+      {
+        "address": "0x6e4063a6481ab48FED6eeEBceA440d3bFe1e5Dcd",
+        "amount": "14"
+      },
+      {
+        "address": "0xa657a18cAaFBdb58536B8Ce366A570CD3dbCAc61",
+        "amount": "18"
+      },
+      {
+        "address": "0x5Edf80D3E691582742Aa7d0bb7d469832Fd51C89",
+        "amount": "1"
+      },
+      {
+        "address": "0x2CB5C7bd24480C9D450eD07eb49F4525ee41083a",
+        "amount": "2"
+      },
+      {
+        "address": "0xcB5E2626033126530e7157deD0DA04Ede46d3a25",
+        "amount": "2"
+      },
+      {
+        "address": "0xA9a4660f9c12CA2E8E6Af4c4E6Ed9a63dE95e6Ca",
+        "amount": "2"
+      }
+    ]
+  }
+}
