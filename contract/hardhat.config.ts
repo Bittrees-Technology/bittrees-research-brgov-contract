@@ -83,7 +83,7 @@ const config: HardhatUserConfig = {
                 chainId: 11155111,
                 urls: {
                     apiURL: 'https://api-sepolia.etherscan.io/api',
-                    browserURL: 'https://etherscan.io',
+                    browserURL: 'https://sepolia.etherscan.io',
                 },
             },
             {

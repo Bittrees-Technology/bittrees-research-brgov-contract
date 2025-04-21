@@ -70,7 +70,6 @@ PausableUpgradeable
 
     function initialize(
         string memory baseURI_,
-        address treasury_,
         address admin_
     ) public initializer {
         __ERC1155_init(baseURI_);
@@ -79,24 +78,20 @@ PausableUpgradeable
         __ReentrancyGuard_init();
         __Pausable_init();
 
-        // Validate treasury address
-        require(treasury_ != address(0), "Treasury cannot be zero address");
-
         // Grant roles
         _grantRole(DEFAULT_ADMIN_ROLE, admin_);    // Bittrees Research multisig
         _grantRole(ADMIN_ROLE, admin_);
 
         // Set storage
-        treasury = treasury_;
         _baseMetadataURI = baseURI_;
 
         // ===== ONE-TIME MINT LOGIC =====
         // Only used on Ethereum mainnet and sepolia testnet for airdropping existing holders as part of the
         // non-upgrade migration from contract v1() to v2
         if (block.chainid == 1 || block.chainid == 11155111) {
-            _mint(treasury_, ID_ONE, 50, "");
-            _mint(treasury_, ID_TEN, 55, "");
-            _mint(treasury_, ID_HUNDRED, 48, "");
+            _mint(admin_, ID_ONE, 50, "");
+            _mint(admin_, ID_TEN, 55, "");
+            _mint(admin_, ID_HUNDRED, 48, "");
         }
     }
 
@@ -172,6 +167,7 @@ PausableUpgradeable
     nonReentrant
     whenNotPaused
     {
+        require(treasury != address(0), "Treasury not yet set. Treasury must be set before minting can be allowed");
         require(tokenIds.length == amounts.length, "Array length mismatch");
         require(paymentTokens[paymentToken].active, "Payment token not accepted");
 

@@ -4,9 +4,11 @@ dotenv.config();
 
 export const CONFIG = {
     // ===== CONTRACT DEPLOYMENT DETAILS =====
-    baseURI: "https://research.bittrees.org/",
+    initialBaseURI: "https://research.bittrees.org/",
     treasuryAddress: process.env.TREASURY_ADDRESS || "0x...",
     adminAddress: process.env.ADMIN_ADDRESS || "0x...",
+    defaultAdminAddress: process.env.DEFAULT_ADMIN_ADDRESS || "0x...",
+    initialAdminAndDefaultAdminAddress: process.env.INITIAL_ADMIN_AND_DEFAULT_ADMIN_ADDRESS || "0x...",
     /**
      * Used to generate the salt which influences the contract addresses being
      * the same on all networks.

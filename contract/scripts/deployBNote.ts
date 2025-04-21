@@ -1,5 +1,5 @@
 import { ethers, network } from 'hardhat';
-import { CONFIG } from "./config";
+import { CONFIG } from "./utils/config";
 import fs from "fs";
 import {
     calculateCreate2Address,
@@ -8,7 +8,7 @@ import {
     askForConfirmation,
     proposeTxBundleToSafe,
     logTransactionDetailsToConsole,
-} from './helpers';
+} from './utils/helpers';
 
 async function main() {
     if(CONFIG.create2FactoryCallerAddress !== CONFIG.bittreesTechnologyGnosisSafeAddress) {
@@ -34,8 +34,8 @@ async function main() {
     console.log("==== BNote Deployment Information ====");
 
     // Generate deterministic salt from project name
-    const implSalt = generateCompatibleSalt(CONFIG.create2FactoryCallerAddress, `${CONFIG.projectName}_impl`);
-    console.log(`\nImplementation Salt Text: ${CONFIG.projectName}_impl`);
+    const implSalt = generateCompatibleSalt(CONFIG.create2FactoryCallerAddress, `${CONFIG.projectName}`);
+    console.log(`\nImplementation Salt Text: ${CONFIG.projectName}`);
     console.log(`Implementation Salt (hex): ${implSalt}`);
 
     // Get contract factories
@@ -58,9 +58,8 @@ async function main() {
 
     // Encode initialization call for the proxy
     const initData = BNoteFactory.interface.encodeFunctionData("initialize", [
-        CONFIG.baseURI,
-        CONFIG.treasuryAddress,
-        CONFIG.adminAddress
+        CONFIG.initialBaseURI,
+        CONFIG.initialAdminAndDefaultAdminAddress
     ]);
 
     // Encode proxy constructor arguments
@@ -68,8 +67,8 @@ async function main() {
         ProxyFactory.interface.encodeDeploy([implAddress, initData]).slice(2);
 
     // Calculate proxy address
-    const proxySalt = generateCompatibleSalt(CONFIG.create2FactoryCallerAddress, `${CONFIG.projectName}_proxy`);
-    console.log(`\nProxy Salt Text: ${CONFIG.projectName}_proxy`);
+    const proxySalt = generateCompatibleSalt(CONFIG.create2FactoryCallerAddress, `${CONFIG.projectName}`);
+    console.log(`\nProxy Salt Text: ${CONFIG.projectName}`);
     console.log(`Compatible Proxy Salt (hex): ${proxySalt}`);
 
     const proxyAddress = calculateCreate2Address(
@@ -104,9 +103,8 @@ async function main() {
             ]
         },
         config: {
-            baseURI: CONFIG.baseURI,
-            treasuryAddress: CONFIG.treasuryAddress,
-            adminAddress: CONFIG.adminAddress,
+            baseURI: CONFIG.initialBaseURI,
+            initialAdminAddress: CONFIG.initialAdminAndDefaultAdminAddress,
         }
     };
 

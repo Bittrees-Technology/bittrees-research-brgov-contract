@@ -33,8 +33,16 @@ ledger device. This requires `LEDGER_ADDRESS` to be the address you want to sign
 1. `npx hardhat compile` <- ensure you've compiled the latest changes
 2. `npx hardhat test` <- ensure all the tests are passing (and appropriate tests have been added)
 3. `npx hardhat run scripts/deployBNote.ts --network {network-name}` <- expected/configured network names can be found in the hardhat.config.ts
-4. `npx hardhat verify --network {network-name} {proxy-contract-address} --constructor-args deployments/proxy-args.ts` <- verify the proxy contract code on appropriate block explorers for the network
-5. `npx hardhat verify --network {network-name} {implementation-contract-address}` <- verify the implementation contract code on appropriate block explorers for the network
+4. `npx hardhat verify --network {network-name} {implementation-contract-address}` <- verify the implementation contract code on appropriate block explorers for the network
+5. `npx hardhat verify --network {network-name} {proxy-contract-address} --constructor-args deployments/proxy-args.ts` <- verify the proxy contract code on appropriate block explorers for the network
 
 running the deployment script will output a json file in `deployments/bnote-deployment-{network-name}.json`
 proxy-args.ts can be updated (if necessary for testing) by grabbing the proxyArgs from the deployment json file
+
+## Contract Configuration:
+1. Set PaymentToken/s with `npx hardhat run scripts/setPaymentToken.ts --network {network-name} -- --token {token-contract} --price 1000000000000000000`
+2. Set Treasury with `npx hardhat run scripts/setTreasury.ts --network {network-name}`
+3. Grant DEFAULT_ADMIN_ROLE with `npx hardhat run scripts/grantDEFAULT_ADMIN_ROLE.ts --network {network-name}`
+4. Grant ADMIN_ROLE with `npx hardhat run scripts/grantADMIN_ROLE.ts --network {network-name}`
+5. Renounce DEFAULT_ADMIN_ROLE `npx hardhat run scripts/renounceDEFAULT_ADMIN_ROLE.ts --network {network-name} -- --remainingDefaultAdminAddress {address}`
+6. Renounce ADMIN_ROLE `npx hardhat run scripts/renounceADMIN_ROLE.ts --network {network-name} -- --remainingAdminAddress  {address}`

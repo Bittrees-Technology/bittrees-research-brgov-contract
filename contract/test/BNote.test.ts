@@ -37,7 +37,6 @@ describe("BNote (UUPS upgradeable)", () => {
         BNoteFactory,
         [
           baseURI,
-          treasury.address,
           admin.address,
         ],
         { kind: "uups" }
@@ -52,9 +51,9 @@ describe("BNote (UUPS upgradeable)", () => {
       expect(uri).to.equal(baseURI);
     });
 
-    it("should set treasury on initialization", async () => {
+    it("should initialize with zero address treasury", async () => {
       const treasuryAddr = await bNoteProxy.treasury();
-      expect(treasuryAddr).to.equal(treasury.address);
+      expect(treasuryAddr).to.equal(ZeroAddress);
     });
 
     it("should grant ADMIN_ROLE to admin", async () => {
@@ -65,19 +64,6 @@ describe("BNote (UUPS upgradeable)", () => {
     it("should grant DEFAULT_ADMIN_ROLE to admin", async () => {
       const DEFAULT_ADMIN_ROLE = await bNoteProxy.DEFAULT_ADMIN_ROLE();
       expect(await bNoteProxy.hasRole(DEFAULT_ADMIN_ROLE, admin.address)).to.be.true;
-    });
-
-    it("should not initialize with zero address treasury", async () => {
-      const BNoteFactory = await ethers.getContractFactory("BNote");
-      await expect(upgrades.deployProxy(
-          BNoteFactory,
-          [
-            baseURI,
-            ZeroAddress,
-            admin.address,
-          ],
-          { kind: "uups" }
-      )).to.be.revertedWith("Treasury cannot be zero address");
     });
   });
 
@@ -349,13 +335,13 @@ describe("BNote (UUPS upgradeable)", () => {
       await nonCompliantERC20.connect(user).approve(await bNoteProxy.getAddress(), ethers.parseEther("1000"));
     });
 
-    it("should allow minting with valid payment token", async () => {
+    it("should not allow minting before treasury set to non-zero address", async () => {
+      const treasuryAddr = await bNoteProxy.treasury();
+      expect(treasuryAddr).to.equal(ZeroAddress);
+
       const tokenIds = [1, 10];
       const amounts = [5, 2];
       const mockTokenAddress = await mockERC20.getAddress();
-
-      // Calculate expected cost: 5 * 1 * price + 2 * 10 * price
-      const expectedCost = mintPrice * BigInt(5 * 1 + 2 * 10);
 
       // Check user's balance before
       const userBalanceBefore = await mockERC20.balanceOf(user.address);
@@ -363,101 +349,135 @@ describe("BNote (UUPS upgradeable)", () => {
 
       // Execute mint
       await expect(bNoteProxy.connect(user).mintBatch(tokenIds, amounts, mockTokenAddress))
-          .to.emit(bNoteProxy, "TokensMinted")
-          .withArgs(user.address, tokenIds, amounts);
+          .to.be.revertedWith(
+              "Treasury not yet set. Treasury must be set before minting can be allowed"
+          );
 
       // Verify token balances
-      expect(await bNoteProxy.balanceOf(user.address, 1)).to.equal(5);
-      expect(await bNoteProxy.balanceOf(user.address, 10)).to.equal(2);
+      expect(await bNoteProxy.balanceOf(user.address, 1)).to.equal(0);
+      expect(await bNoteProxy.balanceOf(user.address, 10)).to.equal(0);
 
       // Verify payment
-      expect(await mockERC20.balanceOf(user.address)).to.equal(userBalanceBefore - expectedCost);
-      expect(await mockERC20.balanceOf(treasury.address)).to.equal(treasuryBalanceBefore + expectedCost);
+      expect(await mockERC20.balanceOf(user.address)).to.equal(userBalanceBefore);
+      expect(await mockERC20.balanceOf(treasury.address)).to.equal(treasuryBalanceBefore);
     });
 
-    it("should allow minting with non-compliant ERC20 token", async () => {
-      const tokenIds = [1];
-      const amounts = [1];
-      const nonCompliantTokenAddress = await nonCompliantERC20.getAddress();
+    describe("Minting - after setTreasury has been called", () => {
+      beforeEach(async () => {
+        // Set the treasury
+        await bNoteProxy.connect(admin).setTreasury(treasury.address);
+      });
 
-      // Execute mint
-      await expect(bNoteProxy.connect(user).mintBatch(tokenIds, amounts, nonCompliantTokenAddress))
-          .to.emit(bNoteProxy, "TokensMinted");
+      it("should allow minting with valid payment token", async () => {
+        const tokenIds = [1, 10];
+        const amounts = [5, 2];
+        const mockTokenAddress = await mockERC20.getAddress();
 
-      // Verify token balance
-      expect(await bNoteProxy.balanceOf(user.address, 1)).to.equal(1);
-    });
+        // Calculate expected cost: 5 * 1 * price + 2 * 10 * price
+        const expectedCost = mintPrice * BigInt(5 * 1 + 2 * 10);
 
-    it("should reject minting with invalid token ID", async () => {
-      const mockTokenAddress = await mockERC20.getAddress();
+        // Check user's balance before
+        const userBalanceBefore = await mockERC20.balanceOf(user.address);
+        const treasuryBalanceBefore = await mockERC20.balanceOf(treasury.address);
 
-      // Try to mint with invalid token ID (only 1, 10, 100 are valid)
-      await expect(bNoteProxy.connect(user).mintBatch([2], [1], mockTokenAddress))
-          .to.be.revertedWith("Invalid tokenId");
-    });
+        // Execute mint
+        await expect(bNoteProxy.connect(user).mintBatch(tokenIds, amounts, mockTokenAddress))
+            .to.emit(bNoteProxy, "TokensMinted")
+            .withArgs(user.address, tokenIds, amounts);
 
-    it("should reject minting with inactive payment token", async () => {
-      // Set the token as inactive
-      const mockTokenAddress = await mockERC20.getAddress();
-      await bNoteProxy.connect(admin).setPaymentToken(mockTokenAddress, false, mintPrice);
+        // Verify token balances
+        expect(await bNoteProxy.balanceOf(user.address, 1)).to.equal(5);
+        expect(await bNoteProxy.balanceOf(user.address, 10)).to.equal(2);
 
-      await expect(bNoteProxy.connect(user).mintBatch([1], [1], mockTokenAddress))
-          .to.be.revertedWith("Payment token not accepted");
-    });
+        // Verify payment
+        expect(await mockERC20.balanceOf(user.address)).to.equal(userBalanceBefore - expectedCost);
+        expect(await mockERC20.balanceOf(treasury.address)).to.equal(treasuryBalanceBefore + expectedCost);
+      });
 
-    it("should reject minting with array length mismatch", async () => {
-      const mockTokenAddress = await mockERC20.getAddress();
+      it("should allow minting with non-compliant ERC20 token", async () => {
+        const tokenIds = [1];
+        const amounts = [1];
+        const nonCompliantTokenAddress = await nonCompliantERC20.getAddress();
 
-      await expect(bNoteProxy.connect(user).mintBatch([1, 10], [1], mockTokenAddress))
-          .to.be.revertedWith("Array length mismatch");
-    });
+        // Execute mint
+        await expect(bNoteProxy.connect(user).mintBatch(tokenIds, amounts, nonCompliantTokenAddress))
+            .to.emit(bNoteProxy, "TokensMinted");
 
-    it("should handle minting multiple token types", async () => {
-      const tokenIds = [1, 10, 100];
-      const amounts = [5, 3, 2];
-      const mockTokenAddress = await mockERC20.getAddress();
+        // Verify token balance
+        expect(await bNoteProxy.balanceOf(user.address, 1)).to.equal(1);
+      });
 
-      // Calculate expected cost: 5*1*price + 3*10*price + 1*100*price
-      const expectedCost = mintPrice * BigInt(5*1 + 3*10 + 2*100);
+      it("should reject minting with invalid token ID", async () => {
+        const mockTokenAddress = await mockERC20.getAddress();
 
-      await bNoteProxy.connect(user).mintBatch(tokenIds, amounts, mockTokenAddress);
+        // Try to mint with invalid token ID (only 1, 10, 100 are valid)
+        await expect(bNoteProxy.connect(user).mintBatch([2], [1], mockTokenAddress))
+            .to.be.revertedWith("Invalid tokenId");
+      });
 
-      expect(await bNoteProxy.balanceOf(user.address, 1)).to.equal(5);
-      expect(await bNoteProxy.balanceOf(user.address, 10)).to.equal(3);
-      expect(await bNoteProxy.balanceOf(user.address, 100)).to.equal(2);
+      it("should reject minting with inactive payment token", async () => {
+        // Set the token as inactive
+        const mockTokenAddress = await mockERC20.getAddress();
+        await bNoteProxy.connect(admin).setPaymentToken(mockTokenAddress, false, mintPrice);
 
-      // Verify payment went to treasury
-      expect(await mockERC20.balanceOf(treasury.address)).to.equal(expectedCost);
-    });
+        await expect(bNoteProxy.connect(user).mintBatch([1], [1], mockTokenAddress))
+            .to.be.revertedWith("Payment token not accepted");
+      });
 
-    it("should fail if payment fails", async () => {
-      const tokenIds = [1];
-      const amounts = [1000];  // Large amount
-      const mockTokenAddress = await mockERC20.getAddress();
+      it("should reject minting with array length mismatch", async () => {
+        const mockTokenAddress = await mockERC20.getAddress();
 
-      // Reduce allowance to cause payment failure
-      await mockERC20.connect(user).approve(await bNoteProxy.getAddress(), ethers.parseEther("0.01"));
+        await expect(bNoteProxy.connect(user).mintBatch([1, 10], [1], mockTokenAddress))
+            .to.be.revertedWith("Array length mismatch");
+      });
 
-      // Just check that it reverts without specifying the exact message
-      await expect(bNoteProxy.connect(user).mintBatch(tokenIds, amounts, mockTokenAddress))
-          .to.be.reverted;
-    });
+      it("should handle minting multiple token types", async () => {
+        const tokenIds = [1, 10, 100];
+        const amounts = [5, 3, 2];
+        const mockTokenAddress = await mockERC20.getAddress();
 
-    it("should not allow minting when contract is paused", async () => {
-      const tokenIds = [1];
-      const amounts = [1];
-      const mockTokenAddress = await mockERC20.getAddress();
+        // Calculate expected cost: 5*1*price + 3*10*price + 1*100*price
+        const expectedCost = mintPrice * BigInt(5*1 + 3*10 + 2*100);
 
-      // Pause the contract
-      await bNoteProxy.connect(admin).pause();
+        await bNoteProxy.connect(user).mintBatch(tokenIds, amounts, mockTokenAddress);
 
-      // Check that the contract is actually paused
-      expect(await bNoteProxy.paused()).to.be.true;
+        expect(await bNoteProxy.balanceOf(user.address, 1)).to.equal(5);
+        expect(await bNoteProxy.balanceOf(user.address, 10)).to.equal(3);
+        expect(await bNoteProxy.balanceOf(user.address, 100)).to.equal(2);
 
-      // Just assert that the transaction reverts without specifying the exact message
-      await expect(
-          bNoteProxy.connect(user).mintBatch(tokenIds, amounts, mockTokenAddress)
-      ).to.be.reverted;
+        // Verify payment went to treasury
+        expect(await mockERC20.balanceOf(treasury.address)).to.equal(expectedCost);
+      });
+
+      it("should fail if payment fails", async () => {
+        const tokenIds = [1];
+        const amounts = [1000];  // Large amount
+        const mockTokenAddress = await mockERC20.getAddress();
+
+        // Reduce allowance to cause payment failure
+        await mockERC20.connect(user).approve(await bNoteProxy.getAddress(), ethers.parseEther("0.01"));
+
+        // Just check that it reverts without specifying the exact message
+        await expect(bNoteProxy.connect(user).mintBatch(tokenIds, amounts, mockTokenAddress))
+            .to.be.reverted;
+      });
+
+      it("should not allow minting when contract is paused", async () => {
+        const tokenIds = [1];
+        const amounts = [1];
+        const mockTokenAddress = await mockERC20.getAddress();
+
+        // Pause the contract
+        await bNoteProxy.connect(admin).pause();
+
+        // Check that the contract is actually paused
+        expect(await bNoteProxy.paused()).to.be.true;
+
+        // Just assert that the transaction reverts without specifying the exact message
+        await expect(
+            bNoteProxy.connect(user).mintBatch(tokenIds, amounts, mockTokenAddress)
+        ).to.be.reverted;
+      });
     });
   });
 
