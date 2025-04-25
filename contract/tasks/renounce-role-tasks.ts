@@ -1,5 +1,4 @@
 import { task } from "hardhat/config";
-import { BNote__factory } from '../typechain-types';
 import { CONFIG } from "../config";
 import {
     askForConfirmation,
@@ -133,6 +132,7 @@ task("renounce-role", "Allows an address to renounce a role it currently has")
         const proxyAddress = await getBNoteProxyAddress(hre.network.name);
         console.log(`\nConnecting to BNote at: ${proxyAddress}`);
 
+        const { BNote__factory } = require('../typechain-types');
         const bNote = BNote__factory.connect(proxyAddress, hre.ethers.provider);
 
 

@@ -1,5 +1,4 @@
 import { task, types } from "hardhat/config";
-import { BNote__factory, ERC20__factory } from '../typechain-types';
 import { CONFIG } from "../config";
 import {
     askForConfirmation,
@@ -166,6 +165,7 @@ task("set-payment-token", "Sets the payment token accepted in exchange for minti
         console.log(`Active: ${active}`);
         console.log(`Mode: ${mode}`);
 
+        const { BNote__factory, ERC20__factory } = require('../typechain-types');
         const tokenContract = ERC20__factory.connect(tokenAddress, hre.ethers.provider);
         let decimals;
         try {
