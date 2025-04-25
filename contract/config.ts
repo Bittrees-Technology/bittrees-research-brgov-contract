@@ -5,10 +5,10 @@ dotenv.config();
 export const CONFIG = {
     // ===== CONTRACT DEPLOYMENT DETAILS =====
     initialBaseURI: "https://research.bittrees.org/",
-    treasuryAddress: process.env.TREASURY_ADDRESS || "0x...",
-    adminAddress: process.env.ADMIN_ADDRESS || "0x...",
-    defaultAdminAddress: process.env.DEFAULT_ADMIN_ADDRESS || "0x...",
-    initialAdminAndDefaultAdminAddress: process.env.INITIAL_ADMIN_AND_DEFAULT_ADMIN_ADDRESS || "0x...",
+    treasuryAddress: process.env.TREASURY_ADDRESS || "0x2F8f86e6E1Ff118861BEB7E583DE90f0449A264f",
+    adminAddress: process.env.ADMIN_ADDRESS || "0x2F8f86e6E1Ff118861BEB7E583DE90f0449A264f",
+    defaultAdminAddress: process.env.DEFAULT_ADMIN_ADDRESS || "0x2F8f86e6E1Ff118861BEB7E583DE90f0449A264f",
+    initialAdminAndDefaultAdminAddress: process.env.INITIAL_ADMIN_AND_DEFAULT_ADMIN_ADDRESS || "0x2CB5C7bd24480C9D450eD07eb49F4525ee41083a",
     /**
      * Used to generate the salt which influences the contract addresses being
      * the same on all networks.
@@ -18,7 +18,8 @@ export const CONFIG = {
     projectName: "BittreesResearchPreferredStock",
 
     // ===== GNOSIS SAFE DETAILS =====
-    bittreesTechnologyGnosisSafeAddress: "0x2CB5C7bd24480C9D450eD07eb49F4525ee41083a", // used as the deployer
+    bittreesResearchGnosisSafeAddress: "0x2F8f86e6E1Ff118861BEB7E583DE90f0449A264f",
+    bittreesTechnologyGnosisSafeAddress: "0x2CB5C7bd24480C9D450eD07eb49F4525ee41083a",
     /**
      * The Bittrees Technology Gnosis Safe address(0x2CB5C7bd24480C9D450eD07eb49F4525ee41083a)
      * MUST always be the caller of the safeCreate2 function on the gnosisCreate2FactoryAddress
@@ -53,4 +54,18 @@ export const CONFIG = {
     proposeTxToSafe: process.env.PROPOSE_TX === "true",
     useLedger: process.env.USE_LEDGER === "true",
     ledgerAddress: process.env.LEDGER_ADDRESS || "",
+    network: {
+        mainnet: {
+            BTreeTokenAddress: '0x6bDdE71Cf0C751EB6d5EdB8418e43D3d9427e436'
+        },
+        base: {
+            BTreeTokenAddress: '0x4aCFF883f2879e69e67B7003ccec56C73ee41F6f'
+        },
+        sepolia: {
+            BTreeTokenAddress: ''
+        },
+        baseSepolia: {
+            BTreeTokenAddress: '0xCa6f24a651bc4Ab545661a41a81EF387086a34C2'
+        },
+    },
 };

@@ -152,7 +152,6 @@ PausableUpgradeable
         _unpause();
     }
 
-
     // Rescue accidentally sent ERC20 tokens
     function rescueERC20(address token, address to, uint256 amount) external onlyRole(ADMIN_ROLE) {
         require(to != address(0), "Cannot send to zero address");
@@ -217,5 +216,18 @@ PausableUpgradeable
 
     function contractURI() public view returns (string memory) {
         return string.concat(_baseMetadataURI, "contract.json");
+    }
+
+    /**
+    * @notice Returns the total balance of all denominations for an account
+    * @param account The address to check the balance for
+    * @return The sum of all notes held by the account (1*count + 10*count + 100*count)
+    */
+    function totalBalanceOf(address account) public view returns (uint256) {
+        uint256 total = 0;
+        total += balanceOf(account, 1) * 1;
+        total += balanceOf(account, 10) * 10;
+        total += balanceOf(account, 100) * 100;
+        return total;
     }
 }

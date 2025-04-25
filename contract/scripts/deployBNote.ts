@@ -1,5 +1,5 @@
 import { ethers, network } from 'hardhat';
-import { CONFIG } from "./utils/config";
+import { CONFIG } from "../config";
 import fs from "fs";
 import {
     calculateCreate2Address,
@@ -8,9 +8,12 @@ import {
     askForConfirmation,
     proposeTxBundleToSafe,
     logTransactionDetailsToConsole,
-} from './utils/helpers';
+} from '../lib/helpers';
+import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
 async function main() {
+    const hre: HardhatRuntimeEnvironment = require('hardhat');
+
     if(CONFIG.create2FactoryCallerAddress !== CONFIG.bittreesTechnologyGnosisSafeAddress) {
         const question =
             `⚠️Configured create2FactoryCallerAddress address(${
@@ -34,7 +37,11 @@ async function main() {
     console.log("==== BNote Deployment Information ====");
 
     // Generate deterministic salt from project name
-    const implSalt = generateCompatibleSalt(CONFIG.create2FactoryCallerAddress, `${CONFIG.projectName}`);
+    const implSalt = generateCompatibleSalt(
+        hre,
+        CONFIG.create2FactoryCallerAddress,
+        `${CONFIG.projectName}`
+    );
     console.log(`\nImplementation Salt Text: ${CONFIG.projectName}`);
     console.log(`Implementation Salt (hex): ${implSalt}`);
 
@@ -47,6 +54,7 @@ async function main() {
 
     // Calculate implementation address
     const implAddress = calculateCreate2Address(
+        hre,
         CONFIG.gnosisCreate2FactoryAddress,
         implSalt,
         implementationBytecode
@@ -67,11 +75,16 @@ async function main() {
         ProxyFactory.interface.encodeDeploy([implAddress, initData]).slice(2);
 
     // Calculate proxy address
-    const proxySalt = generateCompatibleSalt(CONFIG.create2FactoryCallerAddress, `${CONFIG.projectName}`);
+    const proxySalt = generateCompatibleSalt(
+        hre,
+        CONFIG.create2FactoryCallerAddress,
+        `${CONFIG.projectName}`
+    );
     console.log(`\nProxy Salt Text: ${CONFIG.projectName}`);
     console.log(`Compatible Proxy Salt (hex): ${proxySalt}`);
 
     const proxyAddress = calculateCreate2Address(
+        hre,
         CONFIG.gnosisCreate2FactoryAddress,
         proxySalt,
         proxyCreationCode
@@ -127,10 +140,10 @@ async function main() {
     }
 
     // Encode implementation deployment call
-    const implDeployCalldata = encodeCreate2FactoryDeploymentTxData(implSalt, implementationBytecode);
+    const implDeployCalldata = encodeCreate2FactoryDeploymentTxData(hre, implSalt, implementationBytecode);
 
     // Encode proxy deployment call
-    const proxyDeployCalldata = encodeCreate2FactoryDeploymentTxData(proxySalt, proxyCreationCode);
+    const proxyDeployCalldata = encodeCreate2FactoryDeploymentTxData(hre, proxySalt, proxyCreationCode);
 
     const transactions = [{
         to: CONFIG.gnosisCreate2FactoryAddress,
@@ -145,7 +158,7 @@ async function main() {
     }]
 
     if(CONFIG.proposeTxToSafe) {
-        await proposeTxBundleToSafe(transactions, CONFIG.create2FactoryCallerAddress);
+        await proposeTxBundleToSafe(hre, transactions, CONFIG.create2FactoryCallerAddress);
     } else {
         logTransactionDetailsToConsole(transactions);
     }
