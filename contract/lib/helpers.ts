@@ -1,13 +1,20 @@
 import * as readline from 'readline';
-import { ethers, network } from 'hardhat';
-import { CREATE2_FACTORY_ABI } from './gnosis.create2Factory.abi';
+import { CREATE2_FACTORY_ABI } from './constants';
 import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers';
-import { CONFIG } from './config';
+import { CONFIG } from '../config';
 import { MetaTransactionData } from '@safe-global/types-kit';
 import Safe from '@safe-global/protocol-kit';
 import SafeApiKit from '@safe-global/api-kit';
+import { BNote } from '../typechain-types';
+import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
-export function generateCompatibleSalt(safeAddress: string, saltText: string): string {
+export function generateCompatibleSalt(
+    hre: HardhatRuntimeEnvironment,
+    safeAddress: string,
+    saltText: string
+): string {
+    const { ethers } = hre;
+
     // Remove '0x' from the safe address
     const addressBytes = safeAddress.toLowerCase().replace('0x', '');
 
@@ -21,10 +28,13 @@ export function generateCompatibleSalt(safeAddress: string, saltText: string): s
 }
 
 export function calculateCreate2Address(
+    hre: HardhatRuntimeEnvironment,
     factoryAddress: string,
     salt: string,
-    bytecode: string
+    bytecode: string,
 ): string {
+    const { ethers } = hre;
+
     // Calculate the initialization code hash
     const bytecodeHash = ethers.keccak256(bytecode);
 
@@ -55,15 +65,18 @@ export function calculateCreate2Address(
  * arguments, the bytecode string should append those using
  * `ContractFactoryInstance.interface.encodeDeploy(initData)` - see deployBNote.ts
  * proxyCreationCode for example
+ * @param hre the hardhat runtime environment
  * @returns a string to be used as the `data` property on a transaction deploying the
  * contract. The `to` property should be the address of the Gnosis CREATE2 factory.
  * The `value` property should be 0. The `operation` property should be 0 (usually
  * optional and defaults to 0).
  * */
 export function encodeCreate2FactoryDeploymentTxData(
+    hre: HardhatRuntimeEnvironment,
     salt: string,
-    bytecode: string
+    bytecode: string,
 ): string {
+    const { ethers } = hre;
     const factoryInterface = new ethers.Interface(CREATE2_FACTORY_ABI);
     return factoryInterface.encodeFunctionData("safeCreate2", [salt, bytecode]);
 }
@@ -94,9 +107,14 @@ export function askForConfirmation(question: string): Promise<boolean> {
     });
 }
 
-export async function proposeTxBundleToSafe(transactions: MetaTransactionData[], safeAddress: string) {
+export async function proposeTxBundleToSafe(
+    hre: HardhatRuntimeEnvironment,
+    transactions: MetaTransactionData[],
+    safeAddress: string,
+) {
+    const { ethers, network } = hre;
     // Get the signer - either from ledger or default hardhat
-    const signer = await getSigner();
+    const signer = await getSigner(hre);
 
     const { chainId } = await ethers.provider.getNetwork();
 
@@ -160,7 +178,10 @@ export function logTransactionDetailsToConsole(transactions: (
  * .env under LEDGER_ADDRESS and retrieved in config.ts, or a local signer as
  * configured in the .env under PRIVATE_KEY and retrieved in hardhat.config.ts
  * */
-export async function getSigner(): Promise<HardhatEthersSigner> {
+export async function getSigner(
+    hre: HardhatRuntimeEnvironment
+): Promise<HardhatEthersSigner> {
+    const { ethers } = hre;
     let signer: HardhatEthersSigner;
     if (CONFIG.useLedger) {
         console.log(`Using Ledger with address: ${CONFIG.ledgerAddress}`);
@@ -206,4 +227,51 @@ export function getSafeWebUrl(
     }
 
     return `${baseUrl}/transactions/queue?${query}`;
+}
+
+export type TBNoteDeploymentFile = {
+    network: string;
+    implementationSalt: string;
+    proxySalt: string;
+    create2Factory: string;
+    'implementationV2.0.0': {
+        bytecode: string;
+        address: string;
+    },
+    proxy: {
+        bytecode: string;
+        address: string;
+        proxyArgs: [string, string];
+    },
+    config: {
+        baseURI: string;
+        initialAdminAddress: string;
+    }
+}
+
+export async function getBNoteDeploymentFile(network: string): Promise<TBNoteDeploymentFile> {
+    try {
+        return require(`../deployments/bnote-deployment-${network}.json`);
+    } catch(e) {
+        throw new Error(`Could not find deployment file for network ${network}. Please ensure you've deployed the contract first.`);
+    }
+}
+
+// Get BNote contract address
+export async function getBNoteProxyAddress(network: string): Promise<string> {
+    return (await getBNoteDeploymentFile(network)).proxy.address;
+}
+
+export async function hasDefaultAdminRole(bNote: BNote, address: string): Promise<boolean> {
+    const roleHash = await bNote.DEFAULT_ADMIN_ROLE();
+    return hasRole(bNote, roleHash, address);
+}
+
+export async function hasAdminRole(bNote: BNote, address: string): Promise<boolean> {
+    const roleHash = await bNote.ADMIN_ROLE();
+    return hasRole(bNote, roleHash, address);
+}
+
+export async function hasRole(bNote: BNote, roleHash: string, address: string): Promise<boolean> {
+    return bNote.hasRole(roleHash, address);
 }

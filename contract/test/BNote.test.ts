@@ -388,6 +388,7 @@ describe("BNote (UUPS upgradeable)", () => {
         // Verify token balances
         expect(await bNoteProxy.balanceOf(user.address, 1)).to.equal(5);
         expect(await bNoteProxy.balanceOf(user.address, 10)).to.equal(2);
+        expect(await bNoteProxy.totalBalanceOf(user.address)).to.equal(25);
 
         // Verify payment
         expect(await mockERC20.balanceOf(user.address)).to.equal(userBalanceBefore - expectedCost);
@@ -405,6 +406,7 @@ describe("BNote (UUPS upgradeable)", () => {
 
         // Verify token balance
         expect(await bNoteProxy.balanceOf(user.address, 1)).to.equal(1);
+        expect(await bNoteProxy.totalBalanceOf(user.address)).to.equal(1);
       });
 
       it("should reject minting with invalid token ID", async () => {
@@ -413,6 +415,8 @@ describe("BNote (UUPS upgradeable)", () => {
         // Try to mint with invalid token ID (only 1, 10, 100 are valid)
         await expect(bNoteProxy.connect(user).mintBatch([2], [1], mockTokenAddress))
             .to.be.revertedWith("Invalid tokenId");
+
+        expect(await bNoteProxy.totalBalanceOf(user.address)).to.equal(0);
       });
 
       it("should reject minting with inactive payment token", async () => {
@@ -422,6 +426,9 @@ describe("BNote (UUPS upgradeable)", () => {
 
         await expect(bNoteProxy.connect(user).mintBatch([1], [1], mockTokenAddress))
             .to.be.revertedWith("Payment token not accepted");
+
+        expect(await bNoteProxy.balanceOf(user.address, 1)).to.equal(0);
+        expect(await bNoteProxy.totalBalanceOf(user.address)).to.equal(0);
       });
 
       it("should reject minting with array length mismatch", async () => {
@@ -429,6 +436,10 @@ describe("BNote (UUPS upgradeable)", () => {
 
         await expect(bNoteProxy.connect(user).mintBatch([1, 10], [1], mockTokenAddress))
             .to.be.revertedWith("Array length mismatch");
+
+        expect(await bNoteProxy.balanceOf(user.address, 1)).to.equal(0);
+        expect(await bNoteProxy.balanceOf(user.address, 10)).to.equal(0);
+        expect(await bNoteProxy.totalBalanceOf(user.address)).to.equal(0);
       });
 
       it("should handle minting multiple token types", async () => {
@@ -444,6 +455,7 @@ describe("BNote (UUPS upgradeable)", () => {
         expect(await bNoteProxy.balanceOf(user.address, 1)).to.equal(5);
         expect(await bNoteProxy.balanceOf(user.address, 10)).to.equal(3);
         expect(await bNoteProxy.balanceOf(user.address, 100)).to.equal(2);
+        expect(await bNoteProxy.totalBalanceOf(user.address)).to.equal(235);
 
         // Verify payment went to treasury
         expect(await mockERC20.balanceOf(treasury.address)).to.equal(expectedCost);
@@ -460,6 +472,9 @@ describe("BNote (UUPS upgradeable)", () => {
         // Just check that it reverts without specifying the exact message
         await expect(bNoteProxy.connect(user).mintBatch(tokenIds, amounts, mockTokenAddress))
             .to.be.reverted;
+
+        expect(await bNoteProxy.balanceOf(user.address, 1)).to.equal(0);
+        expect(await bNoteProxy.totalBalanceOf(user.address)).to.equal(0);
       });
 
       it("should not allow minting when contract is paused", async () => {
@@ -477,6 +492,8 @@ describe("BNote (UUPS upgradeable)", () => {
         await expect(
             bNoteProxy.connect(user).mintBatch(tokenIds, amounts, mockTokenAddress)
         ).to.be.reverted;
+
+        expect(await bNoteProxy.totalBalanceOf(user.address)).to.equal(0);
       });
     });
   });
