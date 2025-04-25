@@ -15,5 +15,7 @@ jobs:
             - run: node --version
             - run: npm install
               working-directory: contract
+            - run: npx hardhat compile
+              working-directory: contract
             - run: npm run test:ci
               working-directory: contract
