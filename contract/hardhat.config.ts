@@ -25,7 +25,7 @@ const config: HardhatUserConfig = {
 
         // ===== Mainnet Networks =====
         mainnet: {
-            url: process.env.MAINNET_RPC_URL,
+            url: process.env.MAINNET_RPC_URL || '',
             chainId: 1,
             // When using Ledger, include your address here
             ledgerAccounts: process.env.USE_LEDGER === 'true' && process.env.LEDGER_ADDRESS
@@ -35,7 +35,7 @@ const config: HardhatUserConfig = {
             accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
         },
         base: {
-            url: process.env.BASE_RPC_URL,
+            url: process.env.BASE_RPC_URL || '',
             chainId: 8453,
             ledgerAccounts: process.env.USE_LEDGER === 'true' && process.env.LEDGER_ADDRESS
                 ? [process.env.LEDGER_ADDRESS]
@@ -45,7 +45,7 @@ const config: HardhatUserConfig = {
 
         // ===== Testnet Networks =====
         sepolia: {
-            url: process.env.SEPOLIA_RPC_URL,
+            url: process.env.SEPOLIA_RPC_URL || '',
             chainId: 11155111,
             ledgerAccounts: process.env.USE_LEDGER === 'true' && process.env.LEDGER_ADDRESS
                 ? [process.env.LEDGER_ADDRESS]
@@ -53,7 +53,7 @@ const config: HardhatUserConfig = {
             accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
         },
         baseSepolia: {
-            url: process.env.BASE_SEPOLIA_RPC_URL,
+            url: process.env.BASE_SEPOLIA_RPC_URL || '',
             chainId: 84532,
             ledgerAccounts: process.env.USE_LEDGER === 'true' && process.env.LEDGER_ADDRESS
                 ? [process.env.LEDGER_ADDRESS]
