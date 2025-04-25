@@ -46,7 +46,7 @@ the contract is working as intended in production. Optional steps can be omitted
 
 1. Technology Multisig sets paymentTokens on the contract: (REQUIRED)
 use `npx hardhat technology-add-new-active-payment-token --network {network-name} --token {token-contract-address} --priceInMinorUnits 100000000000000000 --priceInMajorUnits 0.1`
-or use `npx hardhat technology-add-new-active-payment-token-batch --network {network-name} --tokens {token-contract-address-1},{token-contract-address-2} --prices 1000000000000000000,1000000000000000000`
+or use `npx hardhat technology-add-new-active-payment-token-batch --network {network-name} --tokens {token-contract-address-1},{token-contract-address-2} --pricesInMinorUnits 100000000000000000,200000000000000000 --pricesInMajorUnits 0.1,0.2`
 * this take a price in major and minor units and checks they're equivalent based on the decimals return by the onchain 
 token contract of the given address. This is to guard against incorrect price scaling. minor units are using in setting 
 the payment token in the contract after all checks pass

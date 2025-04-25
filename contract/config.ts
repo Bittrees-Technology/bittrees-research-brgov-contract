@@ -54,4 +54,18 @@ export const CONFIG = {
     proposeTxToSafe: process.env.PROPOSE_TX === "true",
     useLedger: process.env.USE_LEDGER === "true",
     ledgerAddress: process.env.LEDGER_ADDRESS || "",
+    network: {
+        mainnet: {
+            BTreeTokenAddress: '0x6bDdE71Cf0C751EB6d5EdB8418e43D3d9427e436'
+        },
+        base: {
+            BTreeTokenAddress: '0x4aCFF883f2879e69e67B7003ccec56C73ee41F6f'
+        },
+        sepolia: {
+            BTreeTokenAddress: ''
+        },
+        baseSepolia: {
+            BTreeTokenAddress: '0xCa6f24a651bc4Ab545661a41a81EF387086a34C2'
+        },
+    },
 };
