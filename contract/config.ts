@@ -62,10 +62,10 @@ export const CONFIG = {
             BTreeTokenAddress: '0x4aCFF883f2879e69e67B7003ccec56C73ee41F6f'
         },
         sepolia: {
-            BTreeTokenAddress: ''
+            BTreeTokenAddress: '0x8389eFa79EF27De249AF63f034D7A94dFBdd4cBE'
         },
         baseSepolia: {
-            BTreeTokenAddress: '0xCa6f24a651bc4Ab545661a41a81EF387086a34C2'
+            BTreeTokenAddress: '0xF8c91a56db8485FCee21c5bf6345B063Cf4228F6'
         },
     },
 };
