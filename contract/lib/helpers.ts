@@ -215,10 +215,10 @@ export function getSafeWebUrl(
             query = `${query}base:${safeAddress}`;
             break;
         case "optimism":
-            query = `${query}opt:${safeAddress}`;
+            query = `${query}oeth:${safeAddress}`;
             break;
         case "arbitrum":
-            query = `${query}arb:${safeAddress}`;
+            query = `${query}arb1:${safeAddress}`;
             break;
 
         // Testnets
@@ -229,10 +229,12 @@ export function getSafeWebUrl(
             query = `${query}basesep:${safeAddress}`;
             break;
         case "optimismSepolia":
-            query = `${query}optsep:${safeAddress}`;
+            // TODO: validate once support added in the UI
+            query = `${query}oethsep:${safeAddress}`;
             break;
         case "arbitrumSepolia":
-            query = `${query}arbsep:${safeAddress}`;
+            // TODO: validate once support added in the UI
+            query = `${query}arb1sep:${safeAddress}`;
             break;
         default:
             query = `${query}${safeAddress}`;
