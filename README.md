@@ -3,14 +3,13 @@
 ## MAINNET: Ethereum
 
 -   BNote Proxy - https://etherscan.io/address/0xf1AAfFc982B5F553a730a9eC134715a547f1fe80
--   BNote Contact - https://etherscan.io/address/0x05817107460e6a3B0B719171fDe700f7eFe4E8F5
 -   ProxyAdmin - https://etherscan.io/address/0x9561a4d6006aa6148b343a9afddf9591acc6abdf
 -   BTREE - https://etherscan.io/address/0x6bDdE71Cf0C751EB6d5EdB8418e43D3d9427e436
 
 ## TESTNET: Sepolia
 
 -   BNote Proxy - https://sepolia.etherscan.io/address/0xf1AAfFc982B5F553a730a9eC134715a547f1fe80
--   BNote Contact - https://sepolia.etherscan.io/address/0x05817107460e6a3B0B719171fDe700f7eFe4E8F5
+-   BTREE - https://sepolia.etherscan.io/address/0x8389eFa79EF27De249AF63f034D7A94dFBdd4cBE
 
 ## MAINNET: Base
 
@@ -23,7 +22,7 @@
 
 -   BNote Proxy - https://sepolia.basescan.org/address/0xf1AAfFc982B5F553a730a9eC134715a547f1fe80
 -   ProxyAdmin - https://sepolia.basescan.org/address/0x3ed570c2917EC8bEa558174697F28B24fc09ec09
--   BTREE - https://sepolia.basescan.org/address/0xCa6f24a651bc4Ab545661a41a81EF387086a34C2
+-   BTREE - https://sepolia.basescan.org/address/0xF8c91a56db8485FCee21c5bf6345B063Cf4228F6
 
 ![Solidity tests](https://github.com/Bittrees-Technology/bittrees-research-brgov-contract/actions/workflows/continuous-integration.yaml/badge.svg)
 
