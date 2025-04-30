@@ -43,7 +43,7 @@ const config: HardhatUserConfig = {
             accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
         },
         optimism: {
-            url: process.env.OPTIMISM_RPC_URL,
+            url: process.env.OPTIMISM_RPC_URL || '',
             chainId: 10,
             ledgerAccounts: process.env.USE_LEDGER === 'true' && process.env.LEDGER_ADDRESS
                 ? [process.env.LEDGER_ADDRESS]
@@ -51,7 +51,7 @@ const config: HardhatUserConfig = {
             accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
         },
         arbitrum: {
-            url: process.env.ARBITRUM_RPC_URL,
+            url: process.env.ARBITRUM_RPC_URL || '',
             chainId: 42161,
             ledgerAccounts: process.env.USE_LEDGER === 'true' && process.env.LEDGER_ADDRESS
                 ? [process.env.LEDGER_ADDRESS]
@@ -77,7 +77,7 @@ const config: HardhatUserConfig = {
             accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
         },
         optimismSepolia: {
-            url: process.env.OPTIMISM_SEPOLIA_RPC_URL,
+            url: process.env.OPTIMISM_SEPOLIA_RPC_URL || '',
             chainId: 11155420,
             ledgerAccounts: process.env.USE_LEDGER === 'true' && process.env.LEDGER_ADDRESS
                 ? [process.env.LEDGER_ADDRESS]
@@ -85,7 +85,7 @@ const config: HardhatUserConfig = {
             accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
         },
         arbitrumSepolia: {
-            url: process.env.ARBITRUM_SEPOLIA_RPC_URL,
+            url: process.env.ARBITRUM_SEPOLIA_RPC_URL || '',
             chainId: 421614,
             ledgerAccounts: process.env.USE_LEDGER === 'true' && process.env.LEDGER_ADDRESS
                 ? [process.env.LEDGER_ADDRESS]
