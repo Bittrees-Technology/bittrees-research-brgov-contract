@@ -35,10 +35,14 @@ export const CONFIG = {
         // Mainnet URLs
         mainnet: 'https://safe-transaction-mainnet.safe.global',
         base: 'https://safe-transaction-base.safe.global',
+        optimism: 'https://safe-transaction-optimism.safe.global',
+        arbitrum: 'https://safe-transaction-arbitrum.safe.global',
 
         // Testnet URLs
         sepolia: 'https://safe-transaction-sepolia.safe.global',
-        baseSepolia: 'https://safe-transaction-base-sepolia.safe.global'
+        baseSepolia: 'https://safe-transaction-base-sepolia.safe.global',
+        optimismSepolia: 'https://safe-transaction-optimism-sepolia.safe.global',
+        arbitrumSepolia: 'https://safe-transaction-arbitrum-sepolia.safe.global',
     },
 
     /**
@@ -55,17 +59,32 @@ export const CONFIG = {
     useLedger: process.env.USE_LEDGER === "true",
     ledgerAddress: process.env.LEDGER_ADDRESS || "",
     network: {
+        // ===== Mainnet Networks =====
         mainnet: {
             BTreeTokenAddress: '0x6bDdE71Cf0C751EB6d5EdB8418e43D3d9427e436'
         },
         base: {
             BTreeTokenAddress: '0x4aCFF883f2879e69e67B7003ccec56C73ee41F6f'
         },
+        optimism: {
+            BTreeTokenAddress: '0xB260d236F5eA5094D31F016160705ff53ac45028'
+        },
+        arbitrum: {
+            BTreeTokenAddress: '0xA29871E78FC005d31982f942E1569265BA145A34'
+        },
+
+        // ===== Testnet Networks =====
         sepolia: {
             BTreeTokenAddress: '0x8389eFa79EF27De249AF63f034D7A94dFBdd4cBE'
         },
         baseSepolia: {
             BTreeTokenAddress: '0xF8c91a56db8485FCee21c5bf6345B063Cf4228F6'
+        },
+        optimismSepolia: {
+            BTreeTokenAddress: '0x7E5A0b6C5c32883AE8E5b830c05688Eff317c3fb'
+        },
+        arbitrumSepolia: {
+            BTreeTokenAddress: '0x65414D6A6DF9A139a462c2F43199dE580A348dF9'
         },
     },
 };
