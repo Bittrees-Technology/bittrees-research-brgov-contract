@@ -17,19 +17,19 @@
   "license": "MIT",
   "description": "An upgradeable ERC1155 for purchasing Bittrees Reasearch Preferred Stock",
   "devDependencies": {
-    "@nomicfoundation/hardhat-ledger": "^1.0.3",
-    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "@nomicfoundation/hardhat-verify": "^2.0.13",
-    "@openzeppelin/contracts": "^5.2.0",
-    "@openzeppelin/contracts-upgradeable": "^5.2.0",
-    "@openzeppelin/hardhat-upgrades": "^3.9.0",
-    "@safe-global/api-kit": "^3.0.1",
-    "@safe-global/protocol-kit": "^6.0.3",
-    "@safe-global/types-kit": "^2.0.1",
-    "dotenv": "^16.4.7",
-    "ethers-v5": "npm:ethers@^5.7.2",
-    "hardhat": "^2.22.19",
-    "solhint": "^5.0.5",
-    "ts-node": "^10.9.2"
+    "@nomicfoundation/hardhat-ledger": "1.1.0",
+    "@nomicfoundation/hardhat-toolbox": "5.0.0",
+    "@nomicfoundation/hardhat-verify": "2.0.13",
+    "@openzeppelin/contracts": "5.3.0",
+    "@openzeppelin/contracts-upgradeable": "5.3.0",
+    "@openzeppelin/hardhat-upgrades": "3.9.0",
+    "@safe-global/api-kit": "3.0.1",
+    "@safe-global/protocol-kit": "6.0.3",
+    "@safe-global/types-kit": "2.0.1",
+    "dotenv": "16.5.0",
+    "ethers-v5": "npm:ethers@5.8.0",
+    "hardhat": "2.23.0",
+    "solhint": "5.0.5",
+    "ts-node": "10.9.2"
   }
 }
