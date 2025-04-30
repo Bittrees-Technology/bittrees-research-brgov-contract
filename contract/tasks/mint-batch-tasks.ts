@@ -191,7 +191,7 @@ task('mint-batch', 'Mints multiple BNotes in one transaction')
         // Get token info (optional, for better UX)
         const tokenContract = ERC20__factory.connect(tokenAddress, hre.ethers.provider);
 
-        const allowance = hre.ethers.parseUnits(await tokenContract.allowance(from, proxyAddress));
+        const allowance: bigint = await tokenContract.allowance(from, proxyAddress);
 
         if (allowance < totalCost) {
             console.log(
