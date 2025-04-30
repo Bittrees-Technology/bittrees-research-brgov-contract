@@ -124,8 +124,17 @@ export async function proposeTxBundleToSafe(
         safeAddress,
     })
 
+    const safeService = new SafeApiKit({
+        chainId
+    });
+
+    const nonce = await getNonce(safe, safeAddress, safeService);
+
     const unsignedSafeTx = await safe.createTransaction({
-        transactions
+        transactions,
+        options: {
+            nonce
+        }
     })
 
     const signedSafeTx = await safe.signTransaction(unsignedSafeTx);
@@ -135,10 +144,6 @@ export async function proposeTxBundleToSafe(
     if (!signature) {
         throw new Error("Signature not found");
     }
-
-    const safeService = new SafeApiKit({
-        chainId
-    });
 
     await safeService.proposeTransaction({
         senderAddress: signer.address,
@@ -153,6 +158,47 @@ export async function proposeTxBundleToSafe(
         "Go to your Safe UI to approve an execute the transaction bundle:\n"
         + getSafeWebUrl(network.name, CONFIG.create2FactoryCallerAddress)
     );
+}
+
+/**
+ * By default, proposing a transaction to the safe service for a instantiated safe
+ * object just checks the nonce based on executed transactions onchain for the safe
+ * in question. This function takes proposed transaction on the queue into account,
+ * allowing us to queue up multiple transactions without causing nonce collisions
+ * or needing to wait for each proposed transaction to be executed before proposing
+ * the next.
+ * */
+async function getNonce(
+    safe: Safe,
+    safeAddress: string,
+    safeService: SafeApiKit,
+): Promise<number> {
+    const onChainNonce = await safe.getNonce();
+
+    const pendingTransactions = (
+        await safeService.getPendingTransactions(safeAddress)).results;
+
+    let nextNonce = onChainNonce;
+
+    if (pendingTransactions.length > 0) {
+        console.log(
+            `There are ${
+                pendingTransactions.length
+            } pending transactions in the queue for the safe with address(${
+                safeAddress
+            })`
+        );
+        // Find the highest nonce in pending transactions
+        const highestPendingNonce = Math.max(
+            ...pendingTransactions.map(tx => tx.nonce)
+        );
+        nextNonce = Math.max(onChainNonce, highestPendingNonce + 1);
+    }
+
+    console.log(`On-chain nonce: ${onChainNonce}`);
+    console.log(`Next available nonce: ${nextNonce}`);
+
+    return nextNonce;
 }
 
 /**
