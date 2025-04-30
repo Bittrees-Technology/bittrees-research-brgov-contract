@@ -39,56 +39,100 @@ ledger device. This requires `LEDGER_ADDRESS` to be the address you want to sign
 running the deployment script will output a json file in `deployments/bnote-deployment-{network-name}.json`
 proxy-args.ts can be updated (if necessary for testing) by grabbing the proxyArgs from the deployment json file
 
-## Contract Configuration & Handover steps:
+# Contract Configuration & Handover steps:
 This describes a thorough process of configuring the BNote contract and handing over control from the Bittrees Technology 
-Multisig to the Bittrees Research Multisig. This process attempts to be thorough, including certain optional steps to test
-the contract is working as intended in production. Optional steps can be omitted, but that is not recommended.
+Multisig to the Bittrees Research Multisig. This process includes certain optional steps to test and ensure the contract
+is working as intended in production. Optional steps can be omitted, but that is not recommended.
 
-1. Technology Multisig sets paymentTokens on the contract: (REQUIRED)
-use `npx hardhat technology-add-new-active-payment-token --network {network-name} --token {token-contract-address} --priceInMinorUnits 100000000000000000 --priceInMajorUnits 0.1`
-or use `npx hardhat technology-add-new-active-payment-token-batch --network {network-name} --tokens {token-contract-address-1},{token-contract-address-2} --pricesInMinorUnits 100000000000000000,200000000000000000 --pricesInMajorUnits 0.1,0.2`
-* this take a price in major and minor units and checks they're equivalent based on the decimals return by the onchain 
-token contract of the given address. This is to guard against incorrect price scaling. minor units are using in setting 
-the payment token in the contract after all checks pass
+### 1. Technology Multisig sets paymentTokens on the contract: (REQUIRED)
+`npx hardhat technology-add-new-active-payment-token --network {network-name} --token-address {token-contract-address} --price-in-minor-units 100000000000000000 --price-in-major-units 0.1`
 
-2. Technology Multisig sets treasury on the contract: (REQUIRED)
-use `npx hardhat technology-set-treasury-to-research --network {network-name}`
-* this is required for minting to work, and so funds paid for minting are received by Bittrees Research Multisig 
+OR 
 
-3. Technology Multisig mints tokens on the treasury: (OPTIONAL)
-use `npx hardhat technology-mint-batch-test --network {network-name}` TODO: add this task
-* this proves minting is working correctly, and that the treasury is correctly set
+`npx hardhat technology-add-new-active-payment-token-batch --network {network-name} --token-addresses {token-contract-address-1},{token-contract-address-2} --prices-in-minor-units 100000000000000000,200000000000000000 --prices-in-major-units 0.1,0.2`
 
-4. Technology Multisig pauses the contract: (OPTIONAL)
-use `npx hardhat technology-pause-bnote --network {network-name}` TODO: add this task
-* this proves minting is working correctly, and that the treasury is correctly set
+This takes the same price in major and minor units and checks they're equivalent based on the decimals return by the onchain 
+token contract of the given address. This is to guard against incorrect price scaling. Minor units are used in setting 
+the payment token in the contract after all checks pass.
 
-5. Technology Multisig tries but fails to mint tokens to the treasury: (OPTIONAL - only useful if step 4 was used)
-use `npx hardhat technology-mint-batch-test --network {network-name}` TODO: add this task
-* this proves that pausing the contract works as it should, and sets up the Research Multisig to prove once it has the ADMIN_ROLE
+### 2. Technology Multisig sets treasury on the contract: (REQUIRED)
+`npx hardhat technology-set-treasury-to-research --network {network-name}`
 
-6. Technology Multisig grants DEFAULT_ADMIN_ROLE to the Research Multisig: (REQUIRED)  
-use `npx hardhat technology-grant-default-admin-role-to-research --network {network-name}`
-* this allows the Research Multisig to to grant roles to addresses 
+This is required for minting to work, and so funds paid for minting are received by Bittrees Research Multisig
 
-7. Research Multisig grants ADMIN_ROLE to the itself: (REQUIRED)
-use `npx hardhat research-grant-admin-role-to-itself --network {network-name}`
-* this proves that the Research Multisig DEFAULT_ADMIN_ROLE is working
+### 3. Technology Multisig approves BNote contract to spend sufficient BTREE it holds: (OPTIONAL)
+TODO: Add this task for Technology to approve BNote contract to spend its BTREE in the following test mint
 
-8. Research Multisig unpauses contract so minting can resume: (REQUIRED if step 4 was used)
-use `npx hardhat research-unpause-bnote --network {network-name}` TODO: add this task
-* this proves that the Research Multisig ADMIN_ROLE is working
+`npx hardhat technology-approve-bnote-to-spend-btree --network {network-name}`
 
-9. Technology Multisig renounces DEFAULT_ADMIN_ROLE & ADMIN_ROLE: (REQUIRED - alternatively do step 10)
-use `npx hardhat technology-renounce-default-admin-role --network {network-name}`
-and use `npx hardhat technology-renounce-admin-role --network {network-name}`
-* this leaves Bittrees Research as the exclusive address with authority over the contract. The --remainingAddress value
+Required for minting in step 4 to work. Default usage approves 111k BTREE, as test assumptions are that
+the unitPrice of 1 BNote is 1,000 BTREE, and test mint will mint 1 of each token resulting in a total of 111 BNote
+
+### 4. Technology Multisig mints tokens to the treasury: (OPTIONAL - requires step 3 to have been carried out)
+`npx hardhat technology-mint-batch-test --network {network-name}`
+
+Proves minting is working correctly, and that the treasury and BTREE paymentToken are set correctly.
+
+### 5. Technology Multisig pauses the contract: (OPTIONAL)
+`npx hardhat technology-pause-bnote-minting --network {network-name}`
+
+Proves minting is working correctly, and that the treasury is correctly set
+
+### 6. Technology Multisig tries but fails to mint tokens to the treasury: (OPTIONAL - only useful if step 4 was used)
+`npx hardhat technology-mint-batch-test --network {network-name}`
+
+Proves that pausing the contract works as it should, and sets up the Research Multisig to prove once it has the ADMIN_ROLE
+
+### 7. Technology Multisig grants DEFAULT_ADMIN_ROLE to the Research Multisig: (REQUIRED)  
+`npx hardhat technology-grant-default-admin-role-to-research --network {network-name}`
+
+Allows the Research Multisig to to grant roles to addresses 
+
+### 8. Research Multisig grants ADMIN_ROLE to the itself: (REQUIRED)
+`npx hardhat research-grant-admin-role-to-itself --network {network-name}`
+
+Proves that the Research Multisig DEFAULT_ADMIN_ROLE is working
+
+### 9. Research Multisig unpauses contract so minting can resume: (REQUIRED if step 4 was used)
+`npx hardhat research-unpause-bnote --network {network-name}`
+
+Proves that the Research Multisig ADMIN_ROLE is working
+
+### 10. Technology Multisig approves BNote contract to spend sufficient BTREE it holds: (OPTIONAL)
+TODO: Add this task for Technology to approve BNote contract to spend its BTREE in the following test mint
+
+`npx hardhat research-approve-bnote-to-spend-btree --network {network-name}`
+
+Required for minting to work. Default approves 111k BTREE, as test assumptions are that the unitPrice of 1 BNote is 
+1,000 BTREE, and test mint will mint 1 of each token resulting in a total of 111 BNote
+
+### 11. Research Multisig mints tokens to the treasury(itself): (OPTIONAL - requires step 10 to have been carried out)
+`npx hardhat research-mint-batch-test --network {network-name}`
+
+Proves to research that minting is working correctly, that the treasury is correctly set, 
+that the BTREE token is set as a valid active paymentToken with the right price, and that the
+contract is unpaused by Research's own authority
+
+### 12_a. Technology Multisig renounces DEFAULT_ADMIN_ROLE & ADMIN_ROLE: (REQUIRED - alternatively do step 12_b)
+
+`npx hardhat technology-renounce-default-admin-role --network {network-name}`
+
+AND
+
+`npx hardhat technology-renounce-admin-role --network {network-name}`
+
+Leaves Bittrees Research as the exclusive address with authority over the contract. The --remainingAddress value
 passed in should be the Research Multisig address, and ensures that the Technology Multisig does not renounce the roles
 before they have been granted to another address.
 
-10. Research Multisig revokes DEFAULT_ADMIN_ROLE & ADMIN_ROLE from Technology Multisig: (REQUIRED - alternatively do step 9)
-use `npx hardhat research-revoke-default-admin-role-from-technology --network {network-name}`
-and use `npx hardhat research-revoke-admin-role-from-technology --network {network-name}`
-* this leaves Bittrees Research as the exclusive address with authority over the contract. The --remainingAddress value 
+### 12_b. Research Multisig revokes DEFAULT_ADMIN_ROLE & ADMIN_ROLE from Technology Multisig: (REQUIRED - alternatively do step 12_a)
+
+`npx hardhat research-revoke-default-admin-role-from-technology --network {network-name}`
+
+AND
+
+`npx hardhat research-revoke-admin-role-from-technology --network {network-name}`
+
+Leaves Bittrees Research as the exclusive address with authority over the contract. The --remainingAddress value 
 passed in should be the Research Multisig address, and ensures that the Technology Multisig does not renounce the roles
 before they have been granted to another address.

@@ -16,7 +16,12 @@ task(
     'technology-mint-batch-test',
     'Bittrees Technology Multisig mints BNotes using the mintBatch function',
 )
-    .addParam('tokenAddress', 'The address of the ERC20 token used for payment')
+    .addOptionalParam(
+        'tokenAddress',
+        'The address of the ERC20 token used for payment',
+        undefined,
+        types.string,
+    )
     .addParam(
         'tokenIds',
         'Comma-separated list of token IDs to mint',
@@ -32,7 +37,7 @@ task(
     .addFlag('dryRun', 'Only show transaction data without submitting')
     .setAction(async (taskArgs, hre) => {
         const {
-            tokenAddress,
+            tokenAddress = CONFIG.network[hre.network.name as keyof typeof CONFIG.network].BTreeTokenAddress,
             tokenIds,
             quantities,
             dryRun,
@@ -56,7 +61,12 @@ task(
     'research-mint-batch-test',
     'Bittrees Research Multisig mints BNotes using the mintBatch function',
 )
-    .addParam('tokenAddress', 'The address of the ERC20 token used for payment')
+    .addOptionalParam(
+        'tokenAddress',
+        'The address of the ERC20 token used for payment',
+        undefined,
+        types.string,
+    )
     .addParam(
         'tokenIds',
         'Comma-separated list of token IDs to mint',
@@ -72,7 +82,7 @@ task(
     .addFlag('dryRun', 'Only show transaction data without submitting')
     .setAction(async (taskArgs, hre) => {
         const {
-            tokenAddress,
+            tokenAddress = CONFIG.network[hre.network.name as keyof typeof CONFIG.network].BTreeTokenAddress,
             tokenIds,
             quantities,
             dryRun,
