@@ -34,7 +34,7 @@ task(
         '1,1,1',
         types.string,
     )
-    .addFlag('dryRun', 'Only show transaction data without submitting')
+    .addFlag('dryRun', 'Return and log transaction data without submitting')
     .setAction(async (taskArgs, hre) => {
         const {
             tokenAddress = CONFIG.network[hre.network.name as keyof typeof CONFIG.network].BTreeTokenAddress,
@@ -79,7 +79,7 @@ task(
         '1,1,1',
         types.string,
     )
-    .addFlag('dryRun', 'Only show transaction data without submitting')
+    .addFlag('dryRun', 'Return and log transaction data without submitting')
     .setAction(async (taskArgs, hre) => {
         const {
             tokenAddress = CONFIG.network[hre.network.name as keyof typeof CONFIG.network].BTreeTokenAddress,
@@ -119,7 +119,7 @@ task('mint-batch', 'Mints multiple BNotes in one transaction')
         'The address calling the contract to mint tokens',
         CONFIG.bittreesResearchGnosisSafeAddress,
     )
-    .addFlag('dryRun', 'Only show transaction data without submitting')
+    .addFlag('dryRun', 'Return and log transaction data without submitting')
     .setAction(async (taskArgs, hre) => {
         const {
             tokenAddress,
@@ -254,6 +254,7 @@ task('mint-batch', 'Mints multiple BNotes in one transaction')
 
         if (dryRun || !CONFIG.proposeTxToSafe) {
             logTransactionDetailsToConsole(transactions);
+            return transactions;
         } else {
             await proposeTxBundleToSafe(hre, transactions, from);
         }

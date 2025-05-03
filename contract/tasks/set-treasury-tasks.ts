@@ -17,7 +17,7 @@ task(
     "technology-set-treasury-to-research",
     "Bittrees Technology Multisig sets treasury to the Bittrees Research Multisig"
 )
-    .addFlag("dryRun", "Only show transaction data without submitting")
+    .addFlag("dryRun", "Return and log transaction data without submitting")
     .setAction(async (taskArgs, hre) => {
         const { dryRun } = taskArgs;
 
@@ -39,7 +39,7 @@ task("set-treasury", "Sets the treasury to a given address")
         "The address calling the contract to set the treasury address",
         CONFIG.bittreesResearchGnosisSafeAddress,
     )
-    .addFlag("dryRun", "Only show transaction data without submitting")
+    .addFlag("dryRun", "Return and log transaction data without submitting")
     .setAction(async (taskArgs, hre) => {
         const {
             treasuryAddress,
@@ -96,6 +96,7 @@ task("set-treasury", "Sets the treasury to a given address")
 
         if (dryRun || !CONFIG.proposeTxToSafe) {
             logTransactionDetailsToConsole(transactions);
+            return transactions;
         } else {
             await proposeTxBundleToSafe(hre, transactions, from);
         }

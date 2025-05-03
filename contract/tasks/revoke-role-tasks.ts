@@ -24,7 +24,7 @@ task(
         'An address retaining the roll - ensures a role is not left with no address that has it after it is revoked',
         CONFIG.bittreesResearchGnosisSafeAddress,
     )
-    .addFlag("dryRun", "Only show transaction data without submitting")
+    .addFlag("dryRun", "Return and log transaction data without submitting")
     .setAction(async (taskArgs, hre) => {
         const { addressRetainingRole, dryRun } = taskArgs;
 
@@ -53,7 +53,7 @@ task(
         'An address retaining the roll - ensures a role is not left with no address that has it after it is revoked',
         CONFIG.bittreesResearchGnosisSafeAddress,
     )
-    .addFlag("dryRun", "Only show transaction data without submitting")
+    .addFlag("dryRun", "Return and log transaction data without submitting")
     .setAction(async (taskArgs, hre) => {
         const { addressRetainingRole, dryRun } = taskArgs;
 
@@ -78,7 +78,7 @@ task("revoke-role", "Allows an address with DEFAULT_ADMIN_ROLE to revoke a role 
         "An address retaining the roll - ensures a role is not left with no address that has it after it is revoked from addessWithRole",
         CONFIG.bittreesResearchGnosisSafeAddress,
     )
-    .addFlag("dryRun", "Only show transaction data without submitting")
+    .addFlag("dryRun", "Return and log transaction data without submitting")
     .setAction(async (taskArgs, hre) => {
         const {
             role,
@@ -188,6 +188,7 @@ task("revoke-role", "Allows an address with DEFAULT_ADMIN_ROLE to revoke a role 
 
         if (dryRun || !CONFIG.proposeTxToSafe) {
             logTransactionDetailsToConsole(transactions);
+            return transactions;
         } else {
             await proposeTxBundleToSafe(hre, transactions, from);
         }

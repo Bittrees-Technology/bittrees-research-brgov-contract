@@ -19,7 +19,7 @@ task(
     "technology-grant-default-admin-role-to-research",
     "Bittrees Technology Multisig grants DEFAULT_ADMIN_ROLE to the Bittrees Research Multisig"
 )
-    .addFlag("dryRun", "Only show transaction data without submitting")
+    .addFlag("dryRun", "Return and log transaction data without submitting")
     .setAction(async (taskArgs, hre) => {
         const { dryRun } = taskArgs;
 
@@ -42,7 +42,7 @@ task(
     "research-grant-admin-role-to-itself",
     "Bittrees Technology Multisig grants ADMIN_ROLE to the Bittrees Research Multisig"
 )
-    .addFlag("dryRun", "Only show transaction data without submitting")
+    .addFlag("dryRun", "Return and log transaction data without submitting")
     .setAction(async (taskArgs, hre) => {
         const { dryRun } = taskArgs;
 
@@ -65,7 +65,7 @@ task("grant-role", "Grants a role to an address")
         "The address calling the contract to grant the role",
         CONFIG.bittreesResearchGnosisSafeAddress,
     )
-    .addFlag("dryRun", "Only show transaction data without submitting")
+    .addFlag("dryRun", "Return and log transaction data without submitting")
     .setAction(async (taskArgs, hre) => {
         const {
             role,
@@ -133,6 +133,7 @@ task("grant-role", "Grants a role to an address")
 
         if (dryRun || !CONFIG.proposeTxToSafe) {
             logTransactionDetailsToConsole(transactions);
+            return transactions;
         } else {
             await proposeTxBundleToSafe(hre, transactions, from);
         }

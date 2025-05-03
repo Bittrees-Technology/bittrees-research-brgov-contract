@@ -17,7 +17,7 @@ task(
     "technology-unpause-bnote-minting",
     "Bittrees Technology Multisig unpauses minting on the BNote contract"
 )
-    .addFlag("dryRun", "Only show transaction data without submitting")
+    .addFlag("dryRun", "Return and log transaction data without submitting")
     .setAction(async (taskArgs, hre) => {
         const { dryRun } = taskArgs;
 
@@ -36,7 +36,7 @@ task(
     "research-unpause-bnote-minting",
     "Bittrees Research Multisig unpauses minting on the BNote contract"
 )
-    .addFlag("dryRun", "Only show transaction data without submitting")
+    .addFlag("dryRun", "Return and log transaction data without submitting")
     .setAction(async (taskArgs, hre) => {
         const { dryRun } = taskArgs;
 
@@ -55,7 +55,7 @@ task("unpause-bnote-minting", "Unpauses minting on the BNote contract")
         "The address calling the contract to unpause minting. Must have the ADMIN_ROLE",
         CONFIG.bittreesResearchGnosisSafeAddress,
     )
-    .addFlag("dryRun", "Only show transaction data without submitting")
+    .addFlag("dryRun", "Return and log transaction data without submitting")
     .setAction(async (taskArgs, hre) => {
         const {
             from,
@@ -111,6 +111,7 @@ task("unpause-bnote-minting", "Unpauses minting on the BNote contract")
 
         if (dryRun || !CONFIG.proposeTxToSafe) {
             logTransactionDetailsToConsole(transactions);
+            return transactions;
         } else {
             await proposeTxBundleToSafe(hre, transactions, from);
         }

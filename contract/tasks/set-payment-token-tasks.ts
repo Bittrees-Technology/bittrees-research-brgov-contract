@@ -30,7 +30,7 @@ task(
         undefined,
         types.bigint
     )
-    .addFlag("dryRun", "Only show transaction data without submitting")
+    .addFlag("dryRun", "Return and log transaction data without submitting")
     .setAction(async (taskArgs, hre) => {
         const {
             tokenAddress,
@@ -72,7 +72,7 @@ task(
         undefined,
         types.bigint
     )
-    .addFlag("dryRun", "Only show transaction data without submitting")
+    .addFlag("dryRun", "Return and log transaction data without submitting")
     .setAction(async (taskArgs, hre) => {
         const {
             tokenAddress,
@@ -137,7 +137,7 @@ task("set-payment-token", "Sets the payment token accepted in exchange for minti
         "The address calling the contract to set the payment token",
         CONFIG.bittreesResearchGnosisSafeAddress,
     )
-    .addFlag("dryRun", "Only show transaction data without submitting")
+    .addFlag("dryRun", "Return and log transaction data without submitting")
     .setAction(async (taskArgs, hre) => {
         const {
             tokenAddress,
@@ -256,6 +256,7 @@ task("set-payment-token", "Sets the payment token accepted in exchange for minti
 
         if (dryRun || !CONFIG.proposeTxToSafe) {
             logTransactionDetailsToConsole(transactions);
+            return transactions;
         } else {
             await proposeTxBundleToSafe(hre, transactions, from);
         }
