@@ -1,3 +1,5 @@
+import './compositions';
+import './ERC20';
 import './grant-role-tasks';
 import './renounce-role-tasks';
 import './revoke-role-tasks';

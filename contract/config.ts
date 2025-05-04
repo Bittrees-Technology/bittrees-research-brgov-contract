@@ -2,8 +2,48 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-export const CONFIG = {
-    // ===== CONTRACT DEPLOYMENT DETAILS =====
+type IConfig = {
+    initialBaseURI: string;
+    treasuryAddress: string;
+    adminAddress: string;
+    defaultAdminAddress: string;
+    initialAdminAndDefaultAdminAddress: string;
+    projectName: string;
+    bittreesResearchGnosisSafeAddress: string;
+    bittreesTechnologyGnosisSafeAddress: string;
+    create2FactoryCallerAddress: string;
+    safeServiceURLs: {
+        [key: string]: string;
+    };
+    gnosisCreate2FactoryAddress: string;
+    proposeTxToSafe: boolean;
+    useLedger: boolean;
+    ledgerAddress: string;
+    network: {
+        [key: string]: {
+            testnet: boolean;
+            paymentTokens: {
+                [key: string]: {
+                    contractAddress: string;
+                    priceInMajorUnits: string;
+                    priceInMinorUnits: string;
+                }
+            }
+        }
+    }
+}
+
+/**
+ * This config holds configurations not required by hardhat and related to this specific
+ * project. Cross-chain configs should be added to the top level, and chain-dependent
+ * configs should be added under the 'networks' key. Keys for networks should match the
+ * keys used in the hardhat.config.ts so the relevant config can be matched/retrieved
+ * programmatically in the execution context of the script/task being run. Where values
+ * might be convenient to override for testing, add it to the .env and .env.sample, with
+ * defaults provided for the standard/official deployment/s.
+ * */
+export const CONFIG: IConfig = {
+    // ===== BNOTE CONTRACT DEPLOYMENT DETAILS =====
     initialBaseURI: "https://research.bittrees.org/",
     treasuryAddress: process.env.TREASURY_ADDRESS || "0x2F8f86e6E1Ff118861BEB7E583DE90f0449A264f",
     adminAddress: process.env.ADMIN_ADDRESS || "0x2F8f86e6E1Ff118861BEB7E583DE90f0449A264f",
@@ -55,17 +95,48 @@ export const CONFIG = {
     useLedger: process.env.USE_LEDGER === "true",
     ledgerAddress: process.env.LEDGER_ADDRESS || "",
     network: {
+        // ===== Mainnet Networks =====
         mainnet: {
-            BTreeTokenAddress: '0x6bDdE71Cf0C751EB6d5EdB8418e43D3d9427e436'
+            testnet: false,
+            paymentTokens: {
+                BTREE: {
+                    contractAddress: '0x6bDdE71Cf0C751EB6d5EdB8418e43D3d9427e436',
+                    priceInMajorUnits: '1000',
+                    priceInMinorUnits: '1000000000000000000000',
+                },
+            }
         },
         base: {
-            BTreeTokenAddress: '0x4aCFF883f2879e69e67B7003ccec56C73ee41F6f'
+            testnet: false,
+            paymentTokens: {
+                BTREE: {
+                    contractAddress: '0x4aCFF883f2879e69e67B7003ccec56C73ee41F6f',
+                    priceInMajorUnits: '1000',
+                    priceInMinorUnits: '1000000000000000000000',
+                },
+            }
         },
+
+        // ===== Testnet Networks =====
         sepolia: {
-            BTreeTokenAddress: '0x8389eFa79EF27De249AF63f034D7A94dFBdd4cBE'
+            testnet: true,
+            paymentTokens: {
+                BTREE: {
+                    contractAddress: '0x8389eFa79EF27De249AF63f034D7A94dFBdd4cBE',
+                    priceInMajorUnits: '1000',
+                    priceInMinorUnits: '1000000000000000000000',
+                },
+            }
         },
         baseSepolia: {
-            BTreeTokenAddress: '0xF8c91a56db8485FCee21c5bf6345B063Cf4228F6'
+            testnet: true,
+            paymentTokens: {
+                BTREE: {
+                    contractAddress: '0xF8c91a56db8485FCee21c5bf6345B063Cf4228F6',
+                    priceInMajorUnits: '1000',
+                    priceInMinorUnits: '1000000000000000000000',
+                },
+            }
         },
     },
 };

@@ -7,6 +7,7 @@ import {
     getBNoteProxyAddress,
     hasDefaultAdminRole,
 } from '../lib/helpers';
+import { transactionBatch, TTransaction } from '../lib/tx-batch';
 
 /**
  * Contract Configuration Helper Task
@@ -115,12 +116,12 @@ task("grant-role", "Grants a role to an address")
             throw new Error(`Unknown role: ${role}. Please use DEFAULT_ADMIN_ROLE or ADMIN_ROLE.`);
         }
 
-        const txData = bNote.interface.encodeFunctionData(
+        const txData: string = bNote.interface.encodeFunctionData(
             "grantRole",
             [roleHash, address]
         );
 
-        const transactions = [{
+        const transactions: TTransaction[] = [{
             to: proxyAddress,
             value: '0',
             data: txData,
@@ -133,7 +134,7 @@ task("grant-role", "Grants a role to an address")
 
         if (dryRun || !CONFIG.proposeTxToSafe) {
             logTransactionDetailsToConsole(transactions);
-            return transactions;
+            transactionBatch.push(...transactions);
         } else {
             await proposeTxBundleToSafe(hre, transactions, from);
         }

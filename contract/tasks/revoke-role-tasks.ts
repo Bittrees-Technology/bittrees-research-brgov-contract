@@ -7,6 +7,7 @@ import {
     getBNoteProxyAddress,
     hasRole, hasDefaultAdminRole,
 } from '../lib/helpers';
+import { transactionBatch, TTransaction } from '../lib/tx-batch';
 
 /**
  * Contract Configuration Helper Task
@@ -170,12 +171,12 @@ task("revoke-role", "Allows an address with DEFAULT_ADMIN_ROLE to revoke a role 
             )
         }
 
-        const txData = bNote.interface.encodeFunctionData(
+        const txData: string = bNote.interface.encodeFunctionData(
             "revokeRole",
             [roleHash, addressWithRole]
         );
 
-        const transactions = [{
+        const transactions: TTransaction[] = [{
             to: proxyAddress,
             value: '0',
             data: txData,
@@ -188,7 +189,7 @@ task("revoke-role", "Allows an address with DEFAULT_ADMIN_ROLE to revoke a role 
 
         if (dryRun || !CONFIG.proposeTxToSafe) {
             logTransactionDetailsToConsole(transactions);
-            return transactions;
+            transactionBatch.push(...transactions);
         } else {
             await proposeTxBundleToSafe(hre, transactions, from);
         }

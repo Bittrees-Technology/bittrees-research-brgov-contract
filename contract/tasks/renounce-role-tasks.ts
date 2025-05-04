@@ -7,6 +7,7 @@ import {
     getBNoteProxyAddress,
     hasRole,
 } from '../lib/helpers';
+import { transactionBatch, TTransaction } from '../lib/tx-batch';
 
 /**
  * Contract Configuration Helper Task
@@ -174,12 +175,12 @@ task("renounce-role", "Allows an address to renounce a role it currently has")
             )
         }
 
-        const txData = bNote.interface.encodeFunctionData(
+        const txData: string = bNote.interface.encodeFunctionData(
             "renounceRole",
             [roleHash, callerConfirmation]
         );
 
-        const transactions = [{
+        const transactions: TTransaction[] = [{
             to: proxyAddress,
             value: '0',
             data: txData,
@@ -192,7 +193,7 @@ task("renounce-role", "Allows an address to renounce a role it currently has")
 
         if (dryRun || !CONFIG.proposeTxToSafe) {
             logTransactionDetailsToConsole(transactions);
-            return transactions;
+            transactionBatch.push(...transactions);
         } else {
             await proposeTxBundleToSafe(hre, transactions, from);
         }

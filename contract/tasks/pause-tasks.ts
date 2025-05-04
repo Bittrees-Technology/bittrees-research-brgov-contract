@@ -7,6 +7,7 @@ import {
     getBNoteProxyAddress,
     hasAdminRole,
 } from '../lib/helpers';
+import { transactionBatch, TTransaction } from '../lib/tx-batch';
 
 /**
  * Contract Configuration Helper Task
@@ -96,9 +97,9 @@ task("pause-bnote-minting", "Pauses minting on the BNote contract")
             )
         }
 
-        const txData = bNote.interface.encodeFunctionData("pause");
+        const txData: string = bNote.interface.encodeFunctionData("pause");
 
-        const transactions = [{
+        const transactions: TTransaction[] = [{
             to: proxyAddress,
             value: '0',
             data: txData,
@@ -111,7 +112,7 @@ task("pause-bnote-minting", "Pauses minting on the BNote contract")
 
         if (dryRun || !CONFIG.proposeTxToSafe) {
             logTransactionDetailsToConsole(transactions);
-            return transactions;
+            transactionBatch.push(...transactions);
         } else {
             await proposeTxBundleToSafe(hre, transactions, from);
         }

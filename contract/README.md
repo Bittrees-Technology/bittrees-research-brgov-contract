@@ -40,9 +40,34 @@ running the deployment script will output a json file in `deployments/bnote-depl
 proxy-args.ts can be updated (if necessary for testing) by grabbing the proxyArgs from the deployment json file
 
 # Contract Configuration & Handover steps:
+
+## Quick Version via Composition Tasks (recommended):
+This is the recommended approach to configuring and handing over the BNote contract. It must be carried out in 3 phases, 
+each resulting in a transaction batch of multiple transactions to be executed by the safe in that stage.
+
+### PHASE 00 - Technology Multisig configures the BNote contract and initiates handover to Research Multisig:
+carries out detailed steps 1 - 7
+
+`npx hardhat technology-configure-bnote-and-handover-to-research --network {network-name}`
+
+### PHASE 01 - Research Multisig takes ownership over the BNote contract, proving PHASE 00 success:
+carries out detailed steps 8 - 11
+
+`npx hardhat research-take-bnote-ownership --network {network-name}`
+
+### PHASE 02 - Technology Multisig loses ownership of the BNote contract, ONLY DO AFTER SUCCESSFUL PHASE 01:
+carries out detailed steps 12a or 12b
+`npx hardhat technology-renounce-bnote-roles --network {network-name}`
+
+OR
+
+`npx hardhat research-revoke-roles-on-bnote-from-technology --network {network-name}`
+
+## Detailed Version, Transaction by Transaction:
 This describes a thorough process of configuring the BNote contract and handing over control from the Bittrees Technology 
 Multisig to the Bittrees Research Multisig. This process includes certain optional steps to test and ensure the contract
-is working as intended in production. Optional steps can be omitted, but that is not recommended.
+is working as intended in production. Optional steps can be omitted, but that is not recommended. Each step is a single
+transaction, submitted to the gnosis safe as a transaction batch.
 
 ### 1. Technology Multisig sets paymentTokens on the contract: (REQUIRED)
 `npx hardhat technology-add-new-active-payment-token --network {network-name} --token-address {token-contract-address} --price-in-minor-units 100000000000000000 --price-in-major-units 0.1`
@@ -78,7 +103,7 @@ Proves minting is working correctly, and that the treasury and BTREE paymentToke
 
 Proves minting is working correctly, and that the treasury is correctly set
 
-### 6. Technology Multisig tries but fails to mint tokens to the treasury: (OPTIONAL - only useful if step 4 was used)
+### 6. (Probably Skip)Technology Multisig tries but fails to mint tokens to the treasury: (OPTIONAL - only useful if step 4 was used. Safe will refuse to execute. Don't do on all networks as it's a hassle to cancel onchain)
 `npx hardhat technology-mint-batch-test --network {network-name}`
 
 Proves that pausing the contract works as it should, and sets up the Research Multisig to prove once it has the ADMIN_ROLE

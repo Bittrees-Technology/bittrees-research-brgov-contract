@@ -7,6 +7,7 @@ import {
     getBNoteProxyAddress,
     hasAdminRole,
 } from '../lib/helpers';
+import { transactionBatch, TTransaction } from '../lib/tx-batch';
 
 /**
  * Contract Configuration Helper Task
@@ -230,12 +231,12 @@ task("set-payment-token", "Sets the payment token accepted in exchange for minti
             )
         }
 
-        const txData = bNote.interface.encodeFunctionData(
+        const txData: string = bNote.interface.encodeFunctionData(
             "setPaymentToken",
             [tokenAddress, active, priceInMinorUnits]
         );
 
-        const transactions = [{
+        const transactions: TTransaction[] = [{
             to: proxyAddress,
             value: '0',
             data: txData,
@@ -256,7 +257,7 @@ task("set-payment-token", "Sets the payment token accepted in exchange for minti
 
         if (dryRun || !CONFIG.proposeTxToSafe) {
             logTransactionDetailsToConsole(transactions);
-            return transactions;
+            transactionBatch.push(...transactions);
         } else {
             await proposeTxBundleToSafe(hre, transactions, from);
         }
