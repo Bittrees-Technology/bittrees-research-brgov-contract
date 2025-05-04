@@ -11,7 +11,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 export function generateCompatibleSalt(
     hre: HardhatRuntimeEnvironment,
     safeAddress: string,
-    saltText: string
+    saltText: string,
 ): string {
     const { ethers } = hre;
 
@@ -45,8 +45,8 @@ export function calculateCreate2Address(
             '0xff',
             factoryAddress.toLowerCase(),
             salt,
-            bytecodeHash
-        ])
+            bytecodeHash,
+        ]),
     );
 
     // Extract the last 20 bytes (40 hex chars) to get the address
@@ -78,7 +78,7 @@ export function encodeCreate2FactoryDeploymentTxData(
 ): string {
     const { ethers } = hre;
     const factoryInterface = new ethers.Interface(CREATE2_FACTORY_ABI);
-    return factoryInterface.encodeFunctionData("safeCreate2", [salt, bytecode]);
+    return factoryInterface.encodeFunctionData('safeCreate2', [salt, bytecode]);
 }
 
 /**
@@ -89,7 +89,7 @@ export function encodeCreate2FactoryDeploymentTxData(
 export function askForConfirmation(question: string): Promise<boolean> {
     const rl = readline.createInterface({
         input: process.stdin,
-        output: process.stdout
+        output: process.stdout,
     });
 
     return new Promise<boolean>((resolve) => {
@@ -122,10 +122,10 @@ export async function proposeTxBundleToSafe(
         provider: network.provider,
         signer: signer.address,
         safeAddress,
-    })
+    });
 
     const safeService = new SafeApiKit({
-        chainId
+        chainId,
     });
 
     const nonce = await getNonce(safe, safeAddress, safeService);
@@ -133,16 +133,16 @@ export async function proposeTxBundleToSafe(
     const unsignedSafeTx = await safe.createTransaction({
         transactions,
         options: {
-            nonce
-        }
-    })
+            nonce,
+        },
+    });
 
     const signedSafeTx = await safe.signTransaction(unsignedSafeTx);
 
     const signature = signedSafeTx.getSignature(signer.address);
 
     if (!signature) {
-        throw new Error("Signature not found");
+        throw new Error('Signature not found');
     }
 
     await safeService.proposeTransaction({
@@ -151,12 +151,12 @@ export async function proposeTxBundleToSafe(
         safeTxHash: await safe.getTransactionHash(signedSafeTx),
         senderSignature: signature.data,
         safeAddress,
-    })
+    });
 
-    console.log("\n==== Safe UI Instructions ====");
+    console.log('\n==== Safe UI Instructions ====');
     console.log(
-        "Go to your Safe UI to approve an execute the transaction bundle:\n"
-        + getSafeWebUrl(network.name, CONFIG.create2FactoryCallerAddress)
+        'Go to your Safe UI to approve an execute the transaction bundle:\n'
+        + getSafeWebUrl(network.name, CONFIG.create2FactoryCallerAddress),
     );
 }
 
@@ -186,11 +186,11 @@ async function getNonce(
                 pendingTransactions.length
             } pending transactions in the queue for the safe with address(${
                 safeAddress
-            })`
+            })`,
         );
         // Find the highest nonce in pending transactions
         const highestPendingNonce = Math.max(
-            ...pendingTransactions.map(tx => tx.nonce)
+            ...pendingTransactions.map(tx => tx.nonce),
         );
         nextNonce = Math.max(onChainNonce, highestPendingNonce + 1);
     }
@@ -207,7 +207,7 @@ async function getNonce(
  * as confirming the proposed TXs add to the safe by one of the other multisig signers)
  * */
 export function logTransactionDetailsToConsole(transactions: (
-    MetaTransactionData & {transactionInfoLog: string })[]
+    MetaTransactionData & { transactionInfoLog: string })[],
 ) {
     transactions.map(tx => {
         console.log(tx.transactionInfoLog);
@@ -225,14 +225,14 @@ export function logTransactionDetailsToConsole(transactions: (
  * configured in the .env under PRIVATE_KEY and retrieved in hardhat.config.ts
  * */
 export async function getSigner(
-    hre: HardhatRuntimeEnvironment
+    hre: HardhatRuntimeEnvironment,
 ): Promise<HardhatEthersSigner> {
     const { ethers } = hre;
     let signer: HardhatEthersSigner;
     if (CONFIG.useLedger) {
         console.log(`Using Ledger with address: ${CONFIG.ledgerAddress}`);
         signer = await ethers.getSigner(CONFIG.ledgerAddress);
-        console.log("Ledger connected successfully!");
+        console.log('Ledger connected successfully!');
     } else {
         const signers = await ethers.getSigners();
         signer = signers[0];
@@ -247,38 +247,38 @@ export async function getSigner(
  * */
 export function getSafeWebUrl(
     networkName: string,
-    safeAddress: string
+    safeAddress: string,
 ): string {
     const baseUrl = 'https://app.safe.global';
     let query = 'safe=';
 
     switch (networkName) {
         // Mainnets
-        case "mainnet":
+        case 'mainnet':
             query = `${query}eth:${safeAddress}`;
             break;
-        case "base":
+        case 'base':
             query = `${query}base:${safeAddress}`;
             break;
-        case "optimism":
+        case 'optimism':
             query = `${query}oeth:${safeAddress}`;
             break;
-        case "arbitrum":
+        case 'arbitrum':
             query = `${query}arb1:${safeAddress}`;
             break;
 
         // Testnets
-        case "sepolia":
+        case 'sepolia':
             query = `${query}sep:${safeAddress}`;
             break;
-        case "baseSepolia":
+        case 'baseSepolia':
             query = `${query}basesep:${safeAddress}`;
             break;
-        case "optimismSepolia":
+        case 'optimismSepolia':
             // TODO: validate once support added in the UI
             query = `${query}oethsep:${safeAddress}`;
             break;
-        case "arbitrumSepolia":
+        case 'arbitrumSepolia':
             // TODO: validate once support added in the UI
             query = `${query}arb1sep:${safeAddress}`;
             break;
@@ -312,7 +312,7 @@ export type TBNoteDeploymentFile = {
 export async function getBNoteDeploymentFile(network: string): Promise<TBNoteDeploymentFile> {
     try {
         return require(`../deployments/bnote-deployment-${network}.json`);
-    } catch(e) {
+    } catch (e) {
         throw new Error(`Could not find deployment file for network ${network}. Please ensure you've deployed the contract first.`);
     }
 }

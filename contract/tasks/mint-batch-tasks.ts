@@ -6,6 +6,7 @@ import {
     logTransactionDetailsToConsole,
     getBNoteProxyAddress,
 } from '../lib/helpers';
+import { transactionBatch, TTransaction } from '../lib/tx-batch';
 
 /**
  * Contract Configuration Helper Task
@@ -34,10 +35,12 @@ task(
         '1,1,1',
         types.string,
     )
-    .addFlag('dryRun', 'Only show transaction data without submitting')
+    .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
     .setAction(async (taskArgs, hre) => {
         const {
-            tokenAddress = CONFIG.network[hre.network.name as keyof typeof CONFIG.network].BTreeTokenAddress,
+            tokenAddress = CONFIG.network[
+                hre.network.name as keyof typeof CONFIG.network
+                ].paymentTokens.BTREE.contractAddress,
             tokenIds,
             quantities,
             dryRun,
@@ -79,10 +82,12 @@ task(
         '1,1,1',
         types.string,
     )
-    .addFlag('dryRun', 'Only show transaction data without submitting')
+    .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
     .setAction(async (taskArgs, hre) => {
         const {
-            tokenAddress = CONFIG.network[hre.network.name as keyof typeof CONFIG.network].BTreeTokenAddress,
+            tokenAddress = CONFIG.network[
+                hre.network.name as keyof typeof CONFIG.network
+                ].paymentTokens.BTREE.contractAddress,
             tokenIds,
             quantities,
             dryRun,
@@ -119,7 +124,7 @@ task('mint-batch', 'Mints multiple BNotes in one transaction')
         'The address calling the contract to mint tokens',
         CONFIG.bittreesResearchGnosisSafeAddress,
     )
-    .addFlag('dryRun', 'Only show transaction data without submitting')
+    .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
     .setAction(async (taskArgs, hre) => {
         const {
             tokenAddress,
@@ -219,11 +224,11 @@ task('mint-batch', 'Mints multiple BNotes in one transaction')
                 }) with total cost(${
                     totalCost
                 }).`
-                + `Attempting to mint-batch with this address will revert onchain and waste gas!`
-            )
+                + `Attempting to mint-batch with this address will revert onchain and waste gas!`,
+            );
             throw new Error(
-                'Sender Insufficient Allowance on Payment Token'
-            )
+                'Sender Insufficient Allowance on Payment Token',
+            );
         }
 
         const symbol = await tokenContract.symbol();
@@ -233,12 +238,12 @@ task('mint-batch', 'Mints multiple BNotes in one transaction')
 
 
         // Create the transaction data
-        const txData = bNote.interface.encodeFunctionData(
+        const txData: string = bNote.interface.encodeFunctionData(
             'mintBatch',
             [tokenIds, quantities, tokenAddress],
         );
 
-        const transactions = [{
+        const transactions: TTransaction[] = [{
             to: proxyAddress,
             value: '0',
             data: txData,
@@ -254,6 +259,7 @@ task('mint-batch', 'Mints multiple BNotes in one transaction')
 
         if (dryRun || !CONFIG.proposeTxToSafe) {
             logTransactionDetailsToConsole(transactions);
+            transactionBatch.push(...transactions);
         } else {
             await proposeTxBundleToSafe(hre, transactions, from);
         }
