@@ -75,10 +75,14 @@ export const CONFIG: IConfig = {
         // Mainnet URLs
         mainnet: 'https://safe-transaction-mainnet.safe.global',
         base: 'https://safe-transaction-base.safe.global',
+        optimism: 'https://safe-transaction-optimism.safe.global',
+        arbitrum: 'https://safe-transaction-arbitrum.safe.global',
 
         // Testnet URLs
         sepolia: 'https://safe-transaction-sepolia.safe.global',
-        baseSepolia: 'https://safe-transaction-base-sepolia.safe.global'
+        baseSepolia: 'https://safe-transaction-base-sepolia.safe.global',
+        optimismSepolia: 'https://safe-transaction-optimism-sepolia.safe.global',
+        arbitrumSepolia: 'https://safe-transaction-arbitrum-sepolia.safe.global',
     },
 
     /**
@@ -116,6 +120,26 @@ export const CONFIG: IConfig = {
                 },
             }
         },
+        optimism: {
+            testnet: false,
+            paymentTokens: {
+                BTREE: {
+                    contractAddress: '0xB260d236F5eA5094D31F016160705ff53ac45028',
+                    priceInMajorUnits: '1000',
+                    priceInMinorUnits: '1000000000000000000000',
+                },
+            },
+        },
+        arbitrum: {
+            testnet: false,
+            paymentTokens: {
+                BTREE: {
+                    contractAddress: '0xA29871E78FC005d31982f942E1569265BA145A34',
+                    priceInMajorUnits: '1000',
+                    priceInMinorUnits: '1000000000000000000000',
+                }
+            }
+        },
 
         // ===== Testnet Networks =====
         sepolia: {
@@ -136,6 +160,26 @@ export const CONFIG: IConfig = {
                     priceInMajorUnits: '1000',
                     priceInMinorUnits: '1000000000000000000000',
                 },
+            },
+        },
+        optimismSepolia: {
+            testnet: true,
+            paymentTokens: {
+                BTREE: {
+                    contractAddress: '0x7E5A0b6C5c32883AE8E5b830c05688Eff317c3fb',
+                    priceInMajorUnits: '1000',
+                    priceInMinorUnits: '1000000000000000000000',
+                },
+            },
+        },
+        arbitrumSepolia: {
+            testnet: true,
+            paymentTokens: {
+                BTREE: {
+                    contractAddress: '0x65414D6A6DF9A139a462c2F43199dE580A348dF9',
+                    priceInMajorUnits: '1000',
+                    priceInMinorUnits: '1000000000000000000000',
+                }
             }
         },
     },
