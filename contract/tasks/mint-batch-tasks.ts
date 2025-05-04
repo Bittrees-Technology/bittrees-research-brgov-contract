@@ -35,7 +35,7 @@ task(
         '1,1,1',
         types.string,
     )
-    .addFlag('dryRun', 'Return and log transaction data without submitting')
+    .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
     .setAction(async (taskArgs, hre) => {
         const {
             tokenAddress = CONFIG.network[
@@ -82,7 +82,7 @@ task(
         '1,1,1',
         types.string,
     )
-    .addFlag('dryRun', 'Return and log transaction data without submitting')
+    .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
     .setAction(async (taskArgs, hre) => {
         const {
             tokenAddress = CONFIG.network[
@@ -124,7 +124,7 @@ task('mint-batch', 'Mints multiple BNotes in one transaction')
         'The address calling the contract to mint tokens',
         CONFIG.bittreesResearchGnosisSafeAddress,
     )
-    .addFlag('dryRun', 'Return and log transaction data without submitting')
+    .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
     .setAction(async (taskArgs, hre) => {
         const {
             tokenAddress,
@@ -224,11 +224,11 @@ task('mint-batch', 'Mints multiple BNotes in one transaction')
                 }) with total cost(${
                     totalCost
                 }).`
-                + `Attempting to mint-batch with this address will revert onchain and waste gas!`
-            )
+                + `Attempting to mint-batch with this address will revert onchain and waste gas!`,
+            );
             throw new Error(
-                'Sender Insufficient Allowance on Payment Token'
-            )
+                'Sender Insufficient Allowance on Payment Token',
+            );
         }
 
         const symbol = await tokenContract.symbol();

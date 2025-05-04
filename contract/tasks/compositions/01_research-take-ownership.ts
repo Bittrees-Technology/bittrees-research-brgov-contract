@@ -18,7 +18,7 @@ task(
     'research-take-bnote-ownership',
     'Research Multisig takes ownership over the BNote contract',
 )
-    .addFlag('dryRun', 'Return and log transaction data without submitting')
+    .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
     .setAction(async (taskArgs, hre) => {
         const { dryRun } = taskArgs;
         const from = CONFIG.bittreesResearchGnosisSafeAddress;

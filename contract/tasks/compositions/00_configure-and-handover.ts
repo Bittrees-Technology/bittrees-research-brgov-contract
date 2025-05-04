@@ -17,7 +17,7 @@ task(
     'technology-configure-bnote-and-handover-to-research',
     'Technology Multisig configures the BNote contract and initiates handover to Research Multisig',
 )
-    .addFlag('dryRun', 'Return and log transaction data without submitting')
+    .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
     .setAction(async (taskArgs, hre) => {
         const { dryRun } = taskArgs;
         const from = CONFIG.bittreesTechnologyGnosisSafeAddress;

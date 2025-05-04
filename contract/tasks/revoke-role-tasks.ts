@@ -1,5 +1,5 @@
-import { task } from "hardhat/config";
-import { CONFIG } from "../config";
+import { task } from 'hardhat/config';
+import { CONFIG } from '../config';
 import {
     askForConfirmation,
     proposeTxBundleToSafe,
@@ -17,15 +17,15 @@ import { transactionBatch, TTransaction } from '../lib/tx-batch';
  * confirmed to be working as expected.
  * */
 task(
-    "research-revoke-default-admin-role-from-technology",
-    "Bittrees Research Multisig revokes the DEFAULT_ADMIN_ROLE Bittrees Technology Multisig"
+    'research-revoke-default-admin-role-from-technology',
+    'Bittrees Research Multisig revokes the DEFAULT_ADMIN_ROLE Bittrees Technology Multisig',
 )
     .addParam(
         'addressRetainingRole',
         'An address retaining the roll - ensures a role is not left with no address that has it after it is revoked',
         CONFIG.bittreesResearchGnosisSafeAddress,
     )
-    .addFlag("dryRun", "Return and log transaction data without submitting")
+    .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
     .setAction(async (taskArgs, hre) => {
         const { addressRetainingRole, dryRun } = taskArgs;
 
@@ -35,7 +35,7 @@ task(
             addressRetainingRole,
             from: CONFIG.bittreesResearchGnosisSafeAddress,
             dryRun,
-        })
+        });
     });
 
 /**
@@ -46,15 +46,15 @@ task(
  * is confirmed to be working as expected.
  * */
 task(
-    "research-revoke-admin-role-from-technology",
-    "Bittrees Research Multisig revokes the ADMIN_ROLE from Bittrees Technology Multisig"
+    'research-revoke-admin-role-from-technology',
+    'Bittrees Research Multisig revokes the ADMIN_ROLE from Bittrees Technology Multisig',
 )
     .addParam(
         'addressRetainingRole',
         'An address retaining the roll - ensures a role is not left with no address that has it after it is revoked',
         CONFIG.bittreesResearchGnosisSafeAddress,
     )
-    .addFlag("dryRun", "Return and log transaction data without submitting")
+    .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
     .setAction(async (taskArgs, hre) => {
         const { addressRetainingRole, dryRun } = taskArgs;
 
@@ -64,22 +64,22 @@ task(
             addressRetainingRole,
             from: CONFIG.bittreesResearchGnosisSafeAddress,
             dryRun,
-        })
+        });
     });
 
 /**
  * Generalized Task for revoking roles an address has
  * */
-task("revoke-role", "Allows an address with DEFAULT_ADMIN_ROLE to revoke a role from another address")
-    .addParam("role", "The role being revoked (ADMIN_ROLE, DEFAULT_ADMIN_ROLE, etc.)")
-    .addParam("addressWithRole", "The address from which the role is being revoked")
-    .addParam("from", "The address calling the contract to revoke the role from addressWithRole",)
+task('revoke-role', 'Allows an address with DEFAULT_ADMIN_ROLE to revoke a role from another address')
+    .addParam('role', 'The role being revoked (ADMIN_ROLE, DEFAULT_ADMIN_ROLE, etc.)')
+    .addParam('addressWithRole', 'The address from which the role is being revoked')
+    .addParam('from', 'The address calling the contract to revoke the role from addressWithRole')
     .addParam(
-        "addressRetainingRole",
-        "An address retaining the roll - ensures a role is not left with no address that has it after it is revoked from addessWithRole",
+        'addressRetainingRole',
+        'An address retaining the roll - ensures a role is not left with no address that has it after it is revoked from addessWithRole',
         CONFIG.bittreesResearchGnosisSafeAddress,
     )
-    .addFlag("dryRun", "Return and log transaction data without submitting")
+    .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
     .setAction(async (taskArgs, hre) => {
         const {
             role,
@@ -109,7 +109,7 @@ task("revoke-role", "Allows an address with DEFAULT_ADMIN_ROLE to revoke a role 
                     from
                 }) provided. Roles should only be revoked using an addressWithRoll other than the caller.`
                 + 'Either provide an address other than the caller from whom you wish to revoke a call, '
-                + 'or use renounce-role tasks instead to have an address remove a role from itself. Aborting...'
+                + 'or use renounce-role tasks instead to have an address remove a role from itself. Aborting...',
             );
         }
 
@@ -118,8 +118,8 @@ task("revoke-role", "Allows an address with DEFAULT_ADMIN_ROLE to revoke a role 
                 'addressRetainingRole address matches addressWithRole address.'
                 + ' addressRetainingRole should differ, as it is used to ensure some address'
                 + ' will still have the role after the role has been revoke from the addressWithRole address'
-                + ' after execution. Aborting...'
-            )
+                + ' after execution. Aborting...',
+            );
         }
 
         console.log(`\nNetwork: ${hre.network.name}`);
@@ -135,9 +135,9 @@ task("revoke-role", "Allows an address with DEFAULT_ADMIN_ROLE to revoke a role 
 
         // Get the role hash
         let roleHash;
-        if (role === "DEFAULT_ADMIN_ROLE") {
+        if (role === 'DEFAULT_ADMIN_ROLE') {
             roleHash = await bNote.DEFAULT_ADMIN_ROLE();
-        } else if (role === "ADMIN_ROLE") {
+        } else if (role === 'ADMIN_ROLE') {
             roleHash = await bNote.ADMIN_ROLE();
         } else {
             throw new Error(`Unknown role: ${role}. Please use DEFAULT_ADMIN_ROLE or ADMIN_ROLE.`);
@@ -149,11 +149,11 @@ task("revoke-role", "Allows an address with DEFAULT_ADMIN_ROLE to revoke a role 
             console.log(
                 '\n==================== !!! ABORTING !!! ====================\n'
                 + `Address specified as from(${from}) does not have the DEFAULT_ADMIN_ROLE.`
-                + `Attempting to revoke-role with this address will revert onchain and waste gas!`
-            )
+                + `Attempting to revoke-role with this address will revert onchain and waste gas!`,
+            );
             throw new Error(
-                'Sender Not Authorized with DEFAULT_ADMIN_ROLE On Contract'
-            )
+                'Sender Not Authorized with DEFAULT_ADMIN_ROLE On Contract',
+            );
         }
 
         const addressRetainingRoleHasRole = await hasRole(bNote, roleHash, addressRetainingRole);
@@ -163,17 +163,17 @@ task("revoke-role", "Allows an address with DEFAULT_ADMIN_ROLE to revoke a role 
                 '\n==================== !!! ABORTING !!! ====================\n'
                 + `Address specified as addressRetainingRole(${addressRetainingRole}) does not have the role(${role}).`
                 + `Attempting to revoke-role from address(${addressWithRole}) could leave nobody with the roll!`
-                + `For some roles this could leave the role as irrecoverable!`
-            )
+                + `For some roles this could leave the role as irrecoverable!`,
+            );
             throw new Error(
                 `Provide an address which has the role(${role}) to the addressRetainingRole parameter`
-                + 'to ensure we do not lock ourselves out.'
-            )
+                + 'to ensure we do not lock ourselves out.',
+            );
         }
 
         const txData: string = bNote.interface.encodeFunctionData(
-            "revokeRole",
-            [roleHash, addressWithRole]
+            'revokeRole',
+            [roleHash, addressWithRole],
         );
 
         const transactions: TTransaction[] = [{
@@ -184,7 +184,7 @@ task("revoke-role", "Allows an address with DEFAULT_ADMIN_ROLE to revoke a role 
         }];
 
         await askForConfirmation(
-            `Do you want to proceed with revoking ${role} from address(${addressWithRole})?`
+            `Do you want to proceed with revoking ${role} from address(${addressWithRole})?`,
         );
 
         if (dryRun || !CONFIG.proposeTxToSafe) {

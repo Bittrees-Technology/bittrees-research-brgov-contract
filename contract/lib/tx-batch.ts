@@ -1,5 +1,3 @@
-
-
 export type TTransaction = {
     to: string;
     value: string;

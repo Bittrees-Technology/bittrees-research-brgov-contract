@@ -44,22 +44,22 @@ type IConfig = {
  * */
 export const CONFIG: IConfig = {
     // ===== BNOTE CONTRACT DEPLOYMENT DETAILS =====
-    initialBaseURI: "https://research.bittrees.org/",
-    treasuryAddress: process.env.TREASURY_ADDRESS || "0x2F8f86e6E1Ff118861BEB7E583DE90f0449A264f",
-    adminAddress: process.env.ADMIN_ADDRESS || "0x2F8f86e6E1Ff118861BEB7E583DE90f0449A264f",
-    defaultAdminAddress: process.env.DEFAULT_ADMIN_ADDRESS || "0x2F8f86e6E1Ff118861BEB7E583DE90f0449A264f",
-    initialAdminAndDefaultAdminAddress: process.env.INITIAL_ADMIN_AND_DEFAULT_ADMIN_ADDRESS || "0x2CB5C7bd24480C9D450eD07eb49F4525ee41083a",
+    initialBaseURI: 'https://research.bittrees.org/',
+    treasuryAddress: process.env.TREASURY_ADDRESS || '0x2F8f86e6E1Ff118861BEB7E583DE90f0449A264f',
+    adminAddress: process.env.ADMIN_ADDRESS || '0x2F8f86e6E1Ff118861BEB7E583DE90f0449A264f',
+    defaultAdminAddress: process.env.DEFAULT_ADMIN_ADDRESS || '0x2F8f86e6E1Ff118861BEB7E583DE90f0449A264f',
+    initialAdminAndDefaultAdminAddress: process.env.INITIAL_ADMIN_AND_DEFAULT_ADMIN_ADDRESS || '0x2CB5C7bd24480C9D450eD07eb49F4525ee41083a',
     /**
      * Used to generate the salt which influences the contract addresses being
      * the same on all networks.
      *
      * TL;DR - do not change the projectName value.
      * */
-    projectName: "BittreesResearchPreferredStock",
+    projectName: 'BittreesResearchPreferredStock',
 
     // ===== GNOSIS SAFE DETAILS =====
-    bittreesResearchGnosisSafeAddress: "0x2F8f86e6E1Ff118861BEB7E583DE90f0449A264f",
-    bittreesTechnologyGnosisSafeAddress: "0x2CB5C7bd24480C9D450eD07eb49F4525ee41083a",
+    bittreesResearchGnosisSafeAddress: '0x2F8f86e6E1Ff118861BEB7E583DE90f0449A264f',
+    bittreesTechnologyGnosisSafeAddress: '0x2CB5C7bd24480C9D450eD07eb49F4525ee41083a',
     /**
      * The Bittrees Technology Gnosis Safe address(0x2CB5C7bd24480C9D450eD07eb49F4525ee41083a)
      * MUST always be the caller of the safeCreate2 function on the gnosisCreate2FactoryAddress
@@ -70,7 +70,7 @@ export const CONFIG: IConfig = {
      * TL;DR value MUST be 0x2CB5C7bd24480C9D450eD07eb49F4525ee41083a for any official
      * deployments, whether testnet or mainnet
      * */
-    create2FactoryCallerAddress: process.env.CREATE2_FACTORY_CALLER_ADDRESS || "0x2CB5C7bd24480C9D450eD07eb49F4525ee41083a",
+    create2FactoryCallerAddress: process.env.CREATE2_FACTORY_CALLER_ADDRESS || '0x2CB5C7bd24480C9D450eD07eb49F4525ee41083a',
     safeServiceURLs: {
         // Mainnet URLs
         mainnet: 'https://safe-transaction-mainnet.safe.global',
@@ -92,12 +92,12 @@ export const CONFIG: IConfig = {
      * having deployed this contract to a chain before we can deploy there if we
      * want to maintain the same contract across networks
      * */
-    gnosisCreate2FactoryAddress: "0x0000000000FFe8B47B3e2130213B802212439497",
+    gnosisCreate2FactoryAddress: '0x0000000000FFe8B47B3e2130213B802212439497',
 
     // Execution mode
-    proposeTxToSafe: process.env.PROPOSE_TX === "true",
-    useLedger: process.env.USE_LEDGER === "true",
-    ledgerAddress: process.env.LEDGER_ADDRESS || "",
+    proposeTxToSafe: process.env.PROPOSE_TX === 'true',
+    useLedger: process.env.USE_LEDGER === 'true',
+    ledgerAddress: process.env.LEDGER_ADDRESS || '',
     network: {
         // ===== Mainnet Networks =====
         mainnet: {
@@ -108,7 +108,7 @@ export const CONFIG: IConfig = {
                     priceInMajorUnits: '1000',
                     priceInMinorUnits: '1000000000000000000000',
                 },
-            }
+            },
         },
         base: {
             testnet: false,
@@ -118,7 +118,7 @@ export const CONFIG: IConfig = {
                     priceInMajorUnits: '1000',
                     priceInMinorUnits: '1000000000000000000000',
                 },
-            }
+            },
         },
         optimism: {
             testnet: false,
@@ -137,8 +137,8 @@ export const CONFIG: IConfig = {
                     contractAddress: '0xA29871E78FC005d31982f942E1569265BA145A34',
                     priceInMajorUnits: '1000',
                     priceInMinorUnits: '1000000000000000000000',
-                }
-            }
+                },
+            },
         },
 
         // ===== Testnet Networks =====
@@ -150,7 +150,7 @@ export const CONFIG: IConfig = {
                     priceInMajorUnits: '1000',
                     priceInMinorUnits: '1000000000000000000000',
                 },
-            }
+            },
         },
         baseSepolia: {
             testnet: true,
@@ -179,8 +179,8 @@ export const CONFIG: IConfig = {
                     contractAddress: '0x65414D6A6DF9A139a462c2F43199dE580A348dF9',
                     priceInMajorUnits: '1000',
                     priceInMinorUnits: '1000000000000000000000',
-                }
-            }
+                },
+            },
         },
     },
 };

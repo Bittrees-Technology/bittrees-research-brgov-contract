@@ -1,5 +1,5 @@
 import { task, types } from 'hardhat/config';
-import { CONFIG } from "../../config";
+import { CONFIG } from '../../config';
 import {
     askForConfirmation,
     proposeTxBundleToSafe,
@@ -14,17 +14,17 @@ import {
  * for Technology Multisig to mint BNote tokens.
  * */
 task(
-    "technology-approve-bnote-to-spend-btree",
-    "Bittrees Technology Multisig approves the BNote contract to spend BTREE tokens it owns"
+    'technology-approve-bnote-to-spend-btree',
+    'Bittrees Technology Multisig approves the BNote contract to spend BTREE tokens it owns',
 )
-    .addFlag("dryRun", "Return and log transaction data without submitting")
+    .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
     .setAction(async (taskArgs, hre) => {
         const { dryRun } = taskArgs;
 
         const {
             contractAddress,
             priceInMajorUnits,
-            priceInMinorUnits
+            priceInMinorUnits,
         } = CONFIG.network[
             hre.network.name as keyof typeof CONFIG.network
             ].paymentTokens.BTREE;
@@ -51,17 +51,17 @@ task(
  * for Research Multisig to mint BNote tokens.
  * */
 task(
-    "research-approve-bnote-to-spend-btree",
-    "Bittrees Research Multisig approves the BNote contract to spend BTREE tokens it owns"
+    'research-approve-bnote-to-spend-btree',
+    'Bittrees Research Multisig approves the BNote contract to spend BTREE tokens it owns',
 )
-    .addFlag("dryRun", "Return and log transaction data without submitting")
+    .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
     .setAction(async (taskArgs, hre) => {
         const { dryRun } = taskArgs;
 
         const {
             contractAddress,
             priceInMajorUnits,
-            priceInMinorUnits
+            priceInMinorUnits,
         } = CONFIG.network[
             hre.network.name as keyof typeof CONFIG.network
             ].paymentTokens.BTREE;
@@ -84,23 +84,23 @@ task(
 /**
  * Generalized Task for granting roles to addresses
  * */
-task("approve-spender", "Approves an address to transfer an ERC20 on it's behalf")
+task('approve-spender', 'Approves an address to transfer an ERC20 on it\'s behalf')
     .addParam(
-        "amountInMinorUnits",
-        "The quantity (in minor units) which the spender is approved to spend",
+        'amountInMinorUnits',
+        'The quantity (in minor units) which the spender is approved to spend',
         undefined,
         types.bigint,
-        )
+    )
     .addParam(
-        "amountInMajorUnits",
-        "The quantity (in major units) which the spender is approved to spend",
+        'amountInMajorUnits',
+        'The quantity (in major units) which the spender is approved to spend',
         undefined,
         types.float,
-        )
-    .addParam("spender", "The address to which spending authority is being delegated")
-    .addParam("tokenAddress", "The address of the token on which the spender is being given approval")
-    .addParam("from", "The address approving a spender of it's ERC20 tokens")
-    .addFlag("dryRun", "Return and log transaction data without submitting")
+    )
+    .addParam('spender', 'The address to which spending authority is being delegated')
+    .addParam('tokenAddress', 'The address of the token on which the spender is being given approval')
+    .addParam('from', 'The address approving a spender of it\'s ERC20 tokens')
+    .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
     .setAction(async (taskArgs, hre) => {
         const {
             tokenAddress,
@@ -139,13 +139,13 @@ task("approve-spender", "Approves an address to transfer an ERC20 on it's behalf
             console.log(`Token decimals: ${decimals}`);
         } catch (e: any) {
             console.error(`Failed to get decimals from token contract. Error: ${e.message}`);
-            throw new Error("Token contract doesn't seem to be a valid ERC20 with decimals() function");
+            throw new Error('Token contract doesn\'t seem to be a valid ERC20 with decimals() function');
         }
 
         // Calculate expected minor units from major units
         const expectedMinorUnits = hre.ethers.parseUnits(
             amountInMajorUnits.toString(),
-            decimals
+            decimals,
         );
 
         // Compare the provided minor units with the calculated value
@@ -153,13 +153,13 @@ task("approve-spender", "Approves an address to transfer an ERC20 on it's behalf
             throw new Error(
                 `Major and minor units don't match.\n` +
                 `${amountInMajorUnits} tokens with ${decimals} decimals should be ${expectedMinorUnits}, ` +
-                `but ${amountInMinorUnits} was provided.`
+                `but ${amountInMinorUnits} was provided.`,
             );
         }
 
         const txData = tokenContract.interface.encodeFunctionData(
             'approve',
-            [spender, amountInMinorUnits]
+            [spender, amountInMinorUnits],
         );
 
         const transactions = [{
@@ -176,7 +176,7 @@ task("approve-spender", "Approves an address to transfer an ERC20 on it's behalf
                 tokenAddress
             }) for amountInMajorUnits(${
                 amountInMajorUnits
-            })?`
+            })?`,
         );
 
         if (dryRun || !CONFIG.proposeTxToSafe) {

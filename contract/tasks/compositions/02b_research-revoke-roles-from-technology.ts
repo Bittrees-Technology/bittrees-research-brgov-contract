@@ -19,7 +19,7 @@ task(
     'research-revoke-roles-on-bnote-from-technology',
     'Research Multisig takes away ownership of the BNote contract from the Technology Multisig',
 )
-    .addFlag('dryRun', 'Return and log transaction data without submitting')
+    .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
     .setAction(async (taskArgs, hre) => {
         const { dryRun } = taskArgs;
         const from = CONFIG.bittreesTechnologyGnosisSafeAddress;
