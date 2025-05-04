@@ -24,7 +24,7 @@ task(
         const from = CONFIG.bittreesResearchGnosisSafeAddress;
 
 
-        const { testnet } = CONFIG.network[
+        const { isTestnet } = CONFIG.network[
             hre.network.name as keyof typeof CONFIG.network
             ];
 
@@ -34,7 +34,7 @@ task(
         //  9. Research Multisig unpauses contract so minting can resume: (REQUIRED if step 4 was used)
         await hre.run('research-unpause-bnote', { dryRun: true });
 
-        if (testnet) {
+        if (isTestnet) {
             // 10. Technology Multisig approves BNote contract to spend sufficient BTREE it holds: (OPTIONAL)
             await hre.run('research-approve-bnote-to-spend-btree', { dryRun: true });
 

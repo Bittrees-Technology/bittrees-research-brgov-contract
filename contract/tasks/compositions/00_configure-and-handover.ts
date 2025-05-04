@@ -26,7 +26,7 @@ task(
             hre.network.name as keyof typeof CONFIG.network
             ];
         const paymentTokens = network.paymentTokens;
-        const testnet = network.testnet;
+        const isTestnet = network.isTestnet;
 
         // 1. Technology Multisig sets paymentTokens on the contract: (REQUIRED)
         // add each of the payment tokens listed in the config.ts file for the
@@ -54,7 +54,7 @@ task(
             },
         );
 
-        if (testnet) {
+        if (isTestnet) {
             // 3. Technology Multisig approves BNote contract to spend sufficient BTREE it holds: (OPTIONAL)
             await hre.run('technology-approve-bnote-to-spend-btree', { dryRun: true });
 

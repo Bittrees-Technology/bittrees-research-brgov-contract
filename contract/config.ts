@@ -21,9 +21,10 @@ type IConfig = {
     ledgerAddress: string;
     network: {
         [key: string]: {
-            testnet: boolean;
+            isTestnet: boolean;
             paymentTokens: {
                 [key: string]: {
+                    name: string,
                     contractAddress: string;
                     priceInMajorUnits: string;
                     priceInMinorUnits: string;
@@ -101,61 +102,168 @@ export const CONFIG: IConfig = {
     network: {
         // ===== Mainnet Networks =====
         mainnet: {
-            testnet: false,
+            isTestnet: false,
             paymentTokens: {
                 BTREE: {
+                    name: 'BTREE',
                     contractAddress: '0x6bDdE71Cf0C751EB6d5EdB8418e43D3d9427e436',
                     priceInMajorUnits: '1000',
                     priceInMinorUnits: '1000000000000000000000',
                 },
+                WBTC: {
+                    name: 'Wrapped BTC',
+                    contractAddress: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
+                    priceInMajorUnits: '0.001',
+                    priceInMinorUnits: '100000', // decimals 8
+                },
+                tBTC: {
+                    name: 'tBTC v2',
+                    contractAddress: '0x18084fbA666a33d37592fA2633fD49a74DD93a88',
+                    priceInMajorUnits: '0.001',
+                    priceInMinorUnits: '1000000000000000', // decimals 18
+                },
+                cbBTC: {
+                    name: 'Coinbase Wrapped BTC',
+                    contractAddress: '0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf',
+                    priceInMajorUnits: '0.001',
+                    priceInMinorUnits: '100000', // decimals 8
+                },
+                LBTC: {
+                    name: 'Lombard Staked BTC',
+                    contractAddress: '0x8236a87084f8B84306f72007F36F2618A5634494',
+                    priceInMajorUnits: '0.001',
+                    priceInMinorUnits: '100000', // decimals 8
+                },
+                kBTC: {
+                    name: 'Kraken Wrapped Bitcoin',
+                    contractAddress: '0x73E0C0d45E048D25Fc26Fa3159b0aA04BfA4Db98',
+                    priceInMajorUnits: '0.001',
+                    priceInMinorUnits: '100000', // decimals 8
+                },
+                BBTC_1: {
+                    name: 'BounceBit BTC',
+                    contractAddress: '0xF5e11df1ebCf78b6b6D26E04FF19cD786a1e81dC',
+                    priceInMajorUnits: '0.001',
+                    priceInMinorUnits: '1000000000000000', // decimals 18
+                },
+                BBTC_2: {
+                    name: 'Binance Wrapped BTC',
+                    contractAddress: '0x9BE89D2a4cd102D8Fecc6BF9dA793be995C22541',
+                    priceInMajorUnits: '0.001',
+                    priceInMinorUnits: '100000', // decimals 8
+                },
             },
         },
         base: {
-            testnet: false,
+            isTestnet: false,
             paymentTokens: {
                 BTREE: {
+                    name: 'BTREE',
                     contractAddress: '0x4aCFF883f2879e69e67B7003ccec56C73ee41F6f',
                     priceInMajorUnits: '1000',
                     priceInMinorUnits: '1000000000000000000000',
                 },
+                WBTC: {
+                    name: 'Wrapped BTC',
+                    contractAddress: '0x0555E30da8f98308EdB960aa94C0Db47230d2B9c',
+                    priceInMajorUnits: '0.001',
+                    priceInMinorUnits: '100000', // decimals 8
+                },
+                tBTC: {
+                    name: 'Base tBTC v2',
+                    contractAddress: '0x236aa50979D5f3De3Bd1Eeb40E81137F22ab794b',
+                    priceInMajorUnits: '0.001',
+                    priceInMinorUnits: '1000000000000000', // decimals 18
+                },
+                cbBTC: {
+                    name: 'Coinbase Wrapped BTC',
+                    contractAddress: '0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf',
+                    priceInMajorUnits: '0.001',
+                    priceInMinorUnits: '100000', // decimals 8
+                },
+                LBTC: {
+                    name: 'Lombard Staked BTC',
+                    contractAddress: '0xecAc9C5F704e954931349Da37F60E39f515c11c1',
+                    priceInMajorUnits: '0.001',
+                    priceInMinorUnits: '100000', // decimals 8
+                },
             },
         },
         optimism: {
-            testnet: false,
+            isTestnet: false,
             paymentTokens: {
                 BTREE: {
+                    name: 'BTREE',
                     contractAddress: '0xB260d236F5eA5094D31F016160705ff53ac45028',
                     priceInMajorUnits: '1000',
                     priceInMinorUnits: '1000000000000000000000',
                 },
+                WBTC: {
+                    name: 'Wrapped BTC',
+                    contractAddress: '0x68f180fcCe6836688e9084f035309E29Bf0A2095',
+                    priceInMajorUnits: '0.001',
+                    priceInMinorUnits: '100000', // decimals 8
+                },
+                tBTC: {
+                    name: 'Optimism tBTC v2',
+                    contractAddress: '0x6c84a8f1c29108F47a79964b5Fe888D4f4D0dE40',
+                    priceInMajorUnits: '0.001',
+                    priceInMinorUnits: '1000000000000000', // decimals 18
+                },
+                kBTC: {
+                    name: 'Kraken Wrapped Bitcoin',
+                    contractAddress: '0x73E0C0d45E048D25Fc26Fa3159b0aA04BfA4Db98',
+                    priceInMajorUnits: '0.001',
+                    priceInMinorUnits: '100000', // decimals 8
+                },
             },
         },
         arbitrum: {
-            testnet: false,
+            isTestnet: false,
             paymentTokens: {
                 BTREE: {
+                    name: 'BTREE',
                     contractAddress: '0xA29871E78FC005d31982f942E1569265BA145A34',
                     priceInMajorUnits: '1000',
                     priceInMinorUnits: '1000000000000000000000',
                 },
             },
         },
+        ink: {
+            isTestnet: false,
+            paymentTokens: {
+                kBTC: {
+                    name: 'Kraken Wrapped Bitcoin',
+                    contractAddress: '0x73E0C0d45E048D25Fc26Fa3159b0aA04BfA4Db98',
+                    priceInMajorUnits: '0.001',
+                    priceInMinorUnits: '100000', // decimals 8
+                },
+            },
+        },
 
         // ===== Testnet Networks =====
         sepolia: {
-            testnet: true,
+            isTestnet: true,
             paymentTokens: {
                 BTREE: {
+                    name: 'BTREE',
                     contractAddress: '0x8389eFa79EF27De249AF63f034D7A94dFBdd4cBE',
                     priceInMajorUnits: '1000',
                     priceInMinorUnits: '1000000000000000000000',
                 },
+                tBTC: {
+                    name: 'tBTC v2',
+                    contractAddress: '0x517f2982701695D4E52f1ECFBEf3ba31Df470161',
+                    priceInMajorUnits: '0.001',
+                    priceInMinorUnits: '1000000000000000', // decimals 18
+                },
             },
         },
         baseSepolia: {
-            testnet: true,
+            isTestnet: true,
             paymentTokens: {
                 BTREE: {
+                    name: 'BTREE',
                     contractAddress: '0xF8c91a56db8485FCee21c5bf6345B063Cf4228F6',
                     priceInMajorUnits: '1000',
                     priceInMinorUnits: '1000000000000000000000',
@@ -163,9 +271,10 @@ export const CONFIG: IConfig = {
             },
         },
         optimismSepolia: {
-            testnet: true,
+            isTestnet: true,
             paymentTokens: {
                 BTREE: {
+                    name: 'BTREE',
                     contractAddress: '0x7E5A0b6C5c32883AE8E5b830c05688Eff317c3fb',
                     priceInMajorUnits: '1000',
                     priceInMinorUnits: '1000000000000000000000',
@@ -173,9 +282,10 @@ export const CONFIG: IConfig = {
             },
         },
         arbitrumSepolia: {
-            testnet: true,
+            isTestnet: true,
             paymentTokens: {
                 BTREE: {
+                    name: 'BTREE',
                     contractAddress: '0x65414D6A6DF9A139a462c2F43199dE580A348dF9',
                     priceInMajorUnits: '1000',
                     priceInMinorUnits: '1000000000000000000000',
