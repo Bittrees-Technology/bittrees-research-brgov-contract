@@ -4,6 +4,7 @@ dotenv.config();
 
 type IConfig = {
     initialBaseURI: string;
+    baseURI: string;
     treasuryAddress: string;
     adminAddress: string;
     defaultAdminAddress: string;
@@ -46,6 +47,7 @@ type IConfig = {
 export const CONFIG: IConfig = {
     // ===== BNOTE CONTRACT DEPLOYMENT DETAILS =====
     initialBaseURI: 'https://research.bittrees.org/',
+    baseURI: 'https://rose-familiar-horse-881.mypinata.cloud/ipfs/bafybeiahcddbvsagtao4w2h25ee2crxjzkly46l3pnk4k5lzaldmpz4qqa/',
     treasuryAddress: process.env.TREASURY_ADDRESS || '0x2F8f86e6E1Ff118861BEB7E583DE90f0449A264f',
     adminAddress: process.env.ADMIN_ADDRESS || '0x2F8f86e6E1Ff118861BEB7E583DE90f0449A264f',
     defaultAdminAddress: process.env.DEFAULT_ADMIN_ADDRESS || '0x2F8f86e6E1Ff118861BEB7E583DE90f0449A264f',

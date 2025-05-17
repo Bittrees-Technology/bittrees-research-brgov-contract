@@ -1,7 +1,5 @@
 import * as readline from 'readline';
 import { CREATE2_FACTORY_ABI } from './constants';
-import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers';
-import { CONFIG } from '../config';
 import { MetaTransactionData } from '@safe-global/types-kit';
 import Safe from '@safe-global/protocol-kit';
 import SafeApiKit from '@safe-global/api-kit';
@@ -22,9 +20,7 @@ export function generateCompatibleSalt(
     const saltHash = ethers.keccak256(ethers.toUtf8Bytes(saltText)).slice(2, 26); // Taking just 12 bytes (24 chars)
 
     // Combine: first 20 bytes from Safe address + last 12 bytes from custom salt
-    const combinedSalt = '0x' + addressBytes + saltHash;
-
-    return combinedSalt;
+    return '0x' + addressBytes + saltHash;
 }
 
 export function calculateCreate2Address(
@@ -113,8 +109,8 @@ export async function proposeTxBundleToSafe(
     safeAddress: string,
 ) {
     const { ethers, network } = hre;
-    // Get the signer - either from ledger or env privKey
-    const signer = await getSigner(hre);
+
+    const signer = await ethers.provider.getSigner();
 
     const { chainId } = await ethers.provider.getNetwork();
 
@@ -286,28 +282,6 @@ export function logTransactionDetailsToConsole(transactions: (
         console.log(`Data: ${tx.data.slice(0, 66)}...${tx.data.slice(-64)}`);
         console.log('\n');
     });
-}
-
-/**
- * @returns A HardhatEthersSigner. Either a ledger signer as configured in the
- * .env under LEDGER_ADDRESS and retrieved in config.ts, or a local signer as
- * configured in the .env under PRIVATE_KEY and retrieved in hardhat.config.ts
- * */
-export async function getSigner(
-    hre: HardhatRuntimeEnvironment,
-): Promise<HardhatEthersSigner> {
-    const { ethers } = hre;
-    let signer: HardhatEthersSigner;
-    if (CONFIG.useLedger) {
-        console.log(`Using Ledger with address: ${CONFIG.ledgerAddress}`);
-        signer = await ethers.getSigner(CONFIG.ledgerAddress);
-        console.log('Ledger connected successfully!');
-    } else {
-        const signers = await ethers.getSigners();
-        signer = signers[0];
-        console.log(`Using signer: ${await signer.getAddress()}`);
-    }
-    return signer;
 }
 
 /**
