@@ -59,7 +59,10 @@ task(
             await hre.run('technology-approve-bnote-to-spend-btree', { dryRun: true });
 
             // 4. Technology Multisig mints tokens to the treasury: (OPTIONAL - requires step 3 to have been carried out)
-            await hre.run('technology-mint-batch-test', { dryRun: true });
+            await hre.run('technology-mint-batch-test', {
+                dryRun: true,
+                omitDefensiveChecks: true,
+            });
         }
 
         // 5. Technology Multisig pauses the contract: (OPTIONAL)

@@ -21,14 +21,20 @@ task(
     'Bittrees Technology Multisig grants DEFAULT_ADMIN_ROLE to the Bittrees Research Multisig',
 )
     .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
+    .addFlag(
+        'omitDefensiveChecks',
+        '⚠️⚠️⚠️DANGEROUS!!! Omit defensive checks which block this task completing. Used for creating a tx which ' +
+        'will only be run in the future once it is valid. Executing this tx before intended could have bad consequences.'
+    )
     .setAction(async (taskArgs, hre) => {
-        const { dryRun } = taskArgs;
+        const { dryRun, omitDefensiveChecks } = taskArgs;
 
         await hre.run('grant-role', {
             role: 'DEFAULT_ADMIN_ROLE',
             address: CONFIG.bittreesResearchGnosisSafeAddress,
             from: CONFIG.bittreesTechnologyGnosisSafeAddress,
             dryRun,
+            omitDefensiveChecks,
         });
     });
 
@@ -44,14 +50,20 @@ task(
     'Bittrees Technology Multisig grants ADMIN_ROLE to the Bittrees Research Multisig',
 )
     .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
+    .addFlag(
+        'omitDefensiveChecks',
+        '⚠️⚠️⚠️DANGEROUS!!! Omit defensive checks which block this task completing. Used for creating a tx which ' +
+        'will only be run in the future once it is valid. Executing this tx before intended could have bad consequences.'
+    )
     .setAction(async (taskArgs, hre) => {
-        const { dryRun } = taskArgs;
+        const { dryRun, omitDefensiveChecks } = taskArgs;
 
         await hre.run('grant-role', {
             role: 'ADMIN_ROLE',
             address: CONFIG.bittreesResearchGnosisSafeAddress,
             from: CONFIG.bittreesResearchGnosisSafeAddress,
             dryRun,
+            omitDefensiveChecks,
         });
     });
 
@@ -67,12 +79,18 @@ task('grant-role', 'Grants a role to an address')
         CONFIG.bittreesResearchGnosisSafeAddress,
     )
     .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
+    .addFlag(
+        'omitDefensiveChecks',
+        '⚠️⚠️⚠️DANGEROUS!!! Omit defensive checks which block this task completing. Used for creating a tx which ' +
+        'will only be run in the future once it is valid. Executing this tx before intended could have bad consequences.'
+    )
     .setAction(async (taskArgs, hre) => {
         const {
             role,
             address,
             from,
             dryRun,
+            omitDefensiveChecks,
         } = taskArgs;
 
         if (address === hre.ethers.ZeroAddress) {
@@ -95,7 +113,7 @@ task('grant-role', 'Grants a role to an address')
 
         const fromAddressHasRole = await hasDefaultAdminRole(bNote, from);
 
-        if (!fromAddressHasRole) {
+        if (!fromAddressHasRole && !omitDefensiveChecks) {
             console.log(
                 '\n==================== !!! ABORTING !!! ====================\n'
                 + `Address specified as from(${from}) does not have the DEFAULT_ADMIN_ROLE.`

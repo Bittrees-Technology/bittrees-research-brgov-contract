@@ -113,7 +113,7 @@ export async function proposeTxBundleToSafe(
     safeAddress: string,
 ) {
     const { ethers, network } = hre;
-    // Get the signer - either from ledger or default hardhat
+    // Get the signer - either from ledger or env privKey
     const signer = await getSigner(hre);
 
     const { chainId } = await ethers.provider.getNetwork();
@@ -128,7 +128,12 @@ export async function proposeTxBundleToSafe(
         chainId,
     });
 
+    const safeInfo = await safeService.getSafeInfo(safeAddress);
+    console.log("Safe version:", safeInfo.version);
+
     const nonce = await getNonce(safe, safeAddress, safeService);
+    const isOwner = await isOwnerOnSafe(safe, safeService, signer.address);
+    const isDelegate = !isOwner;
 
     const unsignedSafeTx = await safe.createTransaction({
         transactions,
@@ -137,31 +142,95 @@ export async function proposeTxBundleToSafe(
         },
     });
 
-    const signedSafeTx = await safe.signTransaction(unsignedSafeTx);
+    const safeTxHash = await safe.getTransactionHash(unsignedSafeTx);
 
-    const signature = signedSafeTx.getSignature(signer.address);
+    if(isOwner) {
+        const signedSafeTx = await safe.signTransaction(unsignedSafeTx);
 
-    if (!signature) {
-        throw new Error('Signature not found');
+        const signature = signedSafeTx.getSignature(signer.address);
+
+        if (!signature) {
+            throw new Error('Signature not found');
+        }
+
+        await safeService.proposeTransaction({
+            senderAddress: signer.address,
+            safeTransactionData: signedSafeTx.data,
+            senderSignature: signature.data,
+            safeTxHash,
+            safeAddress,
+            origin: 'hardhat',
+        });
     }
 
-    await safeService.proposeTransaction({
-        senderAddress: signer.address,
-        safeTransactionData: signedSafeTx.data,
-        safeTxHash: await safe.getTransactionHash(signedSafeTx),
-        senderSignature: signature.data,
-        safeAddress,
-    });
+    if(isDelegate) {
+        const signature = await safe.signHash(safeTxHash);
+
+        await safeService.proposeTransaction({
+            senderAddress:  signer.address,
+            safeTransactionData: unsignedSafeTx.data,
+            senderSignature: signature.data,
+            safeTxHash,
+            safeAddress,
+            origin: 'hardhat',
+        });
+    }
+
+    safeService.getServiceInfo()
 
     console.log('\n==== Safe UI Instructions ====');
     console.log(
         'Go to your Safe UI to approve an execute the transaction bundle:\n'
-        + getSafeWebUrl(network.name, CONFIG.create2FactoryCallerAddress),
+        + getSafeWebUrl(network.name, safeAddress),
     );
 }
 
+async function isOwnerOnSafe(
+    safe: Safe,
+    safeService: SafeApiKit,
+    proposerAddress: string,
+): Promise<boolean> {
+    const isOwner = await safe.isOwner(proposerAddress);
+    if (isOwner) {
+        console.log(
+            `proposerAddress(${
+                proposerAddress
+            }) is an owner on the safe with address(${
+                await safe.getAddress()
+            }) and can propose transactions`
+        );
+        return true;
+    }
+
+    const response = await safeService.getSafeDelegates({
+        safeAddress: await safe.getAddress(),
+        delegateAddress: proposerAddress,
+    })
+
+    const isDelegate = response.results.some((result) => {
+        return result.delegate.toLowerCase() === proposerAddress.toLowerCase();
+    });
+
+    if (isDelegate) {
+        console.log(
+            `proposerAddress(${
+                proposerAddress
+            }) is a delegate on the safe with address(${
+                await safe.getAddress()
+            }) and can propose transactions`
+        );
+        return false;
+    }
+
+    throw new Error(`proposerAddress(${
+        proposerAddress
+    }) is NOT AUTHORIZED on the safe with address(${
+        await safe.getAddress()
+    }) and CANNOT propose transactions`);
+}
+
 /**
- * By default, proposing a transaction to the safe service for a instantiated safe
+ * By default, proposing a transaction to the safe service for an instantiated safe
  * object just checks the nonce based on executed transactions onchain for the safe
  * in question. This function takes proposed transaction on the queue into account,
  * allowing us to queue up multiple transactions without causing nonce collisions

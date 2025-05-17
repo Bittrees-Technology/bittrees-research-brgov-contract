@@ -19,12 +19,18 @@ task(
     'Bittrees Technology Multisig unpauses minting on the BNote contract',
 )
     .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
+    .addFlag(
+        'omitDefensiveChecks',
+        '⚠️⚠️⚠️DANGEROUS!!! Omit defensive checks which block this task completing. Used for creating a tx which ' +
+        'will only be run in the future once it is valid. Executing this tx before intended could have bad consequences.'
+    )
     .setAction(async (taskArgs, hre) => {
-        const { dryRun } = taskArgs;
+        const { dryRun, omitDefensiveChecks } = taskArgs;
 
         await hre.run('unpause-bnote-minting', {
             from: CONFIG.bittreesTechnologyGnosisSafeAddress,
             dryRun,
+            omitDefensiveChecks,
         });
     });
 
@@ -38,12 +44,18 @@ task(
     'Bittrees Research Multisig unpauses minting on the BNote contract',
 )
     .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
+    .addFlag(
+        'omitDefensiveChecks',
+        '⚠️⚠️⚠️DANGEROUS!!! Omit defensive checks which block this task completing. Used for creating a tx which ' +
+        'will only be run in the future once it is valid. Executing this tx before intended could have bad consequences.'
+    )
     .setAction(async (taskArgs, hre) => {
-        const { dryRun } = taskArgs;
+        const { dryRun, omitDefensiveChecks } = taskArgs;
 
         await hre.run('unpause-bnote-minting', {
             from: CONFIG.bittreesResearchGnosisSafeAddress,
             dryRun,
+            omitDefensiveChecks,
         });
     });
 
@@ -57,10 +69,16 @@ task('unpause-bnote-minting', 'Unpauses minting on the BNote contract')
         CONFIG.bittreesResearchGnosisSafeAddress,
     )
     .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
+    .addFlag(
+        'omitDefensiveChecks',
+        '⚠️⚠️⚠️DANGEROUS!!! Omit defensive checks which block this task completing. Used for creating a tx which ' +
+        'will only be run in the future once it is valid. Executing this tx before intended could have bad consequences.'
+    )
     .setAction(async (taskArgs, hre) => {
         const {
             from,
             dryRun,
+            omitDefensiveChecks,
         } = taskArgs;
 
         if (from === hre.ethers.ZeroAddress) {
@@ -78,7 +96,7 @@ task('unpause-bnote-minting', 'Unpauses minting on the BNote contract')
 
         const fromAddressHasRole = await hasAdminRole(bNote, from);
 
-        if (!fromAddressHasRole) {
+        if (!fromAddressHasRole && !omitDefensiveChecks) {
             console.log(
                 '\n==================== !!! ABORTING !!! ====================\n'
                 + `Address specified as from(${from}) does not have the ADMIN_ROLE.`
@@ -91,7 +109,7 @@ task('unpause-bnote-minting', 'Unpauses minting on the BNote contract')
 
         const isUnpaused = !(await bNote.paused());
 
-        if (isUnpaused) {
+        if (isUnpaused && !omitDefensiveChecks) {
             throw new Error(
                 'Minting is already unpaused on the BNote contract',
             );

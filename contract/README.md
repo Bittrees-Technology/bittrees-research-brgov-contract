@@ -119,7 +119,7 @@ Allows the Research Multisig to to grant roles to addresses
 Proves that the Research Multisig DEFAULT_ADMIN_ROLE is working
 
 ### 9. Research Multisig unpauses contract so minting can resume: (REQUIRED if step 4 was used)
-`npx hardhat research-unpause-bnote --network {network-name}`
+`npx hardhat research-unpause-bnote-minting --network {network-name}`
 
 Proves that the Research Multisig ADMIN_ROLE is working
 

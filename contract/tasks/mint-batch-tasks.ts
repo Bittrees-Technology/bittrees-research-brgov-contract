@@ -36,6 +36,11 @@ task(
         types.string,
     )
     .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
+    .addFlag(
+        'omitDefensiveChecks',
+        '⚠️⚠️⚠️DANGEROUS!!! Omit defensive checks which block this task completing. Used for creating a tx which ' +
+        'will only be run in the future once it is valid. Executing this tx before intended could have bad consequences.'
+    )
     .setAction(async (taskArgs, hre) => {
         const {
             tokenAddress = CONFIG.network[
@@ -44,6 +49,7 @@ task(
             tokenIds,
             quantities,
             dryRun,
+            omitDefensiveChecks,
         } = taskArgs;
 
         await hre.run('mint-batch', {
@@ -52,6 +58,7 @@ task(
             quantities,
             from: CONFIG.bittreesTechnologyGnosisSafeAddress,
             dryRun,
+            omitDefensiveChecks,
         });
     });
 
@@ -83,6 +90,11 @@ task(
         types.string,
     )
     .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
+    .addFlag(
+        'omitDefensiveChecks',
+        '⚠️⚠️⚠️DANGEROUS!!! Omit defensive checks which block this task completing. Used for creating a tx which ' +
+        'will only be run in the future once it is valid. Executing this tx before intended could have bad consequences.'
+    )
     .setAction(async (taskArgs, hre) => {
         const {
             tokenAddress = CONFIG.network[
@@ -91,6 +103,7 @@ task(
             tokenIds,
             quantities,
             dryRun,
+            omitDefensiveChecks,
         } = taskArgs;
 
         await hre.run('mint-batch', {
@@ -99,6 +112,7 @@ task(
             quantities,
             from: CONFIG.bittreesResearchGnosisSafeAddress,
             dryRun,
+            omitDefensiveChecks,
         });
     });
 
@@ -125,6 +139,11 @@ task('mint-batch', 'Mints multiple BNotes in one transaction')
         CONFIG.bittreesResearchGnosisSafeAddress,
     )
     .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
+    .addFlag(
+        'omitDefensiveChecks',
+        '⚠️⚠️⚠️DANGEROUS!!! Omit defensive checks which block this task completing. Used for creating a tx which ' +
+        'will only be run in the future once it is valid. Executing this tx before intended could have bad consequences.'
+    )
     .setAction(async (taskArgs, hre) => {
         const {
             tokenAddress,
@@ -132,6 +151,7 @@ task('mint-batch', 'Mints multiple BNotes in one transaction')
             quantities: quantitiesString,
             from,
             dryRun,
+            omitDefensiveChecks,
         } = taskArgs;
 
         if (tokenAddress === hre.ethers.ZeroAddress) {
@@ -182,10 +202,13 @@ task('mint-batch', 'Mints multiple BNotes in one transaction')
 
         // Check if token is a valid payment option
         const paymentToken = await bNote.paymentTokens(tokenAddress);
-        if (!paymentToken.active) {
+        if (!paymentToken.active && !omitDefensiveChecks) {
             throw new Error(`Token ${tokenAddress} is not an active payment token`);
         }
 
+        if (omitDefensiveChecks) {
+            console.log('⚠️price may inaccurate if task was run using the omitDefensiveChecks flag')
+        }
         console.log(`Payment token price: ${paymentToken.unitMintPrice} minor units per token`);
 
         // Calculate total cost
@@ -194,12 +217,15 @@ task('mint-batch', 'Mints multiple BNotes in one transaction')
             totalTokens += BigInt(tokenIds[i] * quantities[i]);
         }
 
+        if (omitDefensiveChecks) {
+            console.log('⚠️price may inaccurate if task was run using the omitDefensiveChecks flag')
+        }
         const totalCost = paymentToken.unitMintPrice * totalTokens;
         console.log(`Total cost: ${totalCost} token minor units`);
 
         // Check if treasury is set
         const treasury = await bNote.treasury();
-        if (treasury === hre.ethers.ZeroAddress) {
+        if (treasury === hre.ethers.ZeroAddress && !omitDefensiveChecks) {
             throw new Error('Treasury not set on contract. Minting will fail until treasury is set.');
         }
 
