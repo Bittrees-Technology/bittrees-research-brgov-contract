@@ -1,0 +1,14 @@
+{
+    "name": "Bittrees Notes",
+    "description": "BNOTE tokens are preferred stock certificates for Bittrees Research, conferring the owner with constrained voting rights as detailed in the disclaimer. It's important to understand that holding BNOTE tokens does not endow one with any ownership stakes or equity in Bittrees Research beyond these circumscribed voting privileges. These tokens come with no expiration date and do not imply the prospect of dividend earnings.",
+    "image": "https://ipfs.io/ipfs/",
+    "external_link": "https://research.bittrees.org",
+    "seller_fee_basis_points": 0,
+    "fee_recipient": "0x2F8f86e6E1Ff118861BEB7E583DE90f0449A264f",
+    "banner_image_url": "https://ipfs.io/ipfs/",
+    "social_media": {
+        "twitter": "bittrees_org",
+        "discord": "https://discord.gg/bittrees",
+        "medium": "bittrees"
+    }
+}

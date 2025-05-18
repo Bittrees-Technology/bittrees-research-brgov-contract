@@ -4,7 +4,6 @@ dotenv.config();
 
 type IConfig = {
     initialBaseURI: string;
-    baseURI: string;
     treasuryAddress: string;
     adminAddress: string;
     defaultAdminAddress: string;
@@ -23,6 +22,7 @@ type IConfig = {
     network: {
         [key: string]: {
             isTestnet: boolean;
+            baseURI: string;
             paymentTokens: {
                 [key: string]: {
                     name: string,
@@ -47,7 +47,6 @@ type IConfig = {
 export const CONFIG: IConfig = {
     // ===== BNOTE CONTRACT DEPLOYMENT DETAILS =====
     initialBaseURI: 'https://research.bittrees.org/',
-    baseURI: 'https://rose-familiar-horse-881.mypinata.cloud/ipfs/bafybeiahcddbvsagtao4w2h25ee2crxjzkly46l3pnk4k5lzaldmpz4qqa/',
     treasuryAddress: process.env.TREASURY_ADDRESS || '0x2F8f86e6E1Ff118861BEB7E583DE90f0449A264f',
     adminAddress: process.env.ADMIN_ADDRESS || '0x2F8f86e6E1Ff118861BEB7E583DE90f0449A264f',
     defaultAdminAddress: process.env.DEFAULT_ADMIN_ADDRESS || '0x2F8f86e6E1Ff118861BEB7E583DE90f0449A264f',
@@ -105,6 +104,7 @@ export const CONFIG: IConfig = {
         // ===== Mainnet Networks =====
         mainnet: {
             isTestnet: false,
+            baseURI: 'https://ipfs.io/ipfs/',
             paymentTokens: {
                 BTREE: {
                     name: 'BTREE',
@@ -158,6 +158,7 @@ export const CONFIG: IConfig = {
         },
         base: {
             isTestnet: false,
+            baseURI: '',
             paymentTokens: {
                 BTREE: {
                     name: 'BTREE',
@@ -193,6 +194,7 @@ export const CONFIG: IConfig = {
         },
         optimism: {
             isTestnet: false,
+            baseURI: '',
             paymentTokens: {
                 BTREE: {
                     name: 'BTREE',
@@ -222,6 +224,7 @@ export const CONFIG: IConfig = {
         },
         arbitrum: {
             isTestnet: false,
+            baseURI: '',
             paymentTokens: {
                 BTREE: {
                     name: 'BTREE',
@@ -233,6 +236,7 @@ export const CONFIG: IConfig = {
         },
         ink: {
             isTestnet: false,
+            baseURI: '',
             paymentTokens: {
                 kBTC: {
                     name: 'Kraken Wrapped Bitcoin',
@@ -246,6 +250,7 @@ export const CONFIG: IConfig = {
         // ===== Testnet Networks =====
         sepolia: {
             isTestnet: true,
+            baseURI: 'https://ipfs.io/ipfs/',
             paymentTokens: {
                 BTREE: {
                     name: 'BTREE',
@@ -263,6 +268,7 @@ export const CONFIG: IConfig = {
         },
         baseSepolia: {
             isTestnet: true,
+            baseURI: '',
             paymentTokens: {
                 BTREE: {
                     name: 'BTREE',
@@ -274,6 +280,7 @@ export const CONFIG: IConfig = {
         },
         optimismSepolia: {
             isTestnet: true,
+            baseURI: '',
             paymentTokens: {
                 BTREE: {
                     name: 'BTREE',
@@ -285,6 +292,7 @@ export const CONFIG: IConfig = {
         },
         arbitrumSepolia: {
             isTestnet: true,
+            baseURI: '',
             paymentTokens: {
                 BTREE: {
                     name: 'BTREE',
