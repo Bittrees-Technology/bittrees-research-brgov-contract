@@ -104,7 +104,7 @@ export const CONFIG: IConfig = {
         // ===== Mainnet Networks =====
         mainnet: {
             isTestnet: false,
-            baseURI: 'https://ipfs.io/ipfs/',
+            baseURI: 'https://ipfs.io/ipfs/bafybeiehx7jdudlmwpsoayke24i25r3gtjfdswtbu5v25lii46ermsd4pu', // TODO get and upload final images including contract collection image and banner image
             paymentTokens: {
                 BTREE: {
                     name: 'BTREE',
@@ -158,7 +158,7 @@ export const CONFIG: IConfig = {
         },
         base: {
             isTestnet: false,
-            baseURI: '',
+            baseURI: 'https://ipfs.io/ipfs/bafybeiehx7jdudlmwpsoayke24i25r3gtjfdswtbu5v25lii46ermsd4pu', // TODO replace with chain specific link
             paymentTokens: {
                 BTREE: {
                     name: 'BTREE',
@@ -194,7 +194,7 @@ export const CONFIG: IConfig = {
         },
         optimism: {
             isTestnet: false,
-            baseURI: '',
+            baseURI: 'https://ipfs.io/ipfs/bafybeiehx7jdudlmwpsoayke24i25r3gtjfdswtbu5v25lii46ermsd4pu', // TODO replace with chain specific link
             paymentTokens: {
                 BTREE: {
                     name: 'BTREE',
@@ -224,7 +224,7 @@ export const CONFIG: IConfig = {
         },
         arbitrum: {
             isTestnet: false,
-            baseURI: '',
+            baseURI: 'https://ipfs.io/ipfs/bafybeiehx7jdudlmwpsoayke24i25r3gtjfdswtbu5v25lii46ermsd4pu', // TODO replace with chain specific link
             paymentTokens: {
                 BTREE: {
                     name: 'BTREE',
@@ -236,7 +236,7 @@ export const CONFIG: IConfig = {
         },
         ink: {
             isTestnet: false,
-            baseURI: '',
+            baseURI: 'https://ipfs.io/ipfs/bafybeiehx7jdudlmwpsoayke24i25r3gtjfdswtbu5v25lii46ermsd4pu', // TODO replace with chain specific link
             paymentTokens: {
                 kBTC: {
                     name: 'Kraken Wrapped Bitcoin',
@@ -250,7 +250,7 @@ export const CONFIG: IConfig = {
         // ===== Testnet Networks =====
         sepolia: {
             isTestnet: true,
-            baseURI: 'https://ipfs.io/ipfs/',
+            baseURI: 'https://ipfs.io/ipfs/bafybeiehx7jdudlmwpsoayke24i25r3gtjfdswtbu5v25lii46ermsd4pu', // TODO replace with chain specific link
             paymentTokens: {
                 BTREE: {
                     name: 'BTREE',
@@ -268,7 +268,7 @@ export const CONFIG: IConfig = {
         },
         baseSepolia: {
             isTestnet: true,
-            baseURI: '',
+            baseURI: 'https://ipfs.io/ipfs/bafybeiehx7jdudlmwpsoayke24i25r3gtjfdswtbu5v25lii46ermsd4pu', // TODO replace with chain specific link
             paymentTokens: {
                 BTREE: {
                     name: 'BTREE',
@@ -280,7 +280,7 @@ export const CONFIG: IConfig = {
         },
         optimismSepolia: {
             isTestnet: true,
-            baseURI: '',
+            baseURI: 'https://ipfs.io/ipfs/bafybeiehx7jdudlmwpsoayke24i25r3gtjfdswtbu5v25lii46ermsd4pu', // TODO replace with chain specific link
             paymentTokens: {
                 BTREE: {
                     name: 'BTREE',
@@ -292,7 +292,7 @@ export const CONFIG: IConfig = {
         },
         arbitrumSepolia: {
             isTestnet: true,
-            baseURI: '',
+            baseURI: 'https://ipfs.io/ipfs/bafybeiehx7jdudlmwpsoayke24i25r3gtjfdswtbu5v25lii46ermsd4pu', // TODO replace with chain specific link
             paymentTokens: {
                 BTREE: {
                     name: 'BTREE',
