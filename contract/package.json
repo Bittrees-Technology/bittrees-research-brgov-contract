@@ -4,10 +4,12 @@
   "main": "index.js",
   "scripts": {
     "clean": "rm -rf ",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "hardhat test",
     "test:ci": "hardhat test",
-    "setPaymentToken": "ts-node scripts/utils/run-with-network.ts setPaymentToken.ts",
-    "setTreasury": "ts-node scripts/utils/run-with-network.ts setTreasury.ts"
+    "test:gas": "REPORT_GAS=1 hardhat test --network hardhat test/*.ts",
+    "test:coverage": "hardhat coverage",
+    "console": "hardhat console --network localhost",
+    "style": "prettier --write ."
   },
   "keywords": [],
   "engines": {
@@ -15,7 +17,7 @@
   },
   "author": "donluv.eth & Brian Gershon",
   "license": "MIT",
-  "description": "An upgradeable ERC1155 for purchasing Bittrees Reasearch Preferred Stock",
+  "description": "An upgradeable ERC1155 for purchasing Bittrees Research Preferred Stock",
   "devDependencies": {
     "@nomicfoundation/hardhat-ledger": "1.1.0",
     "@nomicfoundation/hardhat-toolbox": "5.0.0",
