@@ -46,17 +46,17 @@ This is the recommended approach to configuring and handing over the BNote contr
 each resulting in a transaction batch of multiple transactions to be executed by the safe in that stage.
 
 ### PHASE 00 - Technology Multisig configures the BNote contract and initiates handover to Research Multisig:
-carries out detailed steps 1 - 7
+carries out detailed steps 1 - 8
 
 `npx hardhat technology-configure-bnote-and-handover-to-research --network {network-name}`
 
 ### PHASE 01 - Research Multisig takes ownership over the BNote contract, proving PHASE 00 success:
-carries out detailed steps 8 - 11
+carries out detailed steps 9 - 12
 
 `npx hardhat research-take-bnote-ownership --network {network-name}`
 
 ### PHASE 02 - Technology Multisig loses ownership of the BNote contract, ONLY DO AFTER SUCCESSFUL PHASE 01:
-carries out detailed steps 12a or 12b
+carries out detailed steps 13a or 13b
 `npx hardhat technology-renounce-bnote-roles --network {network-name}`
 
 OR
@@ -113,17 +113,22 @@ Proves that pausing the contract works as it should, and sets up the Research Mu
 
 Allows the Research Multisig to to grant roles to addresses 
 
-### 8. Research Multisig grants ADMIN_ROLE to the itself: (REQUIRED)
+### 8. Technology Multisig set baseUri on the contract: (OPTIONAL)
+`npx hardhat technology-set-base-uri --network {network-name}`
+
+Set the base URI on the contract using the value defined in config.ts
+
+### 9. Research Multisig grants ADMIN_ROLE to the itself: (REQUIRED)
 `npx hardhat research-grant-admin-role-to-itself --network {network-name}`
 
 Proves that the Research Multisig DEFAULT_ADMIN_ROLE is working
 
-### 9. Research Multisig unpauses contract so minting can resume: (REQUIRED if step 4 was used)
+### 10. Research Multisig unpauses contract so minting can resume: (REQUIRED if step 4 was used)
 `npx hardhat research-unpause-bnote-minting --network {network-name}`
 
 Proves that the Research Multisig ADMIN_ROLE is working
 
-### 10. Technology Multisig approves BNote contract to spend sufficient BTREE it holds: (OPTIONAL)
+### 11. Technology Multisig approves BNote contract to spend sufficient BTREE it holds: (OPTIONAL)
 TODO: Add this task for Technology to approve BNote contract to spend its BTREE in the following test mint
 
 `npx hardhat research-approve-bnote-to-spend-btree --network {network-name}`
@@ -131,14 +136,14 @@ TODO: Add this task for Technology to approve BNote contract to spend its BTREE 
 Required for minting to work. Default approves 111k BTREE, as test assumptions are that the unitPrice of 1 BNote is 
 1,000 BTREE, and test mint will mint 1 of each token resulting in a total of 111 BNote
 
-### 11. Research Multisig mints tokens to the treasury(itself): (OPTIONAL - requires step 10 to have been carried out)
+### 12. Research Multisig mints tokens to the treasury(itself): (OPTIONAL - requires step 10 to have been carried out)
 `npx hardhat research-mint-batch-test --network {network-name}`
 
 Proves to research that minting is working correctly, that the treasury is correctly set, 
 that the BTREE token is set as a valid active paymentToken with the right price, and that the
 contract is unpaused by Research's own authority
 
-### 12_a. Technology Multisig renounces DEFAULT_ADMIN_ROLE & ADMIN_ROLE: (REQUIRED - alternatively do step 12_b)
+### 13_a. Technology Multisig renounces DEFAULT_ADMIN_ROLE & ADMIN_ROLE: (REQUIRED - alternatively do step 12_b)
 
 `npx hardhat technology-renounce-default-admin-role --network {network-name}`
 
@@ -150,7 +155,7 @@ Leaves Bittrees Research as the exclusive address with authority over the contra
 passed in should be the Research Multisig address, and ensures that the Technology Multisig does not renounce the roles
 before they have been granted to another address.
 
-### 12_b. Research Multisig revokes DEFAULT_ADMIN_ROLE & ADMIN_ROLE from Technology Multisig: (REQUIRED - alternatively do step 12_a)
+### 13_b. Research Multisig revokes DEFAULT_ADMIN_ROLE & ADMIN_ROLE from Technology Multisig: (REQUIRED - alternatively do step 12_a)
 
 `npx hardhat research-revoke-default-admin-role-from-technology --network {network-name}`
 

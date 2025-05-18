@@ -24,7 +24,7 @@ task(
         const { dryRun } = taskArgs;
         const from = CONFIG.bittreesTechnologyGnosisSafeAddress;
 
-        // 12_b. Research Multisig revokes DEFAULT_ADMIN_ROLE & ADMIN_ROLE from Technology Multisig: (REQUIRED - alternatively do step 12_a)
+        // 13_b. Research Multisig revokes DEFAULT_ADMIN_ROLE & ADMIN_ROLE from Technology Multisig: (REQUIRED - alternatively do step 12_a)
         await hre.run('research-revoke-default-admin-role-from-technology', { dryRun: true });
 
         await hre.run('research-revoke-admin-role-from-technology', { dryRun: true });

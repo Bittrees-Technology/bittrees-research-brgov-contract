@@ -25,7 +25,7 @@ task(
         const from = CONFIG.bittreesTechnologyGnosisSafeAddress;
 
 
-        // 12_a. Technology Multisig renounces DEFAULT_ADMIN_ROLE & ADMIN_ROLE: (REQUIRED - alternatively do step 12_b)
+        // 13_a. Technology Multisig renounces DEFAULT_ADMIN_ROLE & ADMIN_ROLE: (REQUIRED - alternatively do step 12_b)
         await hre.run('technology-renounce-default-admin-role', { dryRun: true });
 
         await hre.run('technology-renounce-admin-role', { dryRun: true });

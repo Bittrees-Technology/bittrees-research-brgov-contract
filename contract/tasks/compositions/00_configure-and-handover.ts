@@ -77,6 +77,9 @@ task(
         // 7. Technology Multisig pauses the contract: (OPTIONAL)
         await hre.run('technology-grant-default-admin-role-to-research', { dryRun: true });
 
+        // 8. Technology sets baseUri on the contract
+        await hre.run('technology-set-base-uri', { dryRun: true });
+
         if (dryRun || !CONFIG.proposeTxToSafe) {
             logTransactionDetailsToConsole(transactionBatch);
         } else {
