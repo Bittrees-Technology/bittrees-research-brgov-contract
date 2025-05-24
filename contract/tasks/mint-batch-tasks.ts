@@ -6,6 +6,7 @@ import {
     logTransactionDetailsToConsole,
     getBNoteProxyAddress,
 } from '../lib/helpers';
+import { transactionBatch, TTransaction } from '../lib/tx-batch';
 
 /**
  * Contract Configuration Helper Task
@@ -34,13 +35,21 @@ task(
         '1,1,1',
         types.string,
     )
-    .addFlag('dryRun', 'Only show transaction data without submitting')
+    .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
+    .addFlag(
+        'omitDefensiveChecks',
+        '⚠️⚠️⚠️DANGEROUS!!! Omit defensive checks which block this task completing. Used for creating a tx which ' +
+        'will only be run in the future once it is valid. Executing this tx before intended could have bad consequences.'
+    )
     .setAction(async (taskArgs, hre) => {
         const {
-            tokenAddress = CONFIG.network[hre.network.name as keyof typeof CONFIG.network].BTreeTokenAddress,
+            tokenAddress = CONFIG.network[
+                hre.network.name as keyof typeof CONFIG.network
+                ].paymentTokens.BTREE.contractAddress,
             tokenIds,
             quantities,
             dryRun,
+            omitDefensiveChecks,
         } = taskArgs;
 
         await hre.run('mint-batch', {
@@ -49,6 +58,7 @@ task(
             quantities,
             from: CONFIG.bittreesTechnologyGnosisSafeAddress,
             dryRun,
+            omitDefensiveChecks,
         });
     });
 
@@ -79,13 +89,21 @@ task(
         '1,1,1',
         types.string,
     )
-    .addFlag('dryRun', 'Only show transaction data without submitting')
+    .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
+    .addFlag(
+        'omitDefensiveChecks',
+        '⚠️⚠️⚠️DANGEROUS!!! Omit defensive checks which block this task completing. Used for creating a tx which ' +
+        'will only be run in the future once it is valid. Executing this tx before intended could have bad consequences.'
+    )
     .setAction(async (taskArgs, hre) => {
         const {
-            tokenAddress = CONFIG.network[hre.network.name as keyof typeof CONFIG.network].BTreeTokenAddress,
+            tokenAddress = CONFIG.network[
+                hre.network.name as keyof typeof CONFIG.network
+                ].paymentTokens.BTREE.contractAddress,
             tokenIds,
             quantities,
             dryRun,
+            omitDefensiveChecks,
         } = taskArgs;
 
         await hre.run('mint-batch', {
@@ -94,6 +112,7 @@ task(
             quantities,
             from: CONFIG.bittreesResearchGnosisSafeAddress,
             dryRun,
+            omitDefensiveChecks,
         });
     });
 
@@ -119,7 +138,12 @@ task('mint-batch', 'Mints multiple BNotes in one transaction')
         'The address calling the contract to mint tokens',
         CONFIG.bittreesResearchGnosisSafeAddress,
     )
-    .addFlag('dryRun', 'Only show transaction data without submitting')
+    .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
+    .addFlag(
+        'omitDefensiveChecks',
+        '⚠️⚠️⚠️DANGEROUS!!! Omit defensive checks which block this task completing. Used for creating a tx which ' +
+        'will only be run in the future once it is valid. Executing this tx before intended could have bad consequences.'
+    )
     .setAction(async (taskArgs, hre) => {
         const {
             tokenAddress,
@@ -127,6 +151,7 @@ task('mint-batch', 'Mints multiple BNotes in one transaction')
             quantities: quantitiesString,
             from,
             dryRun,
+            omitDefensiveChecks,
         } = taskArgs;
 
         if (tokenAddress === hre.ethers.ZeroAddress) {
@@ -177,10 +202,13 @@ task('mint-batch', 'Mints multiple BNotes in one transaction')
 
         // Check if token is a valid payment option
         const paymentToken = await bNote.paymentTokens(tokenAddress);
-        if (!paymentToken.active) {
+        if (!paymentToken.active && !omitDefensiveChecks) {
             throw new Error(`Token ${tokenAddress} is not an active payment token`);
         }
 
+        if (omitDefensiveChecks) {
+            console.log('⚠️price may inaccurate if task was run using the omitDefensiveChecks flag')
+        }
         console.log(`Payment token price: ${paymentToken.unitMintPrice} minor units per token`);
 
         // Calculate total cost
@@ -189,12 +217,15 @@ task('mint-batch', 'Mints multiple BNotes in one transaction')
             totalTokens += BigInt(tokenIds[i] * quantities[i]);
         }
 
+        if (omitDefensiveChecks) {
+            console.log('⚠️price may inaccurate if task was run using the omitDefensiveChecks flag')
+        }
         const totalCost = paymentToken.unitMintPrice * totalTokens;
         console.log(`Total cost: ${totalCost} token minor units`);
 
         // Check if treasury is set
         const treasury = await bNote.treasury();
-        if (treasury === hre.ethers.ZeroAddress) {
+        if (treasury === hre.ethers.ZeroAddress && !omitDefensiveChecks) {
             throw new Error('Treasury not set on contract. Minting will fail until treasury is set.');
         }
 
@@ -219,11 +250,11 @@ task('mint-batch', 'Mints multiple BNotes in one transaction')
                 }) with total cost(${
                     totalCost
                 }).`
-                + `Attempting to mint-batch with this address will revert onchain and waste gas!`
-            )
+                + `Attempting to mint-batch with this address will revert onchain and waste gas!`,
+            );
             throw new Error(
-                'Sender Insufficient Allowance on Payment Token'
-            )
+                'Sender Insufficient Allowance on Payment Token',
+            );
         }
 
         const symbol = await tokenContract.symbol();
@@ -233,12 +264,12 @@ task('mint-batch', 'Mints multiple BNotes in one transaction')
 
 
         // Create the transaction data
-        const txData = bNote.interface.encodeFunctionData(
+        const txData: string = bNote.interface.encodeFunctionData(
             'mintBatch',
             [tokenIds, quantities, tokenAddress],
         );
 
-        const transactions = [{
+        const transactions: TTransaction[] = [{
             to: proxyAddress,
             value: '0',
             data: txData,
@@ -254,6 +285,7 @@ task('mint-batch', 'Mints multiple BNotes in one transaction')
 
         if (dryRun || !CONFIG.proposeTxToSafe) {
             logTransactionDetailsToConsole(transactions);
+            transactionBatch.push(...transactions);
         } else {
             await proposeTxBundleToSafe(hre, transactions, from);
         }

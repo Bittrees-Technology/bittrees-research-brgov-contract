@@ -12,17 +12,20 @@ import { transactionBatch, TTransaction } from '../lib/tx-batch';
 /**
  * Contract Configuration Helper Task
  *
- * The Bittrees Technology Multisig pauses minting on the BNote contract
+ * The Technology Multisig sets the base URI on the BNote contract.
  * */
 task(
-    'technology-pause-bnote-minting',
-    'Bittrees Technology Multisig pauses minting on the BNote contract',
+    'technology-set-base-uri',
+    'Bittrees Technology Multisig sets the base URI on the BNote contract.',
 )
     .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
     .setAction(async (taskArgs, hre) => {
         const { dryRun } = taskArgs;
 
-        await hre.run('pause-bnote-minting', {
+        const networkName = hre.network.name;
+
+        await hre.run('set-base-uri', {
+            baseUri: CONFIG.network[networkName].baseURI,
             from: CONFIG.bittreesTechnologyGnosisSafeAddress,
             dryRun,
         });
@@ -31,34 +34,39 @@ task(
 /**
  * Contract Configuration Helper Task
  *
- * The Bittrees Research Multisig pauses minting on the BNote contract
+ * The Research Multisig sets the base URI on the BNote contract.
  * */
 task(
-    'research-pause-bnote-minting',
-    'Bittrees Research Multisig pauses minting on the BNote contract',
+    'research-set-base-uri',
+    'Bittrees Research Multisig sets the base URI on the BNote contract.',
 )
     .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
     .setAction(async (taskArgs, hre) => {
         const { dryRun } = taskArgs;
 
-        await hre.run('pause-bnote-minting', {
+        const networkName = hre.network.name;
+
+        await hre.run('set-base-uri', {
+            baseUri: CONFIG.network[networkName].baseURI,
             from: CONFIG.bittreesResearchGnosisSafeAddress,
             dryRun,
         });
     });
 
 /**
- * Generalized Task for pausing minting on the BNote contract
+ * Generalized Task for setting the base URI on the BNote contract
  * */
-task('pause-bnote-minting', 'Pauses minting on the BNote contract')
+task('set-base-uri', 'Sets the base URI on the BNote contract.')
+    .addParam('baseUri', 'The base URI to set on the BNote contract')
     .addParam(
         'from',
-        'The address calling the contract to pause minting. Must have the ADMIN_ROLE',
+        'The address calling the contract to set the treasury address',
         CONFIG.bittreesResearchGnosisSafeAddress,
     )
     .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
     .setAction(async (taskArgs, hre) => {
         const {
+            baseUri,
             from,
             dryRun,
         } = taskArgs;
@@ -68,7 +76,8 @@ task('pause-bnote-minting', 'Pauses minting on the BNote contract')
         }
 
         console.log(`\nNetwork: ${hre.network.name}`);
-        console.log(`==== Pausing Minting on the BNote Contract ====`);
+        console.log(`==== Setting Base URI ====`);
+        console.log(`Base URI: ${baseUri}`);
 
         const proxyAddress = await getBNoteProxyAddress(hre.network.name);
         console.log(`\nConnecting to BNote at: ${proxyAddress}`);
@@ -82,32 +91,27 @@ task('pause-bnote-minting', 'Pauses minting on the BNote contract')
             console.log(
                 '\n==================== !!! ABORTING !!! ====================\n'
                 + `Address specified as from(${from}) does not have the ADMIN_ROLE.`
-                + `Attempting to pause-bnote-minting with this address will revert onchain and waste gas!`,
+                + `Attempting to set-base-uri with this address will revert onchain and waste gas!`,
             );
             throw new Error(
                 'Sender Not Authorized with ADMIN_ROLE On Contract',
             );
         }
 
-        const isPaused = await bNote.paused();
-
-        if (isPaused) {
-            throw new Error(
-                'Minting is already paused on the BNote contract',
-            );
-        }
-
-        const txData: string = bNote.interface.encodeFunctionData('pause');
+        const txData: string = bNote.interface.encodeFunctionData(
+            'setBaseURI',
+            [baseUri],
+        );
 
         const transactions: TTransaction[] = [{
             to: proxyAddress,
             value: '0',
             data: txData,
-            transactionInfoLog: `\n==== Pause Minting on BNote Transaction ====`,
+            transactionInfoLog: `\n==== Set Base URI Transaction ====`,
         }];
 
         await askForConfirmation(
-            'Do you want to proceed with pausing minting on the BNote contract?',
+            `Do you want to proceed with setting the base URI to (${baseUri})?`,
         );
 
         if (dryRun || !CONFIG.proposeTxToSafe) {
