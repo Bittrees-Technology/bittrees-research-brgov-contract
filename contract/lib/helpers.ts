@@ -1,7 +1,5 @@
 import * as readline from 'readline';
 import { CREATE2_FACTORY_ABI } from './constants';
-import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers';
-import { CONFIG } from '../config';
 import { MetaTransactionData } from '@safe-global/types-kit';
 import Safe from '@safe-global/protocol-kit';
 import SafeApiKit from '@safe-global/api-kit';
@@ -11,7 +9,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 export function generateCompatibleSalt(
     hre: HardhatRuntimeEnvironment,
     safeAddress: string,
-    saltText: string
+    saltText: string,
 ): string {
     const { ethers } = hre;
 
@@ -22,9 +20,7 @@ export function generateCompatibleSalt(
     const saltHash = ethers.keccak256(ethers.toUtf8Bytes(saltText)).slice(2, 26); // Taking just 12 bytes (24 chars)
 
     // Combine: first 20 bytes from Safe address + last 12 bytes from custom salt
-    const combinedSalt = '0x' + addressBytes + saltHash;
-
-    return combinedSalt;
+    return '0x' + addressBytes + saltHash;
 }
 
 export function calculateCreate2Address(
@@ -45,8 +41,8 @@ export function calculateCreate2Address(
             '0xff',
             factoryAddress.toLowerCase(),
             salt,
-            bytecodeHash
-        ])
+            bytecodeHash,
+        ]),
     );
 
     // Extract the last 20 bytes (40 hex chars) to get the address
@@ -78,7 +74,7 @@ export function encodeCreate2FactoryDeploymentTxData(
 ): string {
     const { ethers } = hre;
     const factoryInterface = new ethers.Interface(CREATE2_FACTORY_ABI);
-    return factoryInterface.encodeFunctionData("safeCreate2", [salt, bytecode]);
+    return factoryInterface.encodeFunctionData('safeCreate2', [salt, bytecode]);
 }
 
 /**
@@ -89,7 +85,7 @@ export function encodeCreate2FactoryDeploymentTxData(
 export function askForConfirmation(question: string): Promise<boolean> {
     const rl = readline.createInterface({
         input: process.stdin,
-        output: process.stdout
+        output: process.stdout,
     });
 
     return new Promise<boolean>((resolve) => {
@@ -113,8 +109,8 @@ export async function proposeTxBundleToSafe(
     safeAddress: string,
 ) {
     const { ethers, network } = hre;
-    // Get the signer - either from ledger or default hardhat
-    const signer = await getSigner(hre);
+
+    const signer = await ethers.provider.getSigner();
 
     const { chainId } = await ethers.provider.getNetwork();
 
@@ -122,46 +118,115 @@ export async function proposeTxBundleToSafe(
         provider: network.provider,
         signer: signer.address,
         safeAddress,
-    })
-
-    const safeService = new SafeApiKit({
-        chainId
     });
 
+    const safeService = new SafeApiKit({
+        chainId,
+    });
+
+    const safeInfo = await safeService.getSafeInfo(safeAddress);
+    console.log("Safe version:", safeInfo.version);
+
     const nonce = await getNonce(safe, safeAddress, safeService);
+    const isOwner = await isOwnerOnSafe(safe, safeService, signer.address);
+    const isDelegate = !isOwner;
 
     const unsignedSafeTx = await safe.createTransaction({
         transactions,
         options: {
-            nonce
+            nonce,
+        },
+    });
+
+    const safeTxHash = await safe.getTransactionHash(unsignedSafeTx);
+
+    if(isOwner) {
+        const signedSafeTx = await safe.signTransaction(unsignedSafeTx);
+
+        const signature = signedSafeTx.getSignature(signer.address);
+
+        if (!signature) {
+            throw new Error('Signature not found');
         }
-    })
 
-    const signedSafeTx = await safe.signTransaction(unsignedSafeTx);
-
-    const signature = signedSafeTx.getSignature(signer.address);
-
-    if (!signature) {
-        throw new Error("Signature not found");
+        await safeService.proposeTransaction({
+            senderAddress: signer.address,
+            safeTransactionData: signedSafeTx.data,
+            senderSignature: signature.data,
+            safeTxHash,
+            safeAddress,
+            origin: 'hardhat',
+        });
     }
 
-    await safeService.proposeTransaction({
-        senderAddress: signer.address,
-        safeTransactionData: signedSafeTx.data,
-        safeTxHash: await safe.getTransactionHash(signedSafeTx),
-        senderSignature: signature.data,
-        safeAddress,
-    })
+    if(isDelegate) {
+        const signature = await safe.signHash(safeTxHash);
 
-    console.log("\n==== Safe UI Instructions ====");
+        await safeService.proposeTransaction({
+            senderAddress:  signer.address,
+            safeTransactionData: unsignedSafeTx.data,
+            senderSignature: signature.data,
+            safeTxHash,
+            safeAddress,
+            origin: 'hardhat',
+        });
+    }
+
+    safeService.getServiceInfo()
+
+    console.log('\n==== Safe UI Instructions ====');
     console.log(
-        "Go to your Safe UI to approve an execute the transaction bundle:\n"
-        + getSafeWebUrl(network.name, CONFIG.create2FactoryCallerAddress)
+        'Go to your Safe UI to approve an execute the transaction bundle:\n'
+        + getSafeWebUrl(network.name, safeAddress),
     );
 }
 
+async function isOwnerOnSafe(
+    safe: Safe,
+    safeService: SafeApiKit,
+    proposerAddress: string,
+): Promise<boolean> {
+    const isOwner = await safe.isOwner(proposerAddress);
+    if (isOwner) {
+        console.log(
+            `proposerAddress(${
+                proposerAddress
+            }) is an owner on the safe with address(${
+                await safe.getAddress()
+            }) and can propose transactions`
+        );
+        return true;
+    }
+
+    const response = await safeService.getSafeDelegates({
+        safeAddress: await safe.getAddress(),
+        delegateAddress: proposerAddress,
+    })
+
+    const isDelegate = response.results.some((result) => {
+        return result.delegate.toLowerCase() === proposerAddress.toLowerCase();
+    });
+
+    if (isDelegate) {
+        console.log(
+            `proposerAddress(${
+                proposerAddress
+            }) is a delegate on the safe with address(${
+                await safe.getAddress()
+            }) and can propose transactions`
+        );
+        return false;
+    }
+
+    throw new Error(`proposerAddress(${
+        proposerAddress
+    }) is NOT AUTHORIZED on the safe with address(${
+        await safe.getAddress()
+    }) and CANNOT propose transactions`);
+}
+
 /**
- * By default, proposing a transaction to the safe service for a instantiated safe
+ * By default, proposing a transaction to the safe service for an instantiated safe
  * object just checks the nonce based on executed transactions onchain for the safe
  * in question. This function takes proposed transaction on the queue into account,
  * allowing us to queue up multiple transactions without causing nonce collisions
@@ -186,11 +251,11 @@ async function getNonce(
                 pendingTransactions.length
             } pending transactions in the queue for the safe with address(${
                 safeAddress
-            })`
+            })`,
         );
         // Find the highest nonce in pending transactions
         const highestPendingNonce = Math.max(
-            ...pendingTransactions.map(tx => tx.nonce)
+            ...pendingTransactions.map(tx => tx.nonce),
         );
         nextNonce = Math.max(onChainNonce, highestPendingNonce + 1);
     }
@@ -207,7 +272,7 @@ async function getNonce(
  * as confirming the proposed TXs add to the safe by one of the other multisig signers)
  * */
 export function logTransactionDetailsToConsole(transactions: (
-    MetaTransactionData & {transactionInfoLog: string })[]
+    MetaTransactionData & { transactionInfoLog: string })[],
 ) {
     transactions.map(tx => {
         console.log(tx.transactionInfoLog);
@@ -220,65 +285,43 @@ export function logTransactionDetailsToConsole(transactions: (
 }
 
 /**
- * @returns A HardhatEthersSigner. Either a ledger signer as configured in the
- * .env under LEDGER_ADDRESS and retrieved in config.ts, or a local signer as
- * configured in the .env under PRIVATE_KEY and retrieved in hardhat.config.ts
- * */
-export async function getSigner(
-    hre: HardhatRuntimeEnvironment
-): Promise<HardhatEthersSigner> {
-    const { ethers } = hre;
-    let signer: HardhatEthersSigner;
-    if (CONFIG.useLedger) {
-        console.log(`Using Ledger with address: ${CONFIG.ledgerAddress}`);
-        signer = await ethers.getSigner(CONFIG.ledgerAddress);
-        console.log("Ledger connected successfully!");
-    } else {
-        const signers = await ethers.getSigners();
-        signer = signers[0];
-        console.log(`Using signer: ${await signer.getAddress()}`);
-    }
-    return signer;
-}
-
-/**
  * Returns the gnosis safe UI url where you can expect to find
  * the queue of proposed transactions
  * */
 export function getSafeWebUrl(
     networkName: string,
-    safeAddress: string
+    safeAddress: string,
 ): string {
     const baseUrl = 'https://app.safe.global';
     let query = 'safe=';
 
     switch (networkName) {
         // Mainnets
-        case "mainnet":
+        case 'mainnet':
             query = `${query}eth:${safeAddress}`;
             break;
-        case "base":
+        case 'base':
             query = `${query}base:${safeAddress}`;
             break;
-        case "optimism":
+        case 'optimism':
             query = `${query}oeth:${safeAddress}`;
             break;
-        case "arbitrum":
+        case 'arbitrum':
             query = `${query}arb1:${safeAddress}`;
             break;
 
         // Testnets
-        case "sepolia":
+        case 'sepolia':
             query = `${query}sep:${safeAddress}`;
             break;
-        case "baseSepolia":
+        case 'baseSepolia':
             query = `${query}basesep:${safeAddress}`;
             break;
-        case "optimismSepolia":
+        case 'optimismSepolia':
             // TODO: validate once support added in the UI
             query = `${query}oethsep:${safeAddress}`;
             break;
-        case "arbitrumSepolia":
+        case 'arbitrumSepolia':
             // TODO: validate once support added in the UI
             query = `${query}arb1sep:${safeAddress}`;
             break;
@@ -312,7 +355,7 @@ export type TBNoteDeploymentFile = {
 export async function getBNoteDeploymentFile(network: string): Promise<TBNoteDeploymentFile> {
     try {
         return require(`../deployments/bnote-deployment-${network}.json`);
-    } catch(e) {
+    } catch (e) {
         throw new Error(`Could not find deployment file for network ${network}. Please ensure you've deployed the contract first.`);
     }
 }

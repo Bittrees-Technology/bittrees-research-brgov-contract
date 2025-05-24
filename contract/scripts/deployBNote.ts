@@ -1,6 +1,6 @@
 import { ethers, network } from 'hardhat';
-import { CONFIG } from "../config";
-import fs from "fs";
+import { CONFIG } from '../config';
+import fs from 'fs';
 import {
     calculateCreate2Address,
     generateCompatibleSalt,
@@ -14,7 +14,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 async function main() {
     const hre: HardhatRuntimeEnvironment = require('hardhat');
 
-    if(CONFIG.create2FactoryCallerAddress !== CONFIG.bittreesTechnologyGnosisSafeAddress) {
+    if (CONFIG.create2FactoryCallerAddress !== CONFIG.bittreesTechnologyGnosisSafeAddress) {
         const question =
             `⚠️Configured create2FactoryCallerAddress address(${
                 CONFIG.create2FactoryCallerAddress
@@ -23,31 +23,31 @@ async function main() {
             })!`
             + `\n⚠️If this is for an official deployment, abort and set the value`
             + ` appropriately in the .env file.`
-            + `\n⚠️Otherwise, enter 'yes' to continue:`
+            + `\n⚠️Otherwise, enter 'yes' to continue:`;
         await askForConfirmation(question);
     } else {
         console.log(
             `\n✅create2FactoryCallerAddress matches the bittreesTechnologySafe address: ${
                 CONFIG.create2FactoryCallerAddress
-            }`
+            }`,
         );
     }
 
     console.log(`\nNetwork: ${network.name}`);
-    console.log("==== BNote Deployment Information ====");
+    console.log('==== BNote Deployment Information ====');
 
     // Generate deterministic salt from project name
     const implSalt = generateCompatibleSalt(
         hre,
         CONFIG.create2FactoryCallerAddress,
-        `${CONFIG.projectName}`
+        `${CONFIG.projectName}`,
     );
     console.log(`\nImplementation Salt Text: ${CONFIG.projectName}`);
     console.log(`Implementation Salt (hex): ${implSalt}`);
 
     // Get contract factories
-    const BNoteFactory = await ethers.getContractFactory("BNote");
-    const ProxyFactory = await ethers.getContractFactory("ERC1967Proxy");
+    const BNoteFactory = await ethers.getContractFactory('BNote');
+    const ProxyFactory = await ethers.getContractFactory('ERC1967Proxy');
 
     // Get implementation bytecode
     const implementationBytecode = BNoteFactory.bytecode;
@@ -57,17 +57,17 @@ async function main() {
         hre,
         CONFIG.gnosisCreate2FactoryAddress,
         implSalt,
-        implementationBytecode
+        implementationBytecode,
     );
 
-    console.log("\n==== Implementation Contract ====");
-    console.log("Implementation Bytecode Length:", implementationBytecode.length / 2 - 1, "bytes");
-    console.log("Implementation Address (via CREATE2):", implAddress);
+    console.log('\n==== Implementation Contract ====');
+    console.log('Implementation Bytecode Length:', implementationBytecode.length / 2 - 1, 'bytes');
+    console.log('Implementation Address (via CREATE2):', implAddress);
 
     // Encode initialization call for the proxy
-    const initData = BNoteFactory.interface.encodeFunctionData("initialize", [
+    const initData = BNoteFactory.interface.encodeFunctionData('initialize', [
         CONFIG.initialBaseURI,
-        CONFIG.initialAdminAndDefaultAdminAddress
+        CONFIG.initialAdminAndDefaultAdminAddress,
     ]);
 
     // Encode proxy constructor arguments
@@ -78,7 +78,7 @@ async function main() {
     const proxySalt = generateCompatibleSalt(
         hre,
         CONFIG.create2FactoryCallerAddress,
-        `${CONFIG.projectName}`
+        `${CONFIG.projectName}`,
     );
     console.log(`\nProxy Salt Text: ${CONFIG.projectName}`);
     console.log(`Compatible Proxy Salt (hex): ${proxySalt}`);
@@ -87,14 +87,14 @@ async function main() {
         hre,
         CONFIG.gnosisCreate2FactoryAddress,
         proxySalt,
-        proxyCreationCode
+        proxyCreationCode,
     );
 
-    console.log("\n==== Proxy Contract ====");
-    console.log("Proxy Creation Bytecode Length:", proxyCreationCode.length / 2 - 1, "bytes");
-    console.log("Proxy Salt:", proxySalt);
-    console.log("Proxy Address (via CREATE2):", proxyAddress);
-    console.log("This will be the main contract address for BNote");
+    console.log('\n==== Proxy Contract ====');
+    console.log('Proxy Creation Bytecode Length:', proxyCreationCode.length / 2 - 1, 'bytes');
+    console.log('Proxy Salt:', proxySalt);
+    console.log('Proxy Address (via CREATE2):', proxyAddress);
+    console.log('This will be the main contract address for BNote');
 
     // Save deployment data to file
     const deploymentData = {
@@ -112,20 +112,20 @@ async function main() {
             address: proxyAddress,
             proxyArgs: [
                 implAddress,
-                initData
-            ]
+                initData,
+            ],
         },
         config: {
             baseURI: CONFIG.initialBaseURI,
             initialAdminAddress: CONFIG.initialAdminAndDefaultAdminAddress,
-        }
+        },
     };
 
     const outputFile = `./deployments/bnote-deployment-${network.name}.json`;
     fs.writeFileSync(outputFile, JSON.stringify(deploymentData, null, 2));
     console.log(`\nDeployment data saved to ${outputFile}`);
 
-    console.log("\n==== Transaction Information ====");
+    console.log('\n==== Transaction Information ====');
 
     // Check if code exists at implementation address
     const implCodeSize = await ethers.provider.getCode(implAddress).then(c => c.length);
@@ -155,9 +155,9 @@ async function main() {
         value: '0',
         data: proxyDeployCalldata,
         transactionInfoLog: '\n==== Proxy Transaction (execute after implementation) ====',
-    }]
+    }];
 
-    if(CONFIG.proposeTxToSafe) {
+    if (CONFIG.proposeTxToSafe) {
         await proposeTxBundleToSafe(hre, transactions, CONFIG.create2FactoryCallerAddress);
     } else {
         logTransactionDetailsToConsole(transactions);

@@ -1,5 +1,5 @@
-import { task } from "hardhat/config";
-import { CONFIG } from "../config";
+import { task } from 'hardhat/config';
+import { CONFIG } from '../config';
 import {
     askForConfirmation,
     proposeTxBundleToSafe,
@@ -7,6 +7,7 @@ import {
     getBNoteProxyAddress,
     hasAdminRole,
 } from '../lib/helpers';
+import { transactionBatch, TTransaction } from '../lib/tx-batch';
 
 /**
  * Contract Configuration Helper Task
@@ -14,17 +15,17 @@ import {
  * The Bittrees Technology Multisig pauses minting on the BNote contract
  * */
 task(
-    "technology-pause-bnote-minting",
-    "Bittrees Technology Multisig pauses minting on the BNote contract"
+    'technology-pause-bnote-minting',
+    'Bittrees Technology Multisig pauses minting on the BNote contract',
 )
-    .addFlag("dryRun", "Only show transaction data without submitting")
+    .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
     .setAction(async (taskArgs, hre) => {
         const { dryRun } = taskArgs;
 
         await hre.run('pause-bnote-minting', {
             from: CONFIG.bittreesTechnologyGnosisSafeAddress,
             dryRun,
-        })
+        });
     });
 
 /**
@@ -33,29 +34,29 @@ task(
  * The Bittrees Research Multisig pauses minting on the BNote contract
  * */
 task(
-    "research-pause-bnote-minting",
-    "Bittrees Research Multisig pauses minting on the BNote contract"
+    'research-pause-bnote-minting',
+    'Bittrees Research Multisig pauses minting on the BNote contract',
 )
-    .addFlag("dryRun", "Only show transaction data without submitting")
+    .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
     .setAction(async (taskArgs, hre) => {
         const { dryRun } = taskArgs;
 
         await hre.run('pause-bnote-minting', {
             from: CONFIG.bittreesResearchGnosisSafeAddress,
             dryRun,
-        })
+        });
     });
 
 /**
  * Generalized Task for pausing minting on the BNote contract
  * */
-task("pause-bnote-minting", "Pauses minting on the BNote contract")
+task('pause-bnote-minting', 'Pauses minting on the BNote contract')
     .addParam(
-        "from",
-        "The address calling the contract to pause minting. Must have the ADMIN_ROLE",
+        'from',
+        'The address calling the contract to pause minting. Must have the ADMIN_ROLE',
         CONFIG.bittreesResearchGnosisSafeAddress,
     )
-    .addFlag("dryRun", "Only show transaction data without submitting")
+    .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
     .setAction(async (taskArgs, hre) => {
         const {
             from,
@@ -81,24 +82,24 @@ task("pause-bnote-minting", "Pauses minting on the BNote contract")
             console.log(
                 '\n==================== !!! ABORTING !!! ====================\n'
                 + `Address specified as from(${from}) does not have the ADMIN_ROLE.`
-                + `Attempting to pause-bnote-minting with this address will revert onchain and waste gas!`
-            )
+                + `Attempting to pause-bnote-minting with this address will revert onchain and waste gas!`,
+            );
             throw new Error(
-                'Sender Not Authorized with ADMIN_ROLE On Contract'
-            )
+                'Sender Not Authorized with ADMIN_ROLE On Contract',
+            );
         }
 
         const isPaused = await bNote.paused();
 
-        if(isPaused) {
+        if (isPaused) {
             throw new Error(
-                'Minting is already paused on the BNote contract'
-            )
+                'Minting is already paused on the BNote contract',
+            );
         }
 
-        const txData = bNote.interface.encodeFunctionData("pause");
+        const txData: string = bNote.interface.encodeFunctionData('pause');
 
-        const transactions = [{
+        const transactions: TTransaction[] = [{
             to: proxyAddress,
             value: '0',
             data: txData,
@@ -106,11 +107,12 @@ task("pause-bnote-minting", "Pauses minting on the BNote contract")
         }];
 
         await askForConfirmation(
-            'Do you want to proceed with pausing minting on the BNote contract?'
+            'Do you want to proceed with pausing minting on the BNote contract?',
         );
 
         if (dryRun || !CONFIG.proposeTxToSafe) {
             logTransactionDetailsToConsole(transactions);
+            transactionBatch.push(...transactions);
         } else {
             await proposeTxBundleToSafe(hre, transactions, from);
         }

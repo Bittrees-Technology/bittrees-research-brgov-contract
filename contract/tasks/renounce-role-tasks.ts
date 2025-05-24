@@ -1,5 +1,5 @@
-import { task } from "hardhat/config";
-import { CONFIG } from "../config";
+import { task } from 'hardhat/config';
+import { CONFIG } from '../config';
 import {
     askForConfirmation,
     proposeTxBundleToSafe,
@@ -7,6 +7,7 @@ import {
     getBNoteProxyAddress,
     hasRole,
 } from '../lib/helpers';
+import { transactionBatch, TTransaction } from '../lib/tx-batch';
 
 /**
  * Contract Configuration Helper Task
@@ -16,15 +17,15 @@ import {
  * confirmed to be working as expected.
  * */
 task(
-    "technology-renounce-default-admin-role",
-    "Bittrees Technology Multisig renounces the DEFAULT_ADMIN_ROLE from itself"
+    'technology-renounce-default-admin-role',
+    'Bittrees Technology Multisig renounces the DEFAULT_ADMIN_ROLE from itself',
 )
     .addParam(
         'addressRetainingRole',
         'An address retaining the roll - ensures a role is not left with no address that has it after it is revoked',
         CONFIG.bittreesResearchGnosisSafeAddress,
     )
-    .addFlag("dryRun", "Only show transaction data without submitting")
+    .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
     .setAction(async (taskArgs, hre) => {
         const { addressRetainingRole, dryRun } = taskArgs;
 
@@ -34,7 +35,7 @@ task(
             dryRun: dryRun,
             addressRetainingRole,
             from: CONFIG.bittreesTechnologyGnosisSafeAddress,
-        })
+        });
     });
 
 /**
@@ -45,15 +46,15 @@ task(
  * be working as expected.
  * */
 task(
-    "technology-renounce-admin-role",
-    "Bittrees Technology Multisig renounces the ADMIN_ROLE from itself"
+    'technology-renounce-admin-role',
+    'Bittrees Technology Multisig renounces the ADMIN_ROLE from itself',
 )
     .addParam(
         'addressRetainingRole',
         'An address retaining the roll - ensures a role is not left with no address that has it after it is revoked',
         CONFIG.bittreesResearchGnosisSafeAddress,
     )
-    .addFlag("dryRun", "Only show transaction data without submitting")
+    .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
     .setAction(async (taskArgs, hre) => {
         const { addressRetainingRole, dryRun } = taskArgs;
 
@@ -63,25 +64,25 @@ task(
             dryRun: dryRun,
             addressRetainingRole,
             from: CONFIG.bittreesTechnologyGnosisSafeAddress,
-        })
+        });
     });
 
 /**
  * Generalized Task for renouncing roles an address has
  * */
-task("renounce-role", "Allows an address to renounce a role it currently has")
-    .addParam("role", "The role being renounced (ADMIN_ROLE, DEFAULT_ADMIN_ROLE, etc.)")
-    .addParam("callerConfirmation", "The address of the caller renouncing their role")
+task('renounce-role', 'Allows an address to renounce a role it currently has')
+    .addParam('role', 'The role being renounced (ADMIN_ROLE, DEFAULT_ADMIN_ROLE, etc.)')
+    .addParam('callerConfirmation', 'The address of the caller renouncing their role')
     .addParam(
-        "from",
-        "The address calling the contract to renounce the role from itself - should match the callerConfirmation param",
+        'from',
+        'The address calling the contract to renounce the role from itself - should match the callerConfirmation param',
     )
     .addParam(
-        "addressRetainingRole",
-        "An address retaining the roll - ensures a role is not left with no address that has it after renouncing",
+        'addressRetainingRole',
+        'An address retaining the roll - ensures a role is not left with no address that has it after renouncing',
         CONFIG.bittreesResearchGnosisSafeAddress,
     )
-    .addFlag("dryRun", "Only show transaction data without submitting")
+    .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
     .setAction(async (taskArgs, hre) => {
         const {
             role,
@@ -112,17 +113,17 @@ task("renounce-role", "Allows an address to renounce a role it currently has")
                 }) provided. Roles can only be renounced by an address which already has them.`
                 + 'This transaction would fail onchain and consume gas.'
                 + 'If you want to remove a roll from a different address that will execute this'
-                + 'transaction, use one of the renounce-role tasks instead. Aborting...'
+                + 'transaction, use one of the renounce-role tasks instead. Aborting...',
             );
         }
 
         if (addressRetainingRole === callerConfirmation || addressRetainingRole === from) {
             throw new Error(
                 'addressRetainingRole matches callerConfirmation/from addresses.'
-                +' addressRetainingRole should differ, as it is used to ensure some address'
+                + ' addressRetainingRole should differ, as it is used to ensure some address'
                 + ' will still have the role being renounced by the callerConfirmation/from address'
-                + ' after execution. Aborting...'
-            )
+                + ' after execution. Aborting...',
+            );
         }
 
         console.log(`\nNetwork: ${hre.network.name}`);
@@ -138,9 +139,9 @@ task("renounce-role", "Allows an address to renounce a role it currently has")
 
         // Get the role hash
         let roleHash;
-        if (role === "DEFAULT_ADMIN_ROLE") {
+        if (role === 'DEFAULT_ADMIN_ROLE') {
             roleHash = await bNote.DEFAULT_ADMIN_ROLE();
-        } else if (role === "ADMIN_ROLE") {
+        } else if (role === 'ADMIN_ROLE') {
             roleHash = await bNote.ADMIN_ROLE();
         } else {
             throw new Error(`Unknown role: ${role}. Please use DEFAULT_ADMIN_ROLE or ADMIN_ROLE.`);
@@ -152,11 +153,11 @@ task("renounce-role", "Allows an address to renounce a role it currently has")
             console.log(
                 '\n==================== !!! ABORTING !!! ====================\n'
                 + `Address specified as from(${from}) does not have the role(${role}).`
-                + `Attempting to renounce-role with this address will revert onchain and waste gas!`
-            )
+                + `Attempting to renounce-role with this address will revert onchain and waste gas!`,
+            );
             throw new Error(
-                'Sender Not Authorized with DEFAULT_ADMIN_ROLE On Contract'
-            )
+                'Sender Not Authorized with DEFAULT_ADMIN_ROLE On Contract',
+            );
         }
 
         const addressRetainingRoleHasRole = await hasRole(bNote, roleHash, addressRetainingRole);
@@ -166,20 +167,20 @@ task("renounce-role", "Allows an address to renounce a role it currently has")
                 '\n==================== !!! ABORTING !!! ====================\n'
                 + `Address specified as addressRetainingRole(${addressRetainingRole}) does not have the role(${role}).`
                 + `Attempting to renounce-role with address(${from}) could leave nobody with the roll!`
-                + `For some roles this could leave the role as irrecoverable!`
-            )
+                + `For some roles this could leave the role as irrecoverable!`,
+            );
             throw new Error(
                 `Provide an address which has the role(${role}) to the addressRetainingRole parameter`
-                + 'to ensure we do not lock ourselves out.'
-            )
+                + 'to ensure we do not lock ourselves out.',
+            );
         }
 
-        const txData = bNote.interface.encodeFunctionData(
-            "renounceRole",
-            [roleHash, callerConfirmation]
+        const txData: string = bNote.interface.encodeFunctionData(
+            'renounceRole',
+            [roleHash, callerConfirmation],
         );
 
-        const transactions = [{
+        const transactions: TTransaction[] = [{
             to: proxyAddress,
             value: '0',
             data: txData,
@@ -187,11 +188,12 @@ task("renounce-role", "Allows an address to renounce a role it currently has")
         }];
 
         await askForConfirmation(
-            `Do you want to proceed with renouncing ${role} to address(${callerConfirmation})?`
+            `Do you want to proceed with renouncing ${role} to address(${callerConfirmation})?`,
         );
 
         if (dryRun || !CONFIG.proposeTxToSafe) {
             logTransactionDetailsToConsole(transactions);
+            transactionBatch.push(...transactions);
         } else {
             await proposeTxBundleToSafe(hre, transactions, from);
         }

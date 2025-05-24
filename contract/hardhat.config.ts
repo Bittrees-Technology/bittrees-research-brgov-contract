@@ -7,6 +7,10 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+const accountsList = process.env.USE_LEDGER === 'true' && process.env.LEDGER_ADDRESS
+        ? { ledgerAccounts: [process.env.LEDGER_ADDRESS] } // When using Ledger, include your address here
+        : { accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [] } // Or use regular accounts for testing
+
 const config: HardhatUserConfig = {
     solidity: {
         version: '0.8.28',
@@ -27,70 +31,44 @@ const config: HardhatUserConfig = {
         mainnet: {
             url: process.env.MAINNET_RPC_URL || '',
             chainId: 1,
-            // When using Ledger, include your address here
-            ledgerAccounts: process.env.USE_LEDGER === 'true' && process.env.LEDGER_ADDRESS
-                ? [process.env.LEDGER_ADDRESS]
-                : [],
-            // Or use regular accounts for testing
-            accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+            ...accountsList,
         },
         base: {
             url: process.env.BASE_RPC_URL || '',
             chainId: 8453,
-            ledgerAccounts: process.env.USE_LEDGER === 'true' && process.env.LEDGER_ADDRESS
-                ? [process.env.LEDGER_ADDRESS]
-                : [],
-            accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+            ...accountsList,
         },
         optimism: {
             url: process.env.OPTIMISM_RPC_URL || '',
             chainId: 10,
-            ledgerAccounts: process.env.USE_LEDGER === 'true' && process.env.LEDGER_ADDRESS
-                ? [process.env.LEDGER_ADDRESS]
-                : [],
-            accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+            ...accountsList,
         },
         arbitrum: {
             url: process.env.ARBITRUM_RPC_URL || '',
             chainId: 42161,
-            ledgerAccounts: process.env.USE_LEDGER === 'true' && process.env.LEDGER_ADDRESS
-                ? [process.env.LEDGER_ADDRESS]
-                : [],
-            accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+            ...accountsList,
         },
 
         // ===== Testnet Networks =====
         sepolia: {
             url: process.env.SEPOLIA_RPC_URL || '',
             chainId: 11155111,
-            ledgerAccounts: process.env.USE_LEDGER === 'true' && process.env.LEDGER_ADDRESS
-                ? [process.env.LEDGER_ADDRESS]
-                : [],
-            accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+            ...accountsList,
         },
         baseSepolia: {
             url: process.env.BASE_SEPOLIA_RPC_URL || '',
             chainId: 84532,
-            ledgerAccounts: process.env.USE_LEDGER === 'true' && process.env.LEDGER_ADDRESS
-                ? [process.env.LEDGER_ADDRESS]
-                : [],
-            accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+            ...accountsList,
         },
         optimismSepolia: {
             url: process.env.OPTIMISM_SEPOLIA_RPC_URL || '',
             chainId: 11155420,
-            ledgerAccounts: process.env.USE_LEDGER === 'true' && process.env.LEDGER_ADDRESS
-                ? [process.env.LEDGER_ADDRESS]
-                : [],
-            accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+            ...accountsList,
         },
         arbitrumSepolia: {
             url: process.env.ARBITRUM_SEPOLIA_RPC_URL || '',
             chainId: 421614,
-            ledgerAccounts: process.env.USE_LEDGER === 'true' && process.env.LEDGER_ADDRESS
-                ? [process.env.LEDGER_ADDRESS]
-                : [],
-            accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+            ...accountsList,
         },
     },
     etherscan: {
