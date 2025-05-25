@@ -42,7 +42,7 @@ IERC1155Receiver
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
     // Exchange rates: BNote denomination -> BIT tokens (in full token units)
-    uint256 public immutable constant MINT_RATE_MULTIPLIER = 1000 * 10**decimals(); // 1 BNote (id 1) = 1000 BIT in major units
+    uint256 public immutable MINT_RATE_MULTIPLIER = 1_000 * 1e18; // 1 BNote (id 1) = 1000 BIT in major units
 
     // Redemption premium: defaults to 1% premium (1010 BIT to redeem 1 BNote of denomination 1)
     uint256 public redemptionPremiumPerUnit = 10 * 10**decimals(); // 1% or 10 BIT
@@ -147,7 +147,7 @@ IERC1155Receiver
         uint256[] memory bnoteAmounts
     ) external nonReentrant whenNotPaused {
 
-        uint256 totalBitToMint = _calculateMintAmount(
+        uint256 totalBitToMint = calculateMintAmount(
             bnoteIds,
             bnoteAmounts
         );
@@ -167,26 +167,6 @@ IERC1155Receiver
         emit TokensMinted(msg.sender, totalBitToMint, bnoteIds, bnoteAmounts);
     }
 
-    function _calculateMintAmount(
-        uint256[] memory bnoteIds,
-        uint256[] memory bnoteAmounts
-    ) internal view returns (uint256) {
-        require(bnoteIds.length == bnoteAmounts.length, InvalidArrayLength());
-        require(bnoteIds.length > 0, ZeroAmount());
-
-        uint256 totalBitToMint = 0;
-        for (uint256 i = 0; i < bnoteIds.length; i++) {
-            uint256 id = bnoteIds[i];
-            uint256 amount = bnoteAmounts[i];
-
-            require(amount > 0, ZeroAmount());
-
-            totalBitToMint += id * amount * MINT_RATE_MULTIPLIER;
-        }
-
-        return totalBitToMint;
-    }
-
     /**
      * @notice Redeem BNotes by burning BIT tokens (with premium)
      * @param bnoteIds Array of BNote token IDs to redeem
@@ -198,7 +178,7 @@ IERC1155Receiver
     ) external nonReentrant whenNotPaused {
         require(treasury != address(0), TreasuryNotSet());
 
-        (uint256 baseBits, uint256 premiumBits) = _calculateRedeemPrice(
+        (uint256 baseBits, uint256 premiumBits) = calculateRedeemPrice(
             bnoteIds,
             bnoteAmounts
         );
@@ -229,6 +209,28 @@ IERC1155Receiver
         );
     }
 
+    // VIEW FUNCTIONS
+
+    function calculateMintAmount(
+        uint256[] memory bnoteIds,
+        uint256[] memory bnoteAmounts
+    ) public pure returns (uint256) {
+        require(bnoteIds.length == bnoteAmounts.length, InvalidArrayLength());
+        require(bnoteIds.length > 0, ZeroAmount());
+
+        uint256 totalBitToMint = 0;
+        for (uint256 i = 0; i < bnoteIds.length; i++) {
+            uint256 id = bnoteIds[i];
+            uint256 amount = bnoteAmounts[i];
+
+            require(amount > 0, ZeroAmount());
+
+            totalBitToMint += id * amount * MINT_RATE_MULTIPLIER;
+        }
+
+        return totalBitToMint;
+    }
+
     /**
     * @notice Calculate how much BIT is required to redeem given BNotes (including premium)
     * @param bnoteIds Array of BNote token IDs
@@ -236,10 +238,10 @@ IERC1155Receiver
     * @return baseBits - amount in BIT tokens to be burned
     * @return premiumBits - amount in BIT tokens to be paid to the treasury
     */
-    function _calculateRedeemPrice(
+    function calculateRedeemPrice(
         uint256[] memory bnoteIds,
         uint256[] memory bnoteAmounts
-    ) internal view returns (uint256 baseBits, uint256 premiumBits) {
+    ) public view returns (uint256 baseBits, uint256 premiumBits) {
         require(bnoteIds.length == bnoteAmounts.length, InvalidArrayLength());
         require(bnoteIds.length > 0, ZeroAmount());
 
@@ -257,39 +259,10 @@ IERC1155Receiver
             totalBNote += id * amount;
         }
 
-        uint256 baseBits = totalBNote * MINT_RATE_MULTIPLIER * 10**decimals();
-        uint256 premiumBits = totalBNote * redemptionPremiumPerUnit;
+        baseBits = totalBNote * MINT_RATE_MULTIPLIER;
+        premiumBits = totalBNote * redemptionPremiumPerUnit;
 
         return (baseBits, premiumBits);
-    }
-
-    // VIEW FUNCTIONS
-
-    /**
-     * @notice Calculate how much BIT would be minted for given BNotes
-     * @param bnoteIds Array of BNote token IDs
-     * @param bnoteAmounts Array of amounts for each BNote ID
-     * @return Total BIT tokens that would be minted
-     */
-    function calculateMintAmount(
-        uint256[] memory bnoteIds,
-        uint256[] memory bnoteAmounts
-    ) external view returns (uint256) {
-        return _calculateMintAmount(bnoteIds, bnoteAmounts);
-    }
-
-    /**
-     * @notice Calculate how much BIT is required to redeem given BNotes (including premium)
-     * @param bnoteIds Array of BNote token IDs
-     * @param bnoteAmounts Array of amounts for each BNote ID
-     * @return baseBits - amount in BIT tokens to be burned
-     * @return premiumBits - amount in BIT tokens to be paid to the treasury
-     */
-    function calculateRedeemPrice(
-        uint256[] memory bnoteIds,
-        uint256[] memory bnoteAmounts
-    ) external view returns (uint256 totalRequired, uint256 premium) {
-        return _calculateRedeemPrice(bnoteIds, bnoteAmounts);
     }
 
     /**
@@ -312,22 +285,22 @@ IERC1155Receiver
     // ERC1155 Receiver functions - these reject direct transfers to maintain proper accounting
     // Users must use the mint() function instead of sending BNotes directly
     function onERC1155Received(
-        address operator,
-        address from,
-        uint256 id,
-        uint256 value,
-        bytes calldata data
+        address, // operator
+        address, // from
+        uint256, // id
+        uint256, // value
+        bytes calldata // data
     ) external pure override returns (bytes4) {
         // Reject all direct transfers - forces users to use mint() function
         return bytes4(0);
     }
 
     function onERC1155BatchReceived(
-        address operator,
-        address from,
-        uint256[] calldata ids,
-        uint256[] calldata values,
-        bytes calldata data
+        address, // operator
+        address, // from
+        uint256[] calldata, // ids
+        uint256[] calldata, // values
+        bytes calldata // data
     ) external pure override returns (bytes4) {
         // Reject all direct transfers - forces users to use mint() function
         return bytes4(0);
