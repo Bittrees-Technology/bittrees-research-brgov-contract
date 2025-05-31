@@ -42,10 +42,10 @@ IERC1155Receiver
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
     // Exchange rates: BNote denomination -> BIT tokens (in full token units)
-    uint256 public immutable MINT_RATE_MULTIPLIER = 1_000 * 1e18; // 1 BNote (id 1) = 1000 BIT in major units
+    uint256 public constant MINT_RATE_MULTIPLIER = 1_000 * 1e18; // 1 BNote (id 1) = 1000 BIT in major units
 
     // Redemption premium: defaults to 1% premium (1010 BIT to redeem 1 BNote of denomination 1)
-    uint256 public redemptionPremiumPerUnit = 10 * 10**decimals(); // 1% or 10 BIT
+    uint256 public redemptionPremiumPerUnit;
     IBNote public bnoteContract;
     address public treasury;
 
@@ -101,6 +101,10 @@ IERC1155Receiver
 
         // Set BNote contract (immutable after initialization)
         bnoteContract = IBNote(bnoteContract_);
+
+        uint256 premium = 10 * 10**decimals(); // 1% or 10 BIT in major units
+        redemptionPremiumPerUnit = premium;
+        emit RedemptionPremiumUpdated(premium);
     }
 
     // ADMIN FUNCTIONS
@@ -158,7 +162,7 @@ IERC1155Receiver
             address(this),
             bnoteIds,
             bnoteAmounts,
-            ""
+            abi.encode("BIT_MINT")
         );
 
         // Mint BIT tokens to user
@@ -289,9 +293,17 @@ IERC1155Receiver
         address, // from
         uint256, // id
         uint256, // value
-        bytes calldata // data
-    ) external pure override returns (bytes4) {
-        // Reject all direct transfers - forces users to use mint() function
+        bytes calldata data
+    ) external view override returns (bytes4) {
+        // Allow receiving of bNote ERC1155s when called from the BIT.sol mint method
+        if (msg.sender == address(bnoteContract)) {
+            bytes memory mintData = abi.encode("BIT_MINT");
+
+            if (keccak256(data) == keccak256(mintData) ) {
+                return IERC1155Receiver.onERC1155Received.selector;
+            }
+        }
+        // Reject all other ERC1155 transfers - forces users to use mint() function
         return bytes4(0);
     }
 
@@ -300,9 +312,17 @@ IERC1155Receiver
         address, // from
         uint256[] calldata, // ids
         uint256[] calldata, // values
-        bytes calldata // data
-    ) external pure override returns (bytes4) {
-        // Reject all direct transfers - forces users to use mint() function
+        bytes calldata data
+    ) external view override returns (bytes4) {
+        // Allow receiving of bNote ERC1155s when called from the BIT.sol mint method
+        if (msg.sender == address(bnoteContract)) {
+            bytes memory mintData = abi.encode("BIT_MINT");
+
+            if (keccak256(data) == keccak256(mintData) ) {
+                return IERC1155Receiver.onERC1155BatchReceived.selector;
+            }
+        }
+        // Reject all other ERC1155 transfers - forces users to use mint() function
         return bytes4(0);
     }
 }
