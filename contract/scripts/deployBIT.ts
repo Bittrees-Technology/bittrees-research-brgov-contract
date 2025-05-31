@@ -7,7 +7,7 @@ import {
     encodeCreate2FactoryDeploymentTxData,
     askForConfirmation,
     proposeTxBundleToSafe,
-    logTransactionDetailsToConsole,
+    logTransactionDetailsToConsole, getBNoteProxyAddress,
 } from '../lib/helpers';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
@@ -34,23 +34,23 @@ async function main() {
     }
 
     console.log(`\nNetwork: ${network.name}`);
-    console.log('==== BNote Deployment Information ====');
+    console.log('==== BIT Deployment Information ====');
 
     // Generate deterministic salt from project name
     const implSalt = generateCompatibleSalt(
         hre,
         CONFIG.create2FactoryCallerAddress,
-        `${CONFIG.projectNames.bNote}`,
+        `${CONFIG.projectNames.bit}`,
     );
-    console.log(`\nImplementation Salt Text: ${CONFIG.projectNames.bNote}`);
+    console.log(`\nImplementation Salt Text: ${CONFIG.projectNames.bit}`);
     console.log(`Implementation Salt (hex): ${implSalt}`);
 
     // Get contract factories
-    const BNoteFactory = await ethers.getContractFactory('BNote');
+    const BitFactory = await ethers.getContractFactory('BIT');
     const ProxyFactory = await ethers.getContractFactory('ERC1967Proxy');
 
     // Get implementation bytecode
-    const implementationBytecode = BNoteFactory.bytecode;
+    const implementationBytecode = BitFactory.bytecode;
 
     // Calculate implementation address
     const implAddress = calculateCreate2Address(
@@ -65,9 +65,11 @@ async function main() {
     console.log('Implementation Address (via CREATE2):', implAddress);
 
     // Encode initialization call for the proxy
-    const initData = BNoteFactory.interface.encodeFunctionData('initialize', [
-        CONFIG.initialBaseURI,
+    const initData = BitFactory.interface.encodeFunctionData('initialize', [
+        'BIT',
+        'BIT',
         CONFIG.initialAdminAndDefaultAdminAddress,
+        await getBNoteProxyAddress(hre.network.name),
     ]);
 
     // Encode proxy constructor arguments
@@ -78,9 +80,9 @@ async function main() {
     const proxySalt = generateCompatibleSalt(
         hre,
         CONFIG.create2FactoryCallerAddress,
-        `${CONFIG.projectNames.bNote}`,
+        `${CONFIG.projectNames.bit}`,
     );
-    console.log(`\nProxy Salt Text: ${CONFIG.projectNames.bNote}`);
+    console.log(`\nProxy Salt Text: ${CONFIG.projectNames.bit}`);
     console.log(`Compatible Proxy Salt (hex): ${proxySalt}`);
 
     const proxyAddress = calculateCreate2Address(
@@ -94,7 +96,7 @@ async function main() {
     console.log('Proxy Creation Bytecode Length:', proxyCreationCode.length / 2 - 1, 'bytes');
     console.log('Proxy Salt:', proxySalt);
     console.log('Proxy Address (via CREATE2):', proxyAddress);
-    console.log('This will be the main contract address for BNote');
+    console.log('This will be the main contract address for BIT');
 
     // Save deployment data to file
     const deploymentData = {
@@ -102,11 +104,11 @@ async function main() {
         implementationSalt: implSalt,
         proxySalt: proxySalt,
         create2Factory: CONFIG.gnosisCreate2FactoryAddress,
-        'implementationV2.0.0': {
+        'implementationV1.0.0': {
             bytecode: implementationBytecode,
             address: implAddress,
         },
-        initialImplementation: 'implementationV2.0.0',
+        initialImplementation: 'implementationV1.0.0',
         proxy: {
             bytecode: proxyCreationCode,
             address: proxyAddress,
@@ -116,12 +118,14 @@ async function main() {
             ],
         },
         config: {
-            baseURI: CONFIG.initialBaseURI,
+            name: 'BIT',
+            symbol: 'BIT',
             initialAdminAddress: CONFIG.initialAdminAndDefaultAdminAddress,
+            bnoteContractAddress: await getBNoteProxyAddress(hre.network.name),
         },
     };
 
-    const outputFile = `./deployments/bnote-deployment-${network.name}.json`;
+    const outputFile = `./deployments/bit-deployment-${network.name}.json`;
     fs.writeFileSync(outputFile, JSON.stringify(deploymentData, null, 2));
     console.log(`\nDeployment data saved to ${outputFile}`);
 
