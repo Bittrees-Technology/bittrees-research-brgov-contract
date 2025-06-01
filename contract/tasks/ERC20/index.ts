@@ -1,1 +1,1 @@
-import './approve-spender-tasks';
+import './approve-spender';

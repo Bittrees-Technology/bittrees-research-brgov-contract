@@ -1,13 +1,15 @@
 import { task, types } from 'hardhat/config';
-import { CONFIG } from '../config';
+import { CONFIG } from '@project/config';
 import {
     askForConfirmation,
-    proposeTxBundleToSafe,
-    logTransactionDetailsToConsole,
-    getBNoteProxyAddress,
+    getBittreesResearchContract,
+    getContractProxyAddress,
     hasAdminRole,
-} from '../lib/helpers';
-import { transactionBatch, TTransaction } from '../lib/tx-batch';
+    logTransactionDetailsToConsole,
+    proposeTxBundleToSafe,
+    BittreesResearchContractNames,
+} from '@project/lib/helpers';
+import { transactionBatch, TTransaction } from '@project/lib/tx-batch';
 
 /**
  * Contract Configuration Helper Task
@@ -15,7 +17,7 @@ import { transactionBatch, TTransaction } from '../lib/tx-batch';
  * The Technology Multisig adds a new active paymentToken with the given unitPrice.
  * */
 task(
-    'technology-add-new-active-payment-token',
+    'BNOTE-technology-add-new-active-payment-token',
     'Bittrees Technology Multisig sets a new token which can pay for minting BNotes',
 )
     .addParam('tokenAddress', 'The contract address of the payment token')
@@ -40,7 +42,7 @@ task(
             dryRun,
         } = taskArgs;
 
-        await hre.run('set-payment-token', {
+        await hre.run('BNOTE-set-payment-token', {
             tokenAddress,
             priceInMajorUnits,
             priceInMinorUnits,
@@ -57,7 +59,7 @@ task(
  * The Research Multisig adds a new active paymentToken with the given unitPrice.
  * */
 task(
-    'research-add-new-active-payment-token',
+    'BNOTE-research-add-new-active-payment-token',
     'Bittrees Research Multisig sets a new token which can pay for minting BNotes',
 )
     .addParam('tokenAddress', 'The contract address of the payment token')
@@ -82,7 +84,7 @@ task(
             dryRun,
         } = taskArgs;
 
-        await hre.run('set-payment-token', {
+        await hre.run('BNOTE-set-payment-token', {
             tokenAddress,
             priceInMajorUnits,
             priceInMinorUnits,
@@ -112,7 +114,7 @@ function tokenModeType(argName: string) {
 /**
  * Generalized Task for setting payment tokens accepted in exchange for minting BNotes
  * */
-task('set-payment-token', 'Sets the payment token accepted in exchange for minting BNotes')
+task('BNOTE-set-payment-token', 'Sets the payment token accepted in exchange for minting BNotes')
     .addParam('tokenAddress', 'The contract address of the payment token')
     .addParam(
         'active',
@@ -166,7 +168,7 @@ task('set-payment-token', 'Sets the payment token accepted in exchange for minti
         console.log(`Active: ${active}`);
         console.log(`Mode: ${mode}`);
 
-        const { BNote__factory, ERC20__factory } = require('../typechain-types');
+        const { ERC20__factory } = require('@project/typechain-types');
         const tokenContract = ERC20__factory.connect(tokenAddress, hre.ethers.provider);
         let decimals;
         try {
@@ -193,12 +195,11 @@ task('set-payment-token', 'Sets the payment token accepted in exchange for minti
         }
 
 
-        const proxyAddress = await getBNoteProxyAddress(hre.network.name);
-        console.log(`\nConnecting to BNote at: ${proxyAddress}`);
+        const proxyAddress = await getContractProxyAddress(BittreesResearchContractNames.BNOTE, hre.network.name);
 
-        const bNote = BNote__factory.connect(proxyAddress, hre.ethers.provider);
+        const contract = await getBittreesResearchContract(BittreesResearchContractNames.BNOTE, proxyAddress, hre);
 
-        const fromAddressHasRole = await hasAdminRole(bNote, from);
+        const fromAddressHasRole = await hasAdminRole(contract, from);
 
         if (!fromAddressHasRole) {
             console.log(
@@ -211,7 +212,7 @@ task('set-payment-token', 'Sets the payment token accepted in exchange for minti
             );
         }
 
-        const paymentTokenExists = await bNote.paymentTokenExists(tokenAddress);
+        const paymentTokenExists = await contract.paymentTokenExists(tokenAddress);
 
         if (paymentTokenExists && mode === 'add') {
             throw new Error(
@@ -231,7 +232,7 @@ task('set-payment-token', 'Sets the payment token accepted in exchange for minti
             );
         }
 
-        const txData: string = bNote.interface.encodeFunctionData(
+        const txData: string = contract.interface.encodeFunctionData(
             'setPaymentToken',
             [tokenAddress, active, priceInMinorUnits],
         );

@@ -37,7 +37,7 @@ ledger device. This requires `LEDGER_ADDRESS` to be the address you want to sign
 5. `npx hardhat verify --network {network-name} {proxy-contract-address} --constructor-args deployments/{contract-name}-proxy-args.ts` <- verify the proxy contract code on appropriate block explorers for the network
 
 running the deployment script will output a json file in `deployments/bnote-deployment-{network-name}.json`
-proxy-args.ts can be updated (if necessary for testing) by grabbing the proxyArgs from the deployment json file
+bnote-proxy-args.ts can be updated (if necessary for testing) by grabbing the proxyArgs from the deployment json file
 
 # Contract Configuration & Handover steps:
 
