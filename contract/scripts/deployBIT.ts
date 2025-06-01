@@ -7,7 +7,7 @@ import {
     encodeCreate2FactoryDeploymentTxData,
     askForConfirmation,
     proposeTxBundleToSafe,
-    logTransactionDetailsToConsole, getBNoteProxyAddress,
+    logTransactionDetailsToConsole, getContractProxyAddress,
 } from '../lib/helpers';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
@@ -69,7 +69,7 @@ async function main() {
         'BIT',
         'BIT',
         CONFIG.initialAdminAndDefaultAdminAddress,
-        await getBNoteProxyAddress(hre.network.name),
+        await getContractProxyAddress('bnote', hre.network.name),
     ]);
 
     // Encode proxy constructor arguments
@@ -121,7 +121,7 @@ async function main() {
             name: 'BIT',
             symbol: 'BIT',
             initialAdminAddress: CONFIG.initialAdminAndDefaultAdminAddress,
-            bnoteContractAddress: await getBNoteProxyAddress(hre.network.name),
+            bnoteContractAddress: await getContractProxyAddress('bnote', hre.network.name),
         },
     };
 
