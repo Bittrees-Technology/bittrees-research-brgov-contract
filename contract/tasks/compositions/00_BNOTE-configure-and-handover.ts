@@ -1,10 +1,10 @@
 import { task } from 'hardhat/config';
-import { CONFIG } from '../../config';
+import { CONFIG } from '@project/config';
 import {
     logTransactionDetailsToConsole,
     proposeTxBundleToSafe,
-} from '../../lib/helpers';
-import { transactionBatch } from '../../lib/tx-batch';
+} from '@project/lib/helpers';
+import { transactionBatch } from '@project/lib/tx-batch';
 
 /**
  * Contract Configuration Composition Task
@@ -39,7 +39,7 @@ task(
             } = paymentTokens[key as keyof typeof paymentTokens];
 
             await hre.run(
-                'technology-add-new-active-payment-token',
+                'BNOTE-technology-add-new-active-payment-token',
                 {
                     tokenAddress,
                     priceInMajorUnits: Number(priceInMajorUnits),
@@ -49,7 +49,7 @@ task(
         }
 
         // 2. Technology Multisig sets treasury on the contract: (REQUIRED)
-        await hre.run('technology-set-treasury-to-research', {
+        await hre.run('BNOTE-technology-set-treasury-to-research', {
                 dryRun: true,
             },
         );
@@ -59,14 +59,14 @@ task(
             await hre.run('technology-approve-bnote-to-spend-btree', { dryRun: true });
 
             // 4. Technology Multisig mints tokens to the treasury: (OPTIONAL - requires step 3 to have been carried out)
-            await hre.run('technology-mint-batch-test', {
+            await hre.run('BNOTE-technology-mint-batch-test', {
                 dryRun: true,
                 omitDefensiveChecks: true,
             });
         }
 
         // 5. Technology Multisig pauses the contract: (OPTIONAL)
-        await hre.run('technology-pause-bnote-minting', { dryRun: true });
+        await hre.run('BNOTE-technology-pause', { dryRun: true });
 
         // 6. Skip Step 6 - won't execute in Safe if all is working correctly and
         // is a hassle to cancel onchain, wasting gas and getting in the way of
@@ -75,10 +75,10 @@ task(
 
 
         // 7. Technology Multisig pauses the contract: (OPTIONAL)
-        await hre.run('technology-grant-default-admin-role-to-research', { dryRun: true });
+        await hre.run('BNOTE-technology-grant-default-admin-role-to-research', { dryRun: true });
 
         // 8. Technology sets baseUri on the contract
-        await hre.run('technology-set-base-uri', { dryRun: true });
+        await hre.run('BNOTE-technology-set-base-uri', { dryRun: true });
 
         if (dryRun || !CONFIG.proposeTxToSafe) {
             logTransactionDetailsToConsole(transactionBatch);

@@ -1,11 +1,12 @@
 import { task, types } from 'hardhat/config';
-import { CONFIG } from '../../config';
+import { CONFIG } from '@project/config';
 import {
     askForConfirmation,
-    proposeTxBundleToSafe,
+    getContractProxyAddress,
     logTransactionDetailsToConsole,
-    getBNoteProxyAddress,
-} from '../../lib/helpers';
+    proposeTxBundleToSafe,
+    BittreesResearchContractNames,
+} from '@project/lib/helpers';
 
 /**
  * Contract Configuration Helper Task
@@ -38,7 +39,7 @@ task(
             tokenAddress: contractAddress,
             amountInMinorUnits,
             amountInMajorUnits,
-            spender: await getBNoteProxyAddress(hre.network.name),
+            spender: await getContractProxyAddress(BittreesResearchContractNames.BNOTE, hre.network.name),
             from: CONFIG.bittreesTechnologyGnosisSafeAddress,
             dryRun,
         });
@@ -75,7 +76,7 @@ task(
             tokenAddress: contractAddress,
             amountInMinorUnits,
             amountInMajorUnits,
-            spender: await getBNoteProxyAddress(hre.network.name),
+            spender: await getContractProxyAddress(BittreesResearchContractNames.BNOTE, hre.network.name),
             from: CONFIG.bittreesResearchGnosisSafeAddress,
             dryRun,
         });
@@ -131,7 +132,7 @@ task('approve-spender', 'Approves an address to transfer an ERC20 on it\'s behal
         console.log(`Amount in Major Units: ${amountInMajorUnits}`);
         console.log(`Amount in Minor Units: ${amountInMinorUnits}`);
 
-        const { ERC20__factory } = require('../../typechain-types');
+        const { ERC20__factory } = require('@project/typechain-types');
         const tokenContract = ERC20__factory.connect(tokenAddress, hre.ethers.provider);
         let decimals;
         try {

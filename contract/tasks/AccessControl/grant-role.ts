@@ -1,76 +1,20 @@
 import { task } from 'hardhat/config';
-import { CONFIG } from '../config';
+import { CONFIG } from '@project/config';
 import {
     askForConfirmation,
     proposeTxBundleToSafe,
     logTransactionDetailsToConsole,
-    getBNoteProxyAddress,
+    getContractProxyAddress,
     hasDefaultAdminRole,
-} from '../lib/helpers';
-import { transactionBatch, TTransaction } from '../lib/tx-batch';
-
-/**
- * Contract Configuration Helper Task
- *
- * The Technology Multisig grants the DEFAULT_ADMIN_ROLE to the Bittrees Research
- * Multisig. After this the Research Multisig can grant other roles to itself to
- * confirm it is working correctly.
- * */
-task(
-    'technology-grant-default-admin-role-to-research',
-    'Bittrees Technology Multisig grants DEFAULT_ADMIN_ROLE to the Bittrees Research Multisig',
-)
-    .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
-    .addFlag(
-        'omitDefensiveChecks',
-        '⚠️⚠️⚠️DANGEROUS!!! Omit defensive checks which block this task completing. Used for creating a tx which ' +
-        'will only be run in the future once it is valid. Executing this tx before intended could have bad consequences.'
-    )
-    .setAction(async (taskArgs, hre) => {
-        const { dryRun, omitDefensiveChecks } = taskArgs;
-
-        await hre.run('grant-role', {
-            role: 'DEFAULT_ADMIN_ROLE',
-            address: CONFIG.bittreesResearchGnosisSafeAddress,
-            from: CONFIG.bittreesTechnologyGnosisSafeAddress,
-            dryRun,
-            omitDefensiveChecks,
-        });
-    });
-
-/**
- * Contract Configuration Helper Task
- *
- * The Research Multisig grants the ADMIN_ROLE to itself, confirming it has the
- * DEFAULT_ADMIN_ROLE. Requires that the `technology-grant-default-admin-role-to-research`
- * was already run and executed correctly.
- * */
-task(
-    'research-grant-admin-role-to-itself',
-    'Bittrees Technology Multisig grants ADMIN_ROLE to the Bittrees Research Multisig',
-)
-    .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
-    .addFlag(
-        'omitDefensiveChecks',
-        '⚠️⚠️⚠️DANGEROUS!!! Omit defensive checks which block this task completing. Used for creating a tx which ' +
-        'will only be run in the future once it is valid. Executing this tx before intended could have bad consequences.'
-    )
-    .setAction(async (taskArgs, hre) => {
-        const { dryRun, omitDefensiveChecks } = taskArgs;
-
-        await hre.run('grant-role', {
-            role: 'ADMIN_ROLE',
-            address: CONFIG.bittreesResearchGnosisSafeAddress,
-            from: CONFIG.bittreesResearchGnosisSafeAddress,
-            dryRun,
-            omitDefensiveChecks,
-        });
-    });
+    contractNameParam, getBittreesResearchContract,
+} from '@project/lib/helpers';
+import { transactionBatch, TTransaction } from '@project/lib/tx-batch';
 
 /**
  * Generalized Task for granting roles to addresses
  * */
 task('grant-role', 'Grants a role to an address')
+    .addParam('contractName', 'The name of the contract to grant the role on', undefined, contractNameParam)
     .addParam('role', 'The role to grant (ADMIN_ROLE, DEFAULT_ADMIN_ROLE, etc.)')
     .addParam('address', 'The address to grant the role to')
     .addParam(
@@ -86,6 +30,7 @@ task('grant-role', 'Grants a role to an address')
     )
     .setAction(async (taskArgs, hre) => {
         const {
+            contractName,
             role,
             address,
             from,
@@ -105,13 +50,11 @@ task('grant-role', 'Grants a role to an address')
         console.log(`==== Granting ${role} to Address ====`);
         console.log(`Address: ${address}`);
 
-        const proxyAddress = await getBNoteProxyAddress(hre.network.name);
-        console.log(`\nConnecting to BNote at: ${proxyAddress}`);
+        const proxyAddress = await getContractProxyAddress(contractName, hre.network.name);
 
-        const { BNote__factory } = require('../typechain-types');
-        const bNote = BNote__factory.connect(proxyAddress, hre.ethers.provider);
+        const contract = await getBittreesResearchContract(contractName, proxyAddress, hre);
 
-        const fromAddressHasRole = await hasDefaultAdminRole(bNote, from);
+        const fromAddressHasRole = await hasDefaultAdminRole(contract, from);
 
         if (!fromAddressHasRole && !omitDefensiveChecks) {
             console.log(
@@ -127,14 +70,14 @@ task('grant-role', 'Grants a role to an address')
         // Get the role hash
         let roleHash;
         if (role === 'DEFAULT_ADMIN_ROLE') {
-            roleHash = await bNote.DEFAULT_ADMIN_ROLE();
+            roleHash = await contract.DEFAULT_ADMIN_ROLE();
         } else if (role === 'ADMIN_ROLE') {
-            roleHash = await bNote.ADMIN_ROLE();
+            roleHash = await contract.ADMIN_ROLE();
         } else {
             throw new Error(`Unknown role: ${role}. Please use DEFAULT_ADMIN_ROLE or ADMIN_ROLE.`);
         }
 
-        const txData: string = bNote.interface.encodeFunctionData(
+        const txData: string = contract.interface.encodeFunctionData(
             'grantRole',
             [roleHash, address],
         );

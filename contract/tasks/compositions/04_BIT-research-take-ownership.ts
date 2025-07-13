@@ -1,10 +1,10 @@
 import { task } from 'hardhat/config';
-import { CONFIG } from '../../config';
+import { CONFIG } from '@project/config';
 import {
     logTransactionDetailsToConsole,
     proposeTxBundleToSafe,
-} from '../../lib/helpers';
-import { transactionBatch } from '../../lib/tx-batch';
+} from '@project/lib/helpers';
+import { transactionBatch } from '@project/lib/tx-batch';
 
 /**
  * Contract Configuration Composition Task
@@ -15,8 +15,8 @@ import { transactionBatch } from '../../lib/tx-batch';
  * granted itself ADMIN_ROLE)
  * */
 task(
-    'research-take-bnote-ownership',
-    'Research Multisig takes ownership over the BNote contract',
+    'BIT-research-take-ownership',
+    'Research Multisig takes ownership over the Bit contract',
 )
     .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
     .setAction(async (taskArgs, hre) => {
@@ -29,26 +29,19 @@ task(
             ];
 
         // 9. Research Multisig grants ADMIN_ROLE to the itself: (REQUIRED)
-        await hre.run('research-grant-admin-role-to-itself', {
+        await hre.run('BIT-research-grant-admin-role-to-itself', {
             dryRun: true,
             omitDefensiveChecks: true,
         });
 
         //  10. Research Multisig unpauses contract so minting can resume: (REQUIRED if step 4 was used)
-        await hre.run('research-unpause-bnote-minting', {
+        await hre.run('BIT-research-unpause', {
             dryRun: true,
             omitDefensiveChecks: true,
         });
 
         if (isTestnet) {
-            // 11. Technology Multisig approves BNote contract to spend sufficient BTREE it holds: (OPTIONAL)
-            await hre.run('research-approve-bnote-to-spend-btree', { dryRun: true });
-
-            // 12. Research Multisig mints tokens to the treasury(itself): (OPTIONAL - requires step 10 to have been carried out)
-            await hre.run('research-mint-batch-test', {
-                dryRun: true,
-                omitDefensiveChecks: true,
-            });
+            // TODO add steps to mint some BIT and then redeem it for BNotes
         }
 
         if (dryRun || !CONFIG.proposeTxToSafe) {

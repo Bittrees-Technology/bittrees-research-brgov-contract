@@ -8,7 +8,9 @@ type IConfig = {
     adminAddress: string;
     defaultAdminAddress: string;
     initialAdminAndDefaultAdminAddress: string;
-    projectName: string;
+    projectNames: {
+        [key: string]: string;
+    };
     bittreesResearchGnosisSafeAddress: string;
     bittreesTechnologyGnosisSafeAddress: string;
     create2FactoryCallerAddress: string;
@@ -57,7 +59,10 @@ export const CONFIG: IConfig = {
      *
      * TL;DR - do not change the projectName value.
      * */
-    projectName: 'BittreesResearchPreferredStock',
+    projectNames: {
+        bNote: 'BittreesResearchPreferredStock',
+        bit: 'BittreesResearchBitMinter',
+    },
 
     // ===== GNOSIS SAFE DETAILS =====
     bittreesResearchGnosisSafeAddress: '0x2F8f86e6E1Ff118861BEB7E583DE90f0449A264f',

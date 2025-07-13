@@ -40,9 +40,9 @@ async function main() {
     const implSalt = generateCompatibleSalt(
         hre,
         CONFIG.create2FactoryCallerAddress,
-        `${CONFIG.projectName}`,
+        `${CONFIG.projectNames.bNote}`,
     );
-    console.log(`\nImplementation Salt Text: ${CONFIG.projectName}`);
+    console.log(`\nImplementation Salt Text: ${CONFIG.projectNames.bNote}`);
     console.log(`Implementation Salt (hex): ${implSalt}`);
 
     // Get contract factories
@@ -78,9 +78,9 @@ async function main() {
     const proxySalt = generateCompatibleSalt(
         hre,
         CONFIG.create2FactoryCallerAddress,
-        `${CONFIG.projectName}`,
+        `${CONFIG.projectNames.bNote}`,
     );
-    console.log(`\nProxy Salt Text: ${CONFIG.projectName}`);
+    console.log(`\nProxy Salt Text: ${CONFIG.projectNames.bNote}`);
     console.log(`Compatible Proxy Salt (hex): ${proxySalt}`);
 
     const proxyAddress = calculateCreate2Address(
@@ -106,7 +106,7 @@ async function main() {
             bytecode: implementationBytecode,
             address: implAddress,
         },
-        currentImplementation: 'implementationV2.0.0',
+        initialImplementation: 'implementationV2.0.0',
         proxy: {
             bytecode: proxyCreationCode,
             address: proxyAddress,

@@ -1,125 +1,19 @@
 import { task, types } from 'hardhat/config';
-import { CONFIG } from '../config';
+import { CONFIG } from '@project/config';
 import {
     askForConfirmation,
     proposeTxBundleToSafe,
     logTransactionDetailsToConsole,
-    getBNoteProxyAddress,
-} from '../lib/helpers';
-import { transactionBatch, TTransaction } from '../lib/tx-batch';
+    getContractProxyAddress, contractNameParam, getBittreesResearchContract,
+} from '@project/lib/helpers';
+import { transactionBatch, TTransaction } from '@project/lib/tx-batch';
 
+// TODO generalize more and move BNote minting specific checks up to the BNote task which calls this task
 /**
- * Contract Configuration Helper Task
- *
- * The Technology Multisig mints BNotes using the mintBatch function.
+ * Generalized Task for batch minting ERC1155s
  * */
-task(
-    'technology-mint-batch-test',
-    'Bittrees Technology Multisig mints BNotes using the mintBatch function',
-)
-    .addOptionalParam(
-        'tokenAddress',
-        'The address of the ERC20 token used for payment',
-        undefined,
-        types.string,
-    )
-    .addParam(
-        'tokenIds',
-        'Comma-separated list of token IDs to mint',
-        '1,10,100',
-        types.string,
-    )
-    .addParam(
-        'quantities',
-        'Comma-separated list of quantities to mint for each token ID',
-        '1,1,1',
-        types.string,
-    )
-    .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
-    .addFlag(
-        'omitDefensiveChecks',
-        '⚠️⚠️⚠️DANGEROUS!!! Omit defensive checks which block this task completing. Used for creating a tx which ' +
-        'will only be run in the future once it is valid. Executing this tx before intended could have bad consequences.'
-    )
-    .setAction(async (taskArgs, hre) => {
-        const {
-            tokenAddress = CONFIG.network[
-                hre.network.name as keyof typeof CONFIG.network
-                ].paymentTokens.BTREE.contractAddress,
-            tokenIds,
-            quantities,
-            dryRun,
-            omitDefensiveChecks,
-        } = taskArgs;
-
-        await hre.run('mint-batch', {
-            tokenAddress,
-            tokenIds,
-            quantities,
-            from: CONFIG.bittreesTechnologyGnosisSafeAddress,
-            dryRun,
-            omitDefensiveChecks,
-        });
-    });
-
-/**
- * Contract Configuration Helper Task
- *
- * The Research Multisig mints BNotes using the mintBatch function.
- * */
-task(
-    'research-mint-batch-test',
-    'Bittrees Research Multisig mints BNotes using the mintBatch function',
-)
-    .addOptionalParam(
-        'tokenAddress',
-        'The address of the ERC20 token used for payment',
-        undefined,
-        types.string,
-    )
-    .addParam(
-        'tokenIds',
-        'Comma-separated list of token IDs to mint',
-        '1,10,100',
-        types.string,
-    )
-    .addParam(
-        'quantities',
-        'Comma-separated list of quantities to mint for each token ID',
-        '1,1,1',
-        types.string,
-    )
-    .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
-    .addFlag(
-        'omitDefensiveChecks',
-        '⚠️⚠️⚠️DANGEROUS!!! Omit defensive checks which block this task completing. Used for creating a tx which ' +
-        'will only be run in the future once it is valid. Executing this tx before intended could have bad consequences.'
-    )
-    .setAction(async (taskArgs, hre) => {
-        const {
-            tokenAddress = CONFIG.network[
-                hre.network.name as keyof typeof CONFIG.network
-                ].paymentTokens.BTREE.contractAddress,
-            tokenIds,
-            quantities,
-            dryRun,
-            omitDefensiveChecks,
-        } = taskArgs;
-
-        await hre.run('mint-batch', {
-            tokenAddress,
-            tokenIds,
-            quantities,
-            from: CONFIG.bittreesResearchGnosisSafeAddress,
-            dryRun,
-            omitDefensiveChecks,
-        });
-    });
-
-/**
- * Generalized Task for minting BNotes
- * */
-task('mint-batch', 'Mints multiple BNotes in one transaction')
+task('mint-batch', 'Mints multiple ERC1155s in one transaction')
+    .addParam('contractName', 'The name of the contract to grant the role on', undefined, contractNameParam)
     .addParam('tokenAddress', 'The address of the ERC20 token used for payment')
     .addParam(
         'tokenIds',
@@ -146,6 +40,7 @@ task('mint-batch', 'Mints multiple BNotes in one transaction')
     )
     .setAction(async (taskArgs, hre) => {
         const {
+            contractName,
             tokenAddress,
             tokenIds: tokenIdsString,
             quantities: quantitiesString,
@@ -184,24 +79,23 @@ task('mint-batch', 'Mints multiple BNotes in one transaction')
         });
 
         console.log(`\nNetwork: ${hre.network.name}`);
-        console.log(`==== Minting BNotes in Batch ====`);
+        console.log(`==== Minting Batch ====`);
         console.log(`Token Address: ${tokenAddress}`);
         console.log(`Token IDs: ${tokenIds.join(', ')}`);
         console.log(`Quantities: ${quantities.join(', ')}`);
         console.log(`From: ${from}`);
 
         // Dynamically import types to avoid circular dependency
-        const { BNote__factory, ERC20__factory } = require('../typechain-types');
+        const { ERC20__factory } = require('@project/typechain-types');
 
         // Verify token is set up for payments
-        const proxyAddress = await getBNoteProxyAddress(hre.network.name);
-        console.log(`\nConnecting to BNote at: ${proxyAddress}`);
+        const proxyAddress = await getContractProxyAddress(contractName, hre.network.name);
 
-        const bNote = BNote__factory.connect(proxyAddress, hre.ethers.provider);
+        const contract = await getBittreesResearchContract(contractName, proxyAddress, hre);
 
 
         // Check if token is a valid payment option
-        const paymentToken = await bNote.paymentTokens(tokenAddress);
+        const paymentToken = await contract.paymentTokens(tokenAddress);
         if (!paymentToken.active && !omitDefensiveChecks) {
             throw new Error(`Token ${tokenAddress} is not an active payment token`);
         }
@@ -224,7 +118,7 @@ task('mint-batch', 'Mints multiple BNotes in one transaction')
         console.log(`Total cost: ${totalCost} token minor units`);
 
         // Check if treasury is set
-        const treasury = await bNote.treasury();
+        const treasury = await contract.treasury();
         if (treasury === hre.ethers.ZeroAddress && !omitDefensiveChecks) {
             throw new Error('Treasury not set on contract. Minting will fail until treasury is set.');
         }
@@ -264,7 +158,7 @@ task('mint-batch', 'Mints multiple BNotes in one transaction')
 
 
         // Create the transaction data
-        const txData: string = bNote.interface.encodeFunctionData(
+        const txData: string = contract.interface.encodeFunctionData(
             'mintBatch',
             [tokenIds, quantities, tokenAddress],
         );
