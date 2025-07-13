@@ -1,34 +1,33 @@
 import { task } from 'hardhat/config';
-import { CONFIG } from '../../config';
+import { CONFIG } from '@project/config';
 import {
     logTransactionDetailsToConsole,
     proposeTxBundleToSafe,
-} from '../../lib/helpers';
-import { transactionBatch } from '../../lib/tx-batch';
+} from '@project/lib/helpers';
+import { transactionBatch } from '@project/lib/tx-batch';
 
 /**
  * Contract Configuration Composition Task
  *
- * The Technology Multisig renounces the ADMIN_ROLE and DEFAULT_ADMIN_ROLE from
- * itself.
+ * The Research Multisig revokes the ADMIN_ROLE and DEFAULT_ADMIN_ROLE from
+ * the Technology Multisig.
  *
  * NB: ONLY RUN AND EXECUTE THIS TASK AFTER RESEARCH MULTISIG HAS SUCCESSFULLY
  * RUN AND EXECUTED THE TASK 01 AND THE TX BUNDLE IT CREATED ON THE MULTISIG
  * */
 task(
-    'technology-renounce-bnote-roles',
-    'Technology Multisig gives up ownership of the BNote contract',
+    'research-revoke-roles-on-bnote-from-technology',
+    'Research Multisig takes away ownership of the BNote contract from the Technology Multisig',
 )
     .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
     .setAction(async (taskArgs, hre) => {
         const { dryRun } = taskArgs;
         const from = CONFIG.bittreesTechnologyGnosisSafeAddress;
 
+        // 13_b. Research Multisig revokes DEFAULT_ADMIN_ROLE & ADMIN_ROLE from Technology Multisig: (REQUIRED - alternatively do step 12_a)
+        await hre.run('BNOTE-research-revoke-default-admin-role-from-technology', { dryRun: true });
 
-        // 13_a. Technology Multisig renounces DEFAULT_ADMIN_ROLE & ADMIN_ROLE: (REQUIRED - alternatively do step 12_b)
-        await hre.run('technology-renounce-default-admin-role', { dryRun: true });
-
-        await hre.run('technology-renounce-admin-role', { dryRun: true });
+        await hre.run('BNOTE-research-revoke-admin-role-from-technology', { dryRun: true });
 
         if (dryRun || !CONFIG.proposeTxToSafe) {
             logTransactionDetailsToConsole(transactionBatch);

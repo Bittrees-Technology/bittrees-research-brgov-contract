@@ -1,76 +1,20 @@
 import { task } from 'hardhat/config';
-import { CONFIG } from '../config';
+import { CONFIG } from '@project/config';
 import {
     askForConfirmation,
     proposeTxBundleToSafe,
     logTransactionDetailsToConsole,
-    getBNoteProxyAddress,
+    getContractProxyAddress,
     hasRole,
-} from '../lib/helpers';
-import { transactionBatch, TTransaction } from '../lib/tx-batch';
-
-/**
- * Contract Configuration Helper Task
- *
- * The Technology Multisig renounces the DEFAULT_ADMIN_ROLE from itself. This
- * should only be run once the role has been granted to another address and is
- * confirmed to be working as expected.
- * */
-task(
-    'technology-renounce-default-admin-role',
-    'Bittrees Technology Multisig renounces the DEFAULT_ADMIN_ROLE from itself',
-)
-    .addParam(
-        'addressRetainingRole',
-        'An address retaining the roll - ensures a role is not left with no address that has it after it is revoked',
-        CONFIG.bittreesResearchGnosisSafeAddress,
-    )
-    .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
-    .setAction(async (taskArgs, hre) => {
-        const { addressRetainingRole, dryRun } = taskArgs;
-
-        await hre.run('renounce-role', {
-            role: 'DEFAULT_ADMIN_ROLE',
-            callerConfirmation: CONFIG.bittreesTechnologyGnosisSafeAddress,
-            dryRun: dryRun,
-            addressRetainingRole,
-            from: CONFIG.bittreesTechnologyGnosisSafeAddress,
-        });
-    });
-
-/**
- * Contract Configuration Helper Task
- *
- * The Technology Multisig renounces the ADMIN_ROLE from itself. This should only
- * be run once the role has been granted to another address and is confirmed to
- * be working as expected.
- * */
-task(
-    'technology-renounce-admin-role',
-    'Bittrees Technology Multisig renounces the ADMIN_ROLE from itself',
-)
-    .addParam(
-        'addressRetainingRole',
-        'An address retaining the roll - ensures a role is not left with no address that has it after it is revoked',
-        CONFIG.bittreesResearchGnosisSafeAddress,
-    )
-    .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
-    .setAction(async (taskArgs, hre) => {
-        const { addressRetainingRole, dryRun } = taskArgs;
-
-        await hre.run('renounce-role', {
-            role: 'ADMIN_ROLE',
-            callerConfirmation: CONFIG.bittreesTechnologyGnosisSafeAddress,
-            dryRun: dryRun,
-            addressRetainingRole,
-            from: CONFIG.bittreesTechnologyGnosisSafeAddress,
-        });
-    });
+    contractNameParam, getBittreesResearchContract,
+} from '@project/lib/helpers';
+import { transactionBatch, TTransaction } from '@project/lib/tx-batch';
 
 /**
  * Generalized Task for renouncing roles an address has
  * */
 task('renounce-role', 'Allows an address to renounce a role it currently has')
+    .addParam('contractName', 'The name of the contract to grant the role on', undefined, contractNameParam)
     .addParam('role', 'The role being renounced (ADMIN_ROLE, DEFAULT_ADMIN_ROLE, etc.)')
     .addParam('callerConfirmation', 'The address of the caller renouncing their role')
     .addParam(
@@ -85,6 +29,7 @@ task('renounce-role', 'Allows an address to renounce a role it currently has')
     .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
     .setAction(async (taskArgs, hre) => {
         const {
+            contractName,
             role,
             addressRetainingRole,
             from,
@@ -130,24 +75,22 @@ task('renounce-role', 'Allows an address to renounce a role it currently has')
         console.log(`==== Renouncing ${role} from Address ====`);
         console.log(`Address: ${from}`);
 
-        const proxyAddress = await getBNoteProxyAddress(hre.network.name);
-        console.log(`\nConnecting to BNote at: ${proxyAddress}`);
+        const proxyAddress = await getContractProxyAddress(contractName, hre.network.name);
 
-        const { BNote__factory } = require('../typechain-types');
-        const bNote = BNote__factory.connect(proxyAddress, hre.ethers.provider);
+        const contract = await getBittreesResearchContract(contractName, proxyAddress, hre);
 
 
         // Get the role hash
         let roleHash;
         if (role === 'DEFAULT_ADMIN_ROLE') {
-            roleHash = await bNote.DEFAULT_ADMIN_ROLE();
+            roleHash = await contract.DEFAULT_ADMIN_ROLE();
         } else if (role === 'ADMIN_ROLE') {
-            roleHash = await bNote.ADMIN_ROLE();
+            roleHash = await contract.ADMIN_ROLE();
         } else {
             throw new Error(`Unknown role: ${role}. Please use DEFAULT_ADMIN_ROLE or ADMIN_ROLE.`);
         }
 
-        const fromAddressHasRole = await hasRole(bNote, roleHash, from);
+        const fromAddressHasRole = await hasRole(contract, roleHash, from);
 
         if (!fromAddressHasRole) {
             console.log(
@@ -160,7 +103,7 @@ task('renounce-role', 'Allows an address to renounce a role it currently has')
             );
         }
 
-        const addressRetainingRoleHasRole = await hasRole(bNote, roleHash, addressRetainingRole);
+        const addressRetainingRoleHasRole = await hasRole(contract, roleHash, addressRetainingRole);
 
         if (!addressRetainingRoleHasRole) {
             console.log(
@@ -175,7 +118,7 @@ task('renounce-role', 'Allows an address to renounce a role it currently has')
             );
         }
 
-        const txData: string = bNote.interface.encodeFunctionData(
+        const txData: string = contract.interface.encodeFunctionData(
             'renounceRole',
             [roleHash, callerConfirmation],
         );

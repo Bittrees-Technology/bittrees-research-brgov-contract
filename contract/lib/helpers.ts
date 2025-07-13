@@ -3,8 +3,8 @@ import { CREATE2_FACTORY_ABI } from './constants';
 import { MetaTransactionData } from '@safe-global/types-kit';
 import Safe from '@safe-global/protocol-kit';
 import SafeApiKit from '@safe-global/api-kit';
-import { BNote } from '../typechain-types';
-import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { AccessControlUpgradeable, BIT, BNote } from '../typechain-types';
+import { CLIArgumentType, HardhatRuntimeEnvironment } from 'hardhat/types';
 
 export function generateCompatibleSalt(
     hre: HardhatRuntimeEnvironment,
@@ -332,12 +332,12 @@ export function getSafeWebUrl(
     return `${baseUrl}/transactions/queue?${query}`;
 }
 
-export type TBNoteDeploymentFile = {
+export type UUPSDeploymentFile = {
     network: string;
     implementationSalt: string;
     proxySalt: string;
     create2Factory: string;
-    'implementationV2.0.0': {
+    implementation: {
         bytecode: string;
         address: string;
     },
@@ -346,35 +346,95 @@ export type TBNoteDeploymentFile = {
         address: string;
         proxyArgs: [string, string];
     },
-    config: {
-        baseURI: string;
-        initialAdminAddress: string;
-    }
+    config: object;
 }
 
-export async function getBNoteDeploymentFile(network: string): Promise<TBNoteDeploymentFile> {
+export function getUUPSDeploymentFile<
+    T extends UUPSDeploymentFile = UUPSDeploymentFile
+>(filename: string): Promise<T> {
     try {
-        return require(`../deployments/bnote-deployment-${network}.json`);
+        return require(`@project/deployments/${filename}`);
     } catch (e) {
-        throw new Error(`Could not find deployment file for network ${network}. Please ensure you've deployed the contract first.`);
+        throw new Error(
+            `Could not find deployment file with filename(${
+                filename
+            }). Please ensure you've deployed the contract first.`
+        );
     }
 }
 
-// Get BNote contract address
-export async function getBNoteProxyAddress(network: string): Promise<string> {
-    return (await getBNoteDeploymentFile(network)).proxy.address;
+export enum BittreesResearchContractNames {
+    BNOTE = 'BNOTE',
+    BIT = 'BIT',
 }
 
-export async function hasDefaultAdminRole(bNote: BNote, address: string): Promise<boolean> {
-    const roleHash = await bNote.DEFAULT_ADMIN_ROLE();
-    return hasRole(bNote, roleHash, address);
+export const contractNameParam: CLIArgumentType<BittreesResearchContractNames> = {
+    name: "contractName",
+    parse: (argName: string, strValue: string): BittreesResearchContractNames => {
+        if (BittreesResearchContractNames[strValue as BittreesResearchContractNames]) {
+            return strValue as BittreesResearchContractNames;
+        }
+        throw new Error(
+            `Invalid value for ${argName}: ${
+                strValue
+            }. Valid options: ${Object.values(BittreesResearchContractNames).join(', ')}`
+        );
+    },
+    validate: (argName: string, value: any): void => {
+        if (BittreesResearchContractNames[value as BittreesResearchContractNames]) {
+            return;
+        }
+        throw new Error(
+            `Invalid value for ${argName}: ${
+                value
+            }. Valid options: ${Object.values(BittreesResearchContractNames).join(', ')}`
+        );
+    }
+};
+
+// Get proxy contract address for network where deployment was done
+export async function getContractProxyAddress(
+    contractName: BittreesResearchContractNames,
+    network: string
+): Promise<string> {
+    return (await getUUPSDeploymentFile(
+        `${contractName.toLowerCase()}-deployment-${network}.json`
+    )).proxy.address;
 }
 
-export async function hasAdminRole(bNote: BNote, address: string): Promise<boolean> {
-    const roleHash = await bNote.ADMIN_ROLE();
-    return hasRole(bNote, roleHash, address);
+export async function getBittreesResearchContract(
+    contractName: BittreesResearchContractNames,
+    contractAddress: string,
+    hre: HardhatRuntimeEnvironment
+) {
+    switch(contractName) {
+        case BittreesResearchContractNames.BIT: {
+            console.log(`\nConnecting to BIT at: ${contractAddress}`);
+            const { BIT__factory } = require('@project/typechain-types');
+            return BIT__factory.connect(contractAddress, hre.ethers.provider);
+        }
+        case BittreesResearchContractNames.BNOTE: {
+            console.log(`\nConnecting to BNote at: ${contractAddress}`);
+            const { BNote__factory } = require('@project/typechain-types');
+            return BNote__factory.connect(contractAddress, hre.ethers.provider);
+        }
+        default: {
+            throw new Error(`Unsupported contractName(${contractName})`)
+        }
+    }
+
 }
 
-export async function hasRole(bNote: BNote, roleHash: string, address: string): Promise<boolean> {
-    return bNote.hasRole(roleHash, address);
+export async function hasDefaultAdminRole(contract: AccessControlUpgradeable, address: string): Promise<boolean> {
+    const roleHash = await contract.DEFAULT_ADMIN_ROLE();
+    return hasRole(contract, roleHash, address);
+}
+
+export async function hasAdminRole(contract: BNote | BIT, address: string): Promise<boolean> {
+    const roleHash = await contract.ADMIN_ROLE();
+    return hasRole(contract, roleHash, address);
+}
+
+export async function hasRole(contract: AccessControlUpgradeable, roleHash: string, address: string): Promise<boolean> {
+    return contract.hasRole(roleHash, address);
 }

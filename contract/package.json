@@ -32,6 +32,7 @@
     "ethers-v5": "npm:ethers@5.8.0",
     "hardhat": "2.23.0",
     "solhint": "5.0.5",
-    "ts-node": "10.9.2"
+    "ts-node": "10.9.2",
+    "tsconfig-paths": "^4.2.0"
   }
 }

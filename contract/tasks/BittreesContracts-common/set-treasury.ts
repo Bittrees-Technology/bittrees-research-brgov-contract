@@ -1,39 +1,21 @@
 import { task } from 'hardhat/config';
-import { CONFIG } from '../config';
+import { CONFIG } from '@project/config';
 import {
     askForConfirmation,
     proposeTxBundleToSafe,
     logTransactionDetailsToConsole,
-    getBNoteProxyAddress,
+    getContractProxyAddress,
     hasAdminRole,
-} from '../lib/helpers';
-import { transactionBatch, TTransaction } from '../lib/tx-batch';
-
-/**
- * Contract Configuration Helper Task
- *
- * The Technology Multisig sets the treasury to the Bittrees Research Multisig.
- * */
-task(
-    'technology-set-treasury-to-research',
-    'Bittrees Technology Multisig sets treasury to the Bittrees Research Multisig',
-)
-    .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
-    .setAction(async (taskArgs, hre) => {
-        const { dryRun } = taskArgs;
-
-        await hre.run('set-treasury', {
-            treasuryAddress: CONFIG.bittreesResearchGnosisSafeAddress,
-            from: CONFIG.bittreesTechnologyGnosisSafeAddress,
-            dryRun,
-        });
-    });
-
+    contractNameParam,
+    getBittreesResearchContract,
+} from '@project/lib/helpers';
+import { transactionBatch, TTransaction } from '@project/lib/tx-batch';
 
 /**
  * Generalized Task for setting the treasury to the given addresses
  * */
 task('set-treasury', 'Sets the treasury to a given address')
+    .addParam('contractName', 'The name of the contract to grant the role on', undefined, contractNameParam)
     .addParam('treasuryAddress', 'The address to set the treasury to')
     .addParam(
         'from',
@@ -43,6 +25,7 @@ task('set-treasury', 'Sets the treasury to a given address')
     .addFlag('dryRun', 'Add transactions to transactionBatch global without submitting and log')
     .setAction(async (taskArgs, hre) => {
         const {
+            contractName,
             treasuryAddress,
             from,
             dryRun,
@@ -60,13 +43,11 @@ task('set-treasury', 'Sets the treasury to a given address')
         console.log(`==== Setting Treasury to Address ====`);
         console.log(`Address: ${treasuryAddress}`);
 
-        const proxyAddress = await getBNoteProxyAddress(hre.network.name);
-        console.log(`\nConnecting to BNote at: ${proxyAddress}`);
+        const proxyAddress = await getContractProxyAddress(contractName, hre.network.name);
 
-        const { BNote__factory } = require('../typechain-types');
-        const bNote = BNote__factory.connect(proxyAddress, hre.ethers.provider);
+        const contract = await getBittreesResearchContract(contractName, proxyAddress, hre);
 
-        const fromAddressHasRole = await hasAdminRole(bNote, from);
+        const fromAddressHasRole = await hasAdminRole(contract, from);
 
         if (!fromAddressHasRole) {
             console.log(
@@ -79,7 +60,7 @@ task('set-treasury', 'Sets the treasury to a given address')
             );
         }
 
-        const txData: string = bNote.interface.encodeFunctionData(
+        const txData: string = contract.interface.encodeFunctionData(
             'setTreasury',
             [treasuryAddress],
         );
