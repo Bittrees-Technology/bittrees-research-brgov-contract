@@ -13,13 +13,13 @@ jobs:
               with:
                   node-version: '22.23.4'
             - run: node --version
-            - run: npm install
+            - run: npm ci
               working-directory: contract
             - run: npx hardhat compile
               working-directory: contract
-            - name: Record generated dependency lockfile for review
+            - name: Verify the committed dependency lockfile
               run: |
-                  git -c color.ui=false diff --no-ext-diff -- contract/package-lock.json
+                  git diff --exit-code -- contract/package-lock.json
                   sha256sum contract/package-lock.json
             - run: npm run test:ci
               working-directory: contract
